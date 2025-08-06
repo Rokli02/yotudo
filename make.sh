@@ -13,29 +13,35 @@ create_data_dir_if_not_found() {
     fi
 }
 
-if [ "$MODE" = "dev" ]; then
-    create_data_dir_if_not_found .
+case $MODE in
+    "dev")
+        create_data_dir_if_not_found .
 
-    echo Launching DEV application
-    sudo $WAILS_PATH/wails dev -tags webkit2_41
+        echo Launching DEV application
+        sudo wails dev -tags webkit2_41
+        ;;
+    "build")
+        echo Building production application
 
-elif [ "$MODE" = "build" ]; then
-    local build_dir="./build/bin"
+        sudo chmod -R 777 frontend/dist
+        sudo chmod -R 777 frontend/wailsjs/runtime
 
-    echo Building production application
-    sudo $WAILS_PATH/wails build -tags webkit2_41
+        wails build -tags webkit2_41
 
-    echo Copying dynamic assets to build directory
-    cp -r ./assets $build_dir/assets
+        echo Copying dynamic assets to build directory
 
-    create_data_dir_if_not_found $build_dir
+        sudo chmod 777 ./build/bin
 
-elif [ "$MODE" = "test" ]; then
-    echo Running tests
+        create_data_dir_if_not_found ./build/bin
+        ;;
+    "test")
+        echo Running tests
 
-    output_of_test=$(go test -v ./test/**/*)
-    echo "$output_of_test" | GREP_COLORS='mt=1;31' grep --color=always -e "--- FAIL"
-    echo "$output_of_test" | GREP_COLORS='mt=1;32' grep --color=always -e "--- PASS"
-else
-    echo Unknown command, use \"dev\", \"build\" or \"test\" instead!
-fi
+        output_of_test=$(go test -v ./test/**/*)
+        echo "$output_of_test" | GREP_COLORS='mt=1;31' grep --color=always -e "--- FAIL"
+        echo "$output_of_test" | GREP_COLORS='mt=1;32' grep --color=always -e "--- PASS"
+        ;;
+    *)
+        echo Unknown command, use \"dev\", \"build\" or \"test\" instead!
+        ;;
+esac

@@ -175,7 +175,7 @@ func TestUpdateOneMusic_ErrNotFound(t *testing.T) {
 		Status:    1,
 	})
 
-	if err != nil {
+	if err == nil {
 		t.Error("music entity was found, but it shouldn't have")
 	}
 
