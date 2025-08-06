@@ -26,14 +26,14 @@ func TestSaveAuthorsThenGetSome(t *testing.T) {
 	repo := repository.NewAuthorRepository(db.Conn)
 
 	repo.SaveOne("Énekes 1")
-	repo.SaveOne("Énekes 7")
+	repo.SaveOne("Színész 7")
 	repo.SaveOne("Énekes 2")
 	repo.SaveOne("Énekes 5")
-	repo.SaveOne("Énekes 6")
+	repo.SaveOne("Színész 6")
 	repo.SaveOne("Énekes 3")
 	repo.SaveOne("Énekes 4")
 
-	filter := "2"
+	filter := "Énes"
 	page := model.Page{Page: 0, Size: 3}
 	sort := []model.Sort{
 		{
@@ -43,9 +43,9 @@ func TestSaveAuthorsThenGetSome(t *testing.T) {
 	}
 	logger.InfoF("Parameters: filter(\"%s\"), page(%v), sort(%v)", filter, page, sort)
 
-	authors := repo.FindByPage(filter, page, sort)
+	authors, totalCount := repo.FindByPage(filter, page, sort)
 
-	logger.Info("All Authors based on parameters", authors)
+	logger.Info("All Authors based on parameters", authors, totalCount)
 }
 
 func TestSaveManyAuthors(t *testing.T) {

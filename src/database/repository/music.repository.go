@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"yotudo/src/database/builders"
 	"yotudo/src/database/entity"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -18,35 +19,42 @@ func NewMusicRepository(db *sql.DB) *Music {
 	return &Music{db: db}
 }
 
-func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, sort []model.Sort) []model.Music {
-	queryBuilder := strings.Builder{}
-	queryBuilder.WriteString(`
-		SELECT
+func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, sort []model.Sort) ([]model.Music, int) {
+	args := make([]any, 0)
+	totalCountQuery := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", &args).
+		WithFilter("name", filter).
+		WithCondition("status", status, func(value any) bool {
+			return value.(int) > -1
+		}).
+		WithoutSemicolon().
+		Build()
+
+	query := builders.NewQueryBuilder(fmt.Sprintf(
+		`SELECT
 			m.id, m.name, m.published, m.album, m.url, m.filename, m.pic_filename, m.status,
-			a.id, a.name, genre.id, genre.name, ac.id, ac.name
+			a.id, a.name, genre.id, genre.name, ac.id, ac.name, (%s) as total_count
 		FROM music AS m 
 		JOIN author AS a ON m.author_id = a.id
 		JOIN genre ON m.genre_id = genre.id
 		LEFT JOIN contributor ON m.id = contributor.music_id
 		LEFT JOIN author AS ac ON contributor.author_id = ac.id`,
-	)
-	var args []any = make([]any, 0)
+		totalCountQuery,
+	), &args).
+		WithFilter("m.name", filter).
+		WithCondition("m.status", status, func(value any) bool {
+			return value.(int) > -1
+		}).
+		WithSort(sort).
+		WithPagination(&page).
+		Build()
 
-	appendQueryWithFilter(filter, &queryBuilder, &args)
-	if status > -1 {
-		queryBuilder.WriteString(" AND m.status=?")
-		args = append(args, status)
-	}
-	appendQueryWithSort(sort, &queryBuilder)
-	appendQueryWithPagination(&page, &queryBuilder, &args)
+	logger.Debug("Query:", query)
 
-	queryBuilder.WriteString(";")
-
-	rows, err := m.db.Query(queryBuilder.String(), args...)
+	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		logger.Error(err)
 
-		return []model.Music{}
+		return []model.Music{}, 0
 	}
 
 	defer rows.Close()
@@ -54,6 +62,7 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 	musics := make([]model.Music, 0)
 	lastIndex := -1
 
+	var totalCount int
 	for rows.Next() {
 		currentMusic := model.Music{
 			Author: model.Author{},
@@ -63,11 +72,11 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 
 		if err := rows.Scan(
 			&currentMusic.Id, &currentMusic.Name, &currentMusic.Published, &currentMusic.Album, &currentMusic.Url, &currentMusic.Filename, &currentMusic.PicFilename, &currentMusic.Status,
-			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributor.Id, &contributor.Name,
+			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributor.Id, &contributor.Name, &totalCount,
 		); err != nil {
 			logger.Warning(err)
 		} else {
-			logger.Debug(contributor)
+			logger.Debug("Contributor:", contributor)
 			if len(musics) == 0 || musics[lastIndex].Id != currentMusic.Id {
 				lastIndex++
 				musics = append(musics, currentMusic)
@@ -83,7 +92,7 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 		}
 	}
 
-	return musics
+	return musics, totalCount
 }
 
 func (m *Music) FindById(id int64) *model.Music {
@@ -175,6 +184,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		return
 	}
 
+	// TODO: Felilvizsgálni ez mi a fenét csinál
 	// Get record from 'music' table
 	row := m.db.QueryRow(
 		"SELECT author_id, name, published, album, genre_id, url, filename, pic_filename, status, updated_at FROM music WHERE id=? LIMIT 1",

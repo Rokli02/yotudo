@@ -127,6 +127,8 @@ func TestFindManyMusic(t *testing.T) {
 	musicRepository := repository.NewMusicRepository(db.Conn)
 	contributorRepository := repository.NewContributorRepository(db.Conn)
 
+	logger.Info("Repos created")
+
 	authors, _ := authorRepository.SaveMany([]string{"Test1", "Test2", "Test12", "Test30", "Test23"})
 	musicId1 := musicRepository.SaveOne(&model.NewMusic{
 		Name:      "Test Muzsika",
@@ -147,7 +149,11 @@ func TestFindManyMusic(t *testing.T) {
 	})
 	contributorRepository.SaveMany(musicId2, []int64{authors[0].Id})
 
-	allMusic := musicRepository.FindByPageAndStatus(-1, "", model.Page{}, []model.Sort{})
+	logger.Info("Datas got saved")
+
+	allMusic, totalCount := musicRepository.FindByPageAndStatus(-1, "Muzs", model.Page{Size: 0}, []model.Sort{})
+
+	logger.InfoF("Music pagination query ran and found %d records in total", totalCount)
 
 	for _, music := range allMusic {
 		logger.Debug(music)

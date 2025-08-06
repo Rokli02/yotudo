@@ -12,6 +12,11 @@ type Sort struct {
 	Dir int8
 }
 
+type Pagination[T any] struct {
+	data  T
+	count int
+}
+
 func (s *Sort) DirString() string {
 	if s.Dir < 0 {
 		return "DESC"

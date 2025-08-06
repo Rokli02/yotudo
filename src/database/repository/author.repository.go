@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"strings"
+	"yotudo/src/database/builders"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -17,34 +17,40 @@ func NewAuthorRepository(db *sql.DB) *Author {
 	return &Author{db: db}
 }
 
-func (a *Author) FindByPage(filter string, page model.Page, sort []model.Sort) []model.Author {
-	queryBuilder := strings.Builder{}
-	queryBuilder.WriteString("SELECT id, name FROM author")
+func (a *Author) FindByPage(filter string, page model.Page, sort []model.Sort) ([]model.Author, int) {
 	args := make([]any, 0)
 
-	appendQueryWithFilter(filter, &queryBuilder, &args)
-	appendQueryWithSort(sort, &queryBuilder)
-	appendQueryWithPagination(&page, &queryBuilder, &args)
+	totalCountQuery := builders.
+		NewQueryBuilder("SELECT COUNT(1) FROM author", &args).
+		WithFilter("name", filter).
+		WithoutSemicolon().
+		Build()
 
-	queryBuilder.WriteString(";")
+	query := builders.
+		NewQueryBuilder(fmt.Sprintf("SELECT id, name, (%s) as total_count FROM author", totalCountQuery), &args).
+		WithFilter("name", filter).
+		WithSort(sort).
+		WithPagination(&page).
+		Build()
 
-	logger.Debug(queryBuilder.String())
+	logger.Debug(query)
 
-	rows, err := a.db.Query(queryBuilder.String(), args...)
+	rows, err := a.db.Query(query, args...)
 	if err != nil {
 		logger.Error(err)
 
-		return []model.Author{}
+		return []model.Author{}, 0
 	}
 
 	defer rows.Close()
 
-	authors := make([]model.Author, 0)
+	authors := make([]model.Author, 0, page.Size)
 
+	var totalCount int
 	for rows.Next() {
 		author := model.Author{}
 
-		err = rows.Scan(&author.Id, &author.Name)
+		err = rows.Scan(&author.Id, &author.Name, &totalCount)
 		if err != nil {
 			logger.Warning(err)
 		} else {
@@ -52,7 +58,7 @@ func (a *Author) FindByPage(filter string, page model.Page, sort []model.Sort) [
 		}
 	}
 
-	return authors
+	return authors, totalCount
 }
 
 func (a *Author) SaveOne(name string) (*model.Author, error) {

@@ -30,9 +30,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
-		Linux: &linux.Options{
-			Icon: app.Icon,
-		},
+		Linux: &linux.Options{},
 	})
 
 	if err != nil {
