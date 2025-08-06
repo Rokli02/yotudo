@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"yotudo/src/controller"
+	"yotudo/src/database"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -13,8 +15,9 @@ import (
 var assets embed.FS
 
 func main() {
+	db := database.LoadDatabase()
 	// Create an instance of the app structure
-	app := NewApp()
+	app := NewApp(db)
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -29,6 +32,8 @@ func main() {
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
+			controller.NewStatusController(database.StatusRepository),
+			controller.NewGenreController(database.GenreRepository),
 		},
 		Linux: &linux.Options{},
 	})

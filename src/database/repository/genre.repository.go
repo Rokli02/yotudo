@@ -55,23 +55,6 @@ func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
 	if id, err := res.LastInsertId(); err != nil {
 		logger.Warning(err)
 
-		// #region Extra select insiode SaveOne
-		// TODO: Delete comments if function still works
-		// row := g.db.QueryRow("SELECT id FROM genre WHERE name=? LIMIT 1", name)
-		// if row == nil {
-		// 	logger.ErrorF("Genre \"%s\" got inserted into database, but was not found later in a query!", name)
-		//
-		// 	return nil, errors.ErrUnableToSave
-		// }
-		//
-		// genre := &entity.Genre{Name: name}
-		//
-		// err = row.Scan(&genre.Id)
-		// if err != nil {
-		// 	logger.Warning(err)
-		// }
-		// #endregion
-
 		return nil, errors.ErrUnknown
 	} else {
 		return &entity.Genre{

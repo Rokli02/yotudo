@@ -159,5 +159,5 @@ export interface Options {
         x: number;
         y: number;
     },
-    timeoutId?: number;
+    timeoutId?: any;
 }

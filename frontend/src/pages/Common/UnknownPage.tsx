@@ -18,7 +18,7 @@ export const UnknownPage: FC = () => {
             <div className='content'>
                 <h1>Ilyen oldal nincs, de azért</h1>
                 <div className='img-wrapper'>
-                    <img alt='Noice' src={`./../../assets/images/noice.png`}/>
+                    <img alt='Noice' src={`/imgs/noice.png`}/>
                 </div>
             </div>
         </Container>

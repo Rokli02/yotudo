@@ -33,7 +33,9 @@ elif [ "$MODE" = "build" ]; then
 elif [ "$MODE" = "test" ]; then
     echo Running tests
 
-    go test -v ./test/**/*
+    output_of_test=$(go test -v ./test/**/*)
+    echo "$output_of_test" | GREP_COLORS='mt=1;31' grep --color=always -e "--- FAIL"
+    echo "$output_of_test" | GREP_COLORS='mt=1;32' grep --color=always -e "--- PASS"
 else
     echo Unknown command, use \"dev\", \"build\" or \"test\" instead!
 fi

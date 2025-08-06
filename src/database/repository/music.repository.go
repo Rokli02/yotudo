@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 	"yotudo/src/database/builders"
-	"yotudo/src/database/entity"
+	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 )
@@ -48,8 +48,6 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 		WithPagination(&page).
 		Build()
 
-	logger.Debug("Query:", query)
-
 	rows, err := m.db.Query(query, args...)
 	if err != nil {
 		logger.Error(err)
@@ -76,7 +74,6 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 		); err != nil {
 			logger.Warning(err)
 		} else {
-			logger.Debug("Contributor:", contributor)
 			if len(musics) == 0 || musics[lastIndex].Id != currentMusic.Id {
 				lastIndex++
 				musics = append(musics, currentMusic)
@@ -95,7 +92,7 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 	return musics, totalCount
 }
 
-func (m *Music) FindById(id int64) *model.Music {
+func (m *Music) FindById(id int64) (*model.Music, error) {
 	var music *model.Music
 
 	rows, err := m.db.Query(
@@ -107,13 +104,13 @@ func (m *Music) FindById(id int64) *model.Music {
 		JOIN genre ON m.genre_id = genre.id
 		LEFT JOIN contributor ON m.id = contributor.music_id
 		LEFT JOIN author AS ac ON contributor.author_id = ac.id
-		WHERE m.id=?`,
+		WHERE m.id=? LIMIT 1;`,
 		id,
 	)
 	if err != nil {
 		logger.Warning(err)
 
-		return nil
+		return nil, errors.ErrUnknown
 	}
 
 	defer rows.Close()
@@ -134,15 +131,17 @@ func (m *Music) FindById(id int64) *model.Music {
 			&music.Author.Id, &music.Author.Name, &music.Genre.Id, &music.Genre.Name, &contributorId, &contributorName,
 		); err != nil {
 			logger.Warning(err)
+
+			return nil, errors.ErrNotFound
 		} else if contributorId != nil {
 			music.Contributors = append(music.Contributors, model.Author{Id: *contributorId, Name: *contributorName})
 		}
 	}
 
-	return music
+	return music, nil
 }
 
-func (m *Music) SaveOne(newMusic *model.NewMusic) int64 {
+func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 	var published *int = nil
 	var album *string = nil
 	if newMusic.Published != 0 {
@@ -162,42 +161,47 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) int64 {
 	if err != nil {
 		logger.Warning(err)
 
-		return 0
+		return 0, errors.ErrUnableToSave
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
 		logger.Error(err)
 
-		return 0
+		return 0, errors.ErrUnknown
 	}
 
-	return id
+	//TODO: Contributor beillesztés is ebben a függvényben történjen
+
+	return id, nil
 }
 
 /*
 Updates Music and its contributor references too.
 */
-func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music) {
+func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music, returnError error) {
 	updateOneResponse = nil
+	returnError = nil
 
 	if music == nil {
+		returnError = errors.ErrNotReceivedInputs
+
 		return
 	}
 
-	// TODO: Felilvizsgálni ez mi a fenét csinál
-	// Get record from 'music' table
 	row := m.db.QueryRow(
-		"SELECT author_id, name, published, album, genre_id, url, filename, pic_filename, status, updated_at FROM music WHERE id=? LIMIT 1",
+		"SELECT id FROM music WHERE id=? LIMIT 1",
 		musicId,
 	)
-	flatMusicFromDB := entity.Music{Id: musicId}
 
-	if err := row.Scan(
-		&flatMusicFromDB.AuthorId, &flatMusicFromDB.Name, &flatMusicFromDB.Published,
-		&flatMusicFromDB.Album, &flatMusicFromDB.GenreId, &flatMusicFromDB.Url, &flatMusicFromDB.Filename,
-		&flatMusicFromDB.PicFilename, &flatMusicFromDB.Status, &flatMusicFromDB.UpdatedAt,
-	); err != nil {
+	var idFromDB int64
+
+	if err := row.Scan(&idFromDB); err != nil {
 		logger.Warning(err)
+		returnError = errors.ErrNotFound
+
+		return
+	} else if idFromDB == 0 {
+		returnError = errors.ErrNotFound
 
 		return
 	}
@@ -208,7 +212,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	// Get contributors' ids from 'contributor' table
 	rows, err := m.db.Query("SELECT author_id FROM contributor WHERE music_id=?", musicId)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 	} else {
 		defer rows.Close()
 
@@ -237,6 +241,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	if err != nil {
 		logger.ErrorF("CRITICAL ERROR: Transaction couldn't start for updating music(id=%d)", musicId)
 		logger.Error(err)
+		returnError = errors.ErrUnknown
 
 		return
 	}
@@ -265,12 +270,14 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	)
 	if err != nil {
 		logger.Error(err)
+		returnError = errors.ErrUnableToUpdate
 
 		return
 	}
 
 	if affected, err := res.RowsAffected(); affected == 0 {
 		logger.WarningF("Couldn't update music(id=%d) because an error occured: %s", musicId, err)
+		returnError = errors.ErrUnableToUpdate
 
 		return
 	}
@@ -302,6 +309,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 
 			if affected, err := res.RowsAffected(); affected != int64(len(contributorsToDelete)) {
 				logger.Error("Couldn't delete all of the contributors:", err)
+				returnError = errors.ErrUnableToUpdate
 
 				return
 			}
@@ -322,27 +330,28 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 			res, err := trans.Exec(query, args...)
 			if err != nil {
 				logger.Error(err)
+				returnError = errors.ErrUnableToUpdate
 
 				return
 			}
 
 			if affected, err := res.RowsAffected(); affected != int64(len(contributorsToAdd)) {
 				logger.Error("Couldn't insert all of the new contributors:", err)
+				returnError = errors.ErrUnableToUpdate
 
 				return
 			}
 		}
 	}
 
-	logger.Debug("UpdateOne function was executed succesfully")
-
 	if err := trans.Commit(); err != nil {
 		logger.Error(err)
+		returnError = errors.ErrUnknown
 
 		return
 	}
 
-	updateOneResponse = m.FindById(musicId)
+	updateOneResponse, returnError = m.FindById(musicId)
 
 	return
 }
