@@ -30,7 +30,7 @@ func (db *Database) databaseTables() []entity.Entity {
 }
 
 func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
-	isExists := isDatabaseExists()
+	isExists := isDatabaseExists(settings.Global.Database.Location)
 
 	dbOption := DefaultDatabaseOptions()
 	for _, optsFunc := range optsFuncs {
@@ -74,6 +74,7 @@ func newDatabase(dbOption *DatabaseOptions) *Database {
 }
 
 func (db *Database) Close() {
+	logger.Info("Closing Database")
 	db.Conn.Close()
 }
 
@@ -99,8 +100,8 @@ func (db *Database) init() {
 	InfoRepository.CreateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
 }
 
-func isDatabaseExists() bool {
-	file, err := os.Open(settings.Global.Database.Location)
+func isDatabaseExists(path string) bool {
+	file, err := os.Open(path)
 	if err != nil {
 		return false
 	}

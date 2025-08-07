@@ -9,13 +9,13 @@ export const useGetData = <T>(dataFetcher: () => Promise<T>) => {
     setLoading(true)
 
     fetchPromise.then((res) => {
+      console.log(res)
       if (!res || (Array.isArray(res) && res.length == 0)) {
-        setLoading(false)
-
         return;
       }
 
       setData(res)
+    }).finally(() => {
       setLoading(false)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps

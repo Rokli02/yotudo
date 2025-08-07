@@ -36,7 +36,8 @@ const Container = styled('div')({
     flexDirection: 'column',
     justifyContent: 'center',
     '& .back-container': {
-        width: 'fit-content',
+        minWidth: 'fit-content',
+        width: 'min(200px, 90%)',
     } as CSSObject,
     '& .content': {
         display: 'flex',
@@ -58,8 +59,9 @@ const Container = styled('div')({
             } as CSSObject,
         } as CSSObject,
         '& div.img-wrapper': {
-            width: '50%',
-            aspectRatio: 1.48,
+            width: '90%',
+            maxWidth: '500px',
+            aspectRatio: 1,
             position: 'relative',
             display: 'inline-flex',
             backgroundImage: 'radial-gradient(white 0%, transparent 70%, #f5db6788 70%, transparent 71%)',
@@ -67,17 +69,15 @@ const Container = styled('div')({
             alignItems: 'center',
             '& > img': {
                 width: '50%',
-                height: 'max-content',
+                aspectRatio: .84,
                 position: 'relative',
-            } as CSSObject,
-            '@media screen and (max-width: 1000px)': {
-                width: '80%',
             } as CSSObject,
         } as CSSObject,
     } as CSSObject,
 })
 
 const Button = styled(MuiButton)({
+    width: '100%',
     fontSize: 20,
     columnGap: 10,
     color: 'crimson',
@@ -88,7 +88,7 @@ const Button = styled(MuiButton)({
     } as CSSObject,
     '& svg': {
         height: 24,
-        width: 'max-content',
+        aspectRatio: 1,
         '@media screen and (max-width: 1000px)': {
             height: 20,
         } as CSSObject,

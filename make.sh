@@ -18,7 +18,7 @@ case $MODE in
         create_data_dir_if_not_found .
 
         echo Launching DEV application
-        sudo wails dev -tags webkit2_41
+        sudo $WAILS_PATH/wails dev -tags webkit2_41
         ;;
     "build")
         echo Building production application

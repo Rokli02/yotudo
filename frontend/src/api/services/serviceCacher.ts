@@ -20,6 +20,10 @@ export class DataCache<T = unknown> {
 
     
     public get data() : T | undefined {
+        if (this._data !== undefined) {
+            this.lastModified = Date.now();
+        }
+
         return this._data;
     }
     

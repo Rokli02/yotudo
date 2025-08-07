@@ -119,7 +119,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                 freeSolo={freeSolo}
                 inputValue={_value}
                 options={_options}
-                ListboxProps={{ sx: { maxHeight: '250px' } }}
+                slotProps={{ listbox: { sx: { maxHeight: '250px' } }}}
                 onChange={_onChange}
             />
             <ChipContainer>

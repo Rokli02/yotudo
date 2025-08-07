@@ -3,7 +3,6 @@ package file
 import (
 	"strings"
 	"testing"
-	"yotudo/src/lib/logger"
 	"yotudo/src/service/file"
 )
 
@@ -36,14 +35,13 @@ func TestInvalidFilename(t *testing.T) {
 
 func TestPurgeFilename(t *testing.T) {
 	fileName := " nem|jo:.exe"
+	expectedName := "nem_jo_.exe"
 	service := file.NewFileService()
 
 	purgedFileName := service.PurgeFileName(fileName)
 
-	logger.Debug("Purged filename", purgedFileName)
-
-	if len(purgedFileName) == len(fileName) || purgedFileName == fileName || strings.ContainsAny(purgedFileName, "|:") {
-		t.Error("Filename purge didn't get executed")
+	if strings.ContainsAny(purgedFileName, "|:") || purgedFileName != expectedName {
+		t.Errorf("Filename purge didn't get executed (expected \"%s\", but got \"%s\")", expectedName, purgedFileName)
 	}
 }
 

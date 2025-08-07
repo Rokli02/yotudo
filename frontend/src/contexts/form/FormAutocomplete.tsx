@@ -86,7 +86,7 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
                 freeSolo={freeSolo}
                 value={selected}
                 options={_options}
-                ListboxProps={{ sx: { maxHeight: '250px' } }}
+                slotProps={{ listbox: { sx: { maxHeight: '250px' } } }}
                 onChange={_onChange}
             />
             { getErrors(name) }
