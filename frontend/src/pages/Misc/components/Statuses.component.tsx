@@ -9,7 +9,7 @@ import { StatusIcon, Title } from '@src/components/common'
 export const StatusesComponent: FC = () => {
     const [loading, statuses] = useGetData(() => StatusService.GetAllStatus())
 
-    return loading ? <Container style={{ backgroundColor: 'green' }}><LoadingPage size='medium'/></Container> : (
+    return loading ? <Container><LoadingPage size='medium'/></Container> : (
         <Container>
             <Title>Státuszok</Title>
             <Content className='dir_col'>

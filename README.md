@@ -6,4 +6,5 @@
 - TODO-k megcsinálása
 
 ## Frontend TODO:
-- Minden
+- Api réteg bővítés
+- Oldalak hozzáadása

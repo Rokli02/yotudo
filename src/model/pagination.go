@@ -13,8 +13,8 @@ type Sort struct {
 }
 
 type Pagination[T any] struct {
-	data  T
-	count int
+	Data  T
+	Count int
 }
 
 func (s *Sort) DirString() string {

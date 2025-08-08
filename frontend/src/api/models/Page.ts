@@ -4,6 +4,7 @@ export interface Pagination<T = unknown> {
 }
 
 export interface Page {
+    filter?: string;
     page: number;
     size: number;
 }

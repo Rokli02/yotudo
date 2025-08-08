@@ -4,9 +4,3 @@ export interface Author {
 }
 
 export interface NewAuthor extends Omit<Author, 'id'> {}
-
-export interface AuthorFilter {
-    search?: string;
-    size: number;
-    skip: number;
-}

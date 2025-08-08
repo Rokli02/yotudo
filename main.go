@@ -36,6 +36,7 @@ func main() {
 			app,
 			controller.NewStatusController(database.StatusRepository),
 			controller.NewGenreController(database.GenreRepository),
+			controller.NewAuthorController(database.AuthorRepository),
 		},
 		Linux: &linux.Options{},
 	})
