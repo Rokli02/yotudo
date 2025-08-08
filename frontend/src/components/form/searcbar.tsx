@@ -1,4 +1,4 @@
-import { CSSProperties, FC, useState, ChangeEventHandler, useRef } from 'react'
+import { CSSProperties, FC, useEffect, useState } from 'react'
 import { CSSObject, styled } from '@mui/material/styles';
 import { Search } from '@mui/icons-material';
 import { Input } from '.'
@@ -12,22 +12,21 @@ export interface SearchbarProps {
 
 export const Searchbar: FC<SearchbarProps> = ({ debounceTime = 500, onDebounce, className, style, ...props }) => {
     const [search, setSearch] = useState<string>('')
-    const timeoutIdRef = useRef<any>(undefined)
+    const [firstRender, setFirstRender] = useState<boolean>(true)
 
-    const onChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
-        setSearch(event.target.value);
-
-        if (timeoutIdRef.current != null) {
-            clearTimeout(timeoutIdRef.current);
-        }
+    useEffect(() => {
+        if (firstRender) return setFirstRender(false);
 
         const timeoutId = setTimeout(() => {
             onDebounce(search)
-            timeoutIdRef.current = undefined;
         }, debounceTime)
-
-        timeoutIdRef.current = timeoutId;
-    }
+        
+        return () => {
+            clearTimeout(timeoutId)
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, debounceTime])
+    
 
     return (
         <SearchbarContainer className={className} style={style}>
@@ -40,7 +39,7 @@ export const Searchbar: FC<SearchbarProps> = ({ debounceTime = 500, onDebounce, 
                 placeholder='Keresés...'
                 type='text'
                 autoComplete='off'
-                onChange={onChange}
+                onChange={(event) => setSearch(event.target.value)}
                 value={search}
                 renderSuffix={
                     ({ focused }) => <SearchSuffixContainer className={ focused ? 'focused' : undefined }><Search /></SearchSuffixContainer>
