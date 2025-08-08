@@ -1,10 +1,11 @@
 import { createContext, FC, ReactElement, useEffect, useState } from 'react'
 import { Author, AuthorService, NewAuthor, Page, Pagination } from '@src/api';
+import { PageSetter, usePage } from '@src/hooks/usePage';
 
 export interface IAuthorContext {
     authors: Pagination<Author[]>;
     page: Page;
-    setPage: (page: Partial<Page>) => void,
+    setPage: PageSetter,
     addAuthor: (author: NewAuthor) => Promise<boolean>;
     deleteAuthor: (id: number) => Promise<boolean>;
 }
@@ -15,7 +16,7 @@ export const AuthorContext = createContext<IAuthorContext>(null as unknown as IA
 
 export const AuthorProvider: FC<{ children: ReactElement | ReactElement[] }> = ({ children }) => {
     const [authors, setAuthors] = useState<Pagination<Author[]>>({ data: [], count: 0 });
-    const [page, _setPage] = useState<Page>({ page: 0, size: PAGE_SIZE });
+    const [page, setPage, _setPage] = usePage(PAGE_SIZE, (state) => AuthorService.GetAuthors(state).then(setAuthors));
 
     async function addAuthor(author: NewAuthor) {
         if (!author) return false;
@@ -25,6 +26,7 @@ export const AuthorProvider: FC<{ children: ReactElement | ReactElement[] }> = (
 
         setAuthors((pre) => {
             if (pre.data.unshift(newAuthor) > page.size) {
+                pre.count++;
                 pre.data.pop();
             }
 
@@ -35,42 +37,21 @@ export const AuthorProvider: FC<{ children: ReactElement | ReactElement[] }> = (
     }
 
     async function deleteAuthor(id: number) {
-        const response = await AuthorService.DeleteAuthor(id)
+        const response = await AuthorService.DeleteAuthor(id);
 
         if (response) {
-            if (authors.data.length == 0) {
-                _setPage((pre) => ({ ...pre, page: Math.max(pre.page - 1, 0) }))
-            }
+            if (authors.data.length <= 1) {
+                _setPage((pre) => {
+                    const newState = { ...pre, page: Math.max(pre.page - 1, 0) };
 
-            AuthorService.GetAuthors(page).then(setAuthors)
+                    AuthorService.GetAuthors(newState).then(setAuthors);
+                    
+                    return newState;
+                });
+            }
         }
 
         return response;
-    }
-
-    function setPage(pageUpdate: Partial<Page>) {
-        const modifiedKeys = Object.entries(pageUpdate) as Array<[keyof Page, unknown]>
-        if (
-            modifiedKeys.length === 0 ||
-            modifiedKeys.every(([key, value]) => page[key] === value)
-        ) {
-            console.log("Unnecessary state update was blocked")
-
-            return;
-        }
-
-        _setPage((pre) => {
-            const newState = {
-                ...pre,
-                ...pageUpdate,
-            }
-            
-            return newState;
-        })
-
-        const mdfky = {...page, ...pageUpdate};
-
-        AuthorService.GetAuthors(mdfky).then(setAuthors)
     }
 
     useEffect(() => {

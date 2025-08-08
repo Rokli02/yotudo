@@ -48,10 +48,6 @@ export const GenreProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
         setSelectedGenreState(null);
     }
 
-    useEffect(() => {
-        console.log('Selected genre:', selectedGenre)
-    }, [selectedGenre])
-
     return (
         <GenreContext.Provider value={{
             genres,

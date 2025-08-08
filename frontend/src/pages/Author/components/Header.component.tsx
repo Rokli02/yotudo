@@ -35,6 +35,7 @@ export const HeaderComponent: FC = () => {
                         undefined :
                         <Pagination
                             count={numOfPages}
+                            page={page.page + 1}
                             onChange={(_, currentPage) => {
                                 setPage({ page: currentPage - 1 })
                             }}

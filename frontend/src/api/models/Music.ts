@@ -1,3 +1,4 @@
+import { AutocompleteOptions } from "@src/contexts/form";
 import { Author } from "./Author";
 import { Genre, Status } from "./Misc";
 
@@ -16,7 +17,16 @@ export interface Music {
     contributor?: Author[];
 }
 
-export interface NewMusic extends Omit<Music, 'id'> {}
+export interface NewMusic {
+    name: string;
+    published: number;
+    url: string;
+    album: string;
+    genre: AutocompleteOptions;
+    author: AutocompleteOptions;
+    contributor: AutocompleteOptions[];
+    useThumbnail: boolean;
+}
 
 export interface MusicFilter {
     search?: string;

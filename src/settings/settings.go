@@ -2,7 +2,7 @@ package settings
 
 var Global Settings
 
-func LoadSettings() {
+func LoadSettings() Settings {
 	Global = Settings{
 		App: AppSettings{
 			TempLocation:   "./data/tmp",
@@ -16,4 +16,6 @@ func LoadSettings() {
 			Version:  "0.1.0",
 		},
 	}
+
+	return Global
 }

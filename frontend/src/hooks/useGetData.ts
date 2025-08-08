@@ -9,7 +9,6 @@ export const useGetData = <T>(dataFetcher: () => Promise<T>) => {
     setLoading(true)
 
     fetchPromise.then((res) => {
-      console.log(res)
       if (!res || (Array.isArray(res) && res.length == 0)) {
         return;
       }

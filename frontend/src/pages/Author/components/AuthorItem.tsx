@@ -3,6 +3,7 @@ import { Author } from '@src/api'
 import { CSSObject, styled } from '@mui/material/styles'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { IconButton } from '@mui/material'
+import { CustomCSS } from '@src/components/common/interface'
 
 export interface AuthorItemProps {
     author: Author
@@ -23,8 +24,6 @@ export const AuthorItem: FC<AuthorItemProps> = ({ author, onDelete }) => {
     </Item>
   )
 }
-
-interface CustomCSS extends CSSObject, Record<`&${string}` | `@${string}`, CustomCSS> {};
 
 const Item = styled('div')({
     position: 'relative',

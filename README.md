@@ -6,5 +6,5 @@
 - TODO-k megcsinálása
 
 ## Frontend TODO:
-- Api réteg bővítés
-- Oldalak hozzáadása
+- Api réteg módosítás
+- Music Page tesztelés

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"yotudo/src/controller"
 	"yotudo/src/database"
+	"yotudo/src/database/repository"
 	"yotudo/src/settings"
 
 	"github.com/wailsapp/wails/v2"
@@ -32,11 +33,11 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
-		Bind: []interface{}{
+		Bind: []any{
 			app,
-			controller.NewStatusController(database.StatusRepository),
-			controller.NewGenreController(database.GenreRepository),
-			controller.NewAuthorController(database.AuthorRepository),
+			controller.NewStatusController(repository.NewStatusRepository(db.Conn)),
+			controller.NewGenreController(repository.NewGenreRepository(db.Conn)),
+			controller.NewAuthorController(repository.NewAuthorRepository(db.Conn)),
 		},
 		Linux: &linux.Options{},
 	})

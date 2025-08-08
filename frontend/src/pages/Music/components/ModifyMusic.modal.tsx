@@ -1,0 +1,113 @@
+import { FC } from 'react'
+import { TopRightButton } from '@src/components/common'
+import { Close } from '@mui/icons-material'
+import {
+    Form,
+    FormCheckbox,
+    FormInput,
+    FormAutocomplete,
+    FormMultiselectAutocomplete,
+} from '@src/contexts/form'
+import { IForm } from '@src/contexts/form/interface'
+import { Button, FormControl, InputLabel } from '@src/components/form'
+import { DialogActions, DialogContent } from '@mui/material'
+import { Music, NewMusic } from '@src/api'
+import {
+    CustomDialag,
+    getAuthorOptions,
+    getContributorOptions,
+    getGenreOptions,
+    musicConstraints,
+    Title,
+    transformFormObjectToNewMusic,
+} from './musicForm.utils'
+
+interface ModifyMusicModalProps {
+    open: boolean,
+    onClose: () => void,
+    music: Music,
+    onSubmit: (musicToUpdate: NewMusic, index?: number) => Promise<boolean>,
+}
+
+export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, music, onSubmit }) => {
+    //TODO: Valószínűleg nem fog működni, úgyhogy meg kell majd babrálni
+    const _onSubmit: IForm['onSubmit'] = async (value: NewMusic) => {
+        // const response = await onSubmit({ ...music, ...value});
+
+        // if (response) {
+        //     onClose()
+        // }
+
+        console.log("DEBUG [ModifyMusicModal]:", value)
+
+        return false;
+    }
+
+    return (
+        <CustomDialag open={open} onClose={onClose}>
+        <TopRightButton Icon={Close} onClick={onClose} />
+        <Title>Zene módosítás</Title>
+        <Form
+            onSubmit={_onSubmit}
+            transformFlatObjectTo={transformFormObjectToNewMusic}
+            constraints={musicConstraints}
+        >
+            <DialogContent className='form_items'>
+                <FormControl>
+                    <InputLabel>Cím</InputLabel>
+                    <FormInput name='name' value={music['name']} />
+                </FormControl>
+                <FormControl>
+                    <InputLabel>URL</InputLabel>
+                    <FormInput name='url' type='url' value={music['url']}/>
+                </FormControl>
+                <FormControl>
+                    <InputLabel>Album</InputLabel>
+                    <FormInput name='album' type='text' value={music['album']}/>
+                </FormControl>
+                <FormControl>
+                    <InputLabel>Kiadás dátuma</InputLabel>
+                    <FormInput name='published' type='number' value={music['published']}/>
+                </FormControl>
+                <FormControl>
+                    <FormAutocomplete
+                        debounceTime={600}
+                        fetchOnce
+                        name='author'
+                        label='Szerző'
+                        getOptions={getAuthorOptions}
+                        value={{ label: music['author'].name, ...music['author'] }}
+                    />
+                </FormControl>
+                <FormControl>
+                    <FormAutocomplete
+                        debounceTime={600}
+                        fetchOnce
+                        name='genre'
+                        label='Műfaj'
+                        getOptions={getGenreOptions}
+                        value={{ label: music['genre'].name, ...music['genre'] }}
+                    />
+                </FormControl>
+                <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.useThumbnail} />
+                <FormControl>
+                    <FormMultiselectAutocomplete
+                        debounceTime={600}
+                        fetchOnce
+                        name='contributor'
+                        label='Közreműködők'
+                        getOptions={getContributorOptions}
+                        renderChipContent={(v) => {
+                            return `${v.label} (TOM: ${v.trashOMeter}/10)`
+                        }}
+                        selectedOptions={music['contributor']?.map((v) => ({ label: v.name, ...v }))}
+                    />
+                </FormControl>
+            </DialogContent>
+            <DialogActions>
+                <Button type='submit' color='success'>Módosítás</Button>
+            </DialogActions>
+        </Form>
+    </CustomDialag>
+    )
+}

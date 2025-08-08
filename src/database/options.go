@@ -1,14 +1,16 @@
 package database
 
-import "yotudo/src/settings"
+import (
+	settingsModule "yotudo/src/settings"
+)
 
 type DatabaseOptions struct {
 	location string
 }
 
-func DefaultDatabaseOptions() *DatabaseOptions {
+func DefaultDatabaseOptions(settings settingsModule.DatabaseSettings) *DatabaseOptions {
 	return &DatabaseOptions{
-		location: settings.Global.Database.Location,
+		location: settings.Location,
 	}
 }
 

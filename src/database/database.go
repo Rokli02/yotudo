@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"yotudo/src/database/entity"
+	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/settings"
 
@@ -32,19 +33,19 @@ func (db *Database) databaseTables() []entity.Entity {
 func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 	isExists := isDatabaseExists(settings.Global.Database.Location)
 
-	dbOption := DefaultDatabaseOptions()
+	dbOption := DefaultDatabaseOptions(settings.Global.Database)
 	for _, optsFunc := range optsFuncs {
 		optsFunc(dbOption)
 	}
 
 	db := newDatabase(dbOption)
 
-	InitRepositories(db.Conn)
+	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	if !isExists {
-		db.init()
+		db.init(infoRepository)
 	} else {
-		info, _ := InfoRepository.FindOneByKey("version")
+		info, _ := infoRepository.FindOneByKey("version")
 		if info != nil && info.Value != settings.Global.Database.Version {
 			logger.ErrorF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
 
@@ -78,7 +79,7 @@ func (db *Database) Close() {
 	db.Conn.Close()
 }
 
-func (db *Database) init() {
+func (db *Database) init(infoRepository *repository.Info) {
 	logger.Info("Initializing Database")
 
 	databaseTableList := db.databaseTables()
@@ -97,7 +98,7 @@ func (db *Database) init() {
 
 	logger.Info("Preloading Database with mandatory datas")
 
-	InfoRepository.CreateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
+	infoRepository.CreateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
 }
 
 func isDatabaseExists(path string) bool {
