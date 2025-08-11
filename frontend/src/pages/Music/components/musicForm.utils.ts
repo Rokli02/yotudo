@@ -114,7 +114,7 @@ export const getContributorOptions: MultiselectAutocompleteProps['getOptions'] =
 
 export const CustomDialag = styled(Dialog)({
     '& .MuiDialog-container': {
-        marginTop: '4%',
+        marginBlock: '4% 6%',
         alignItems: 'flex-start',
         '& .MuiPaper-root': {
             maxWidth: '650px',

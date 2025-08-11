@@ -29,8 +29,8 @@ export const useActionAfterHold: UseHoldLoader = ({
         }, holdTime)
 
         holdDiv.current.toggleAttribute('data-helddown', true)
-        holdDiv.current.style['left'] = options.current.pos.x - size / 2 +'px';
-        holdDiv.current.style['top'] = options.current.pos.y - size / 2 +'px';
+        holdDiv.current.style['left'] = (options.current.pos.x - size / 2) +'px';
+        holdDiv.current.style['top'] = (options.current.pos.y - size / 2) +'px';
     }
 
     const onMouseLeave = () => {
@@ -66,7 +66,7 @@ export const useActionAfterHold: UseHoldLoader = ({
         onMouseLeave,
         onMouseMove,
         CursorElement: () => (
-            <UserPressPoint className='MusicItem_user-holding' ref={holdDiv} duration={`${holdTime}ms`} size={size}>
+            <UserPressPoint ref={holdDiv} duration={`${holdTime}ms`} size={size}>
                 <div className='loader'/>
             </UserPressPoint>
         ),

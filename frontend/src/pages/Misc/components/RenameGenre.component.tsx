@@ -1,4 +1,4 @@
-import { FC, FormEventHandler, useEffect, useState } from 'react'
+import { FC, FormEvent, FormEventHandler, useEffect, useState } from 'react'
 import { Container, TopLeftIdText } from './styled.components'
 import { Title, TopRightButton } from '@src/components/common'
 import { Close } from '@mui/icons-material'
@@ -7,21 +7,27 @@ import { Button, Form, FormControl, Input, InputLabel } from '@src/components/fo
 import { Genre, GenreService } from '@src/api'
 
 export const RenameGenreComponent: FC = () => {
-    const { selectedGenre, setSelectedGenre, renameGenre } = useGenreContext();
+    const { selectedGenre, setSelectedGenre, renameGenre, deleteGenre} = useGenreContext();
 
     return !selectedGenre
         ? <></>
-        : <RenameGenre selectedGenre={selectedGenre} renameGenre={renameGenre} onClose={() => setSelectedGenre(null)} />
+        : <RenameGenre
+            selectedGenre={selectedGenre}
+            renameGenre={renameGenre}
+            onClose={() => setSelectedGenre(null)}
+            deleteGenre={deleteGenre}
+        />
 }
 
-export const RenameGenre: FC<{
+const RenameGenre: FC<{
     selectedGenre: Genre,
     onClose: () => void,
     renameGenre: ReturnType<typeof useGenreContext>['renameGenre'],
-}> = ({ selectedGenre, onClose, renameGenre }) => {
+    deleteGenre: ReturnType<typeof useGenreContext>['deleteGenre'],
+}> = ({ selectedGenre, onClose, renameGenre, deleteGenre }) => {
     const [name, setName] = useState<string>(!selectedGenre ? '' : selectedGenre.name)
 
-    const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+    async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         const renamedGenre = await GenreService.RenameGenre(selectedGenre!.id, { name })
@@ -29,8 +35,14 @@ export const RenameGenre: FC<{
         if (renamedGenre) return renameGenre(renamedGenre.id, { name: renamedGenre.name });
     }
 
-    const revertName = () => {
+    function revertName() {
         setName(selectedGenre?.name ?? '')
+    }
+
+    function deleteGenreById() {
+        deleteGenre(selectedGenre.id).then((canDelete) => {
+            if (canDelete) onClose()
+        })
     }
 
     useEffect(() => {
@@ -44,7 +56,7 @@ export const RenameGenre: FC<{
         <Container>
             <TopLeftIdText>id: {selectedGenre.id}</TopLeftIdText>
             <TopRightButton Icon={Close} onClick={onClose}/>
-            <Title>RenameGenreComponent</Title>
+            <Title>Műfaj átnevezés</Title>
             <Form onSubmit={onSubmit}>
                 <FormControl>
                     <InputLabel htmlFor='name'>Műfaj neve</InputLabel>
@@ -53,6 +65,7 @@ export const RenameGenre: FC<{
                 <div style={{ display: 'flex', flexDirection: 'row', columnGap: '1rem' }}>
                     <Button type='submit' color='success' variant='text'>Módosítás</Button>
                     <Button type='button' color='primary' variant='outlined' onClick={revertName}>Undo</Button>
+                    <Button type='button' color='error' variant='outlined' onClick={deleteGenreById}>Törlés</Button>
                 </div>
             </Form>
         </Container>

@@ -1,5 +1,5 @@
 import { createContext, Dispatch, FC, ReactElement, SetStateAction, useEffect, useState } from 'react'
-import { Genre, NewGenre } from '@src/api'
+import { Genre, GenreService, NewGenre } from '@src/api'
 
 export interface IGenreContext {
     genres: Genre[];
@@ -8,6 +8,7 @@ export interface IGenreContext {
     setSelectedGenre: (id: number | null, index?: number) => void;
     addGenre: (genre: Genre) => void;
     renameGenre: (id: number, genre: NewGenre) => void;
+    deleteGenre: (id: number) => Promise<boolean>;
 }
 
 export const GenreContext = createContext<IGenreContext>(null as unknown as IGenreContext)
@@ -28,6 +29,15 @@ export const GenreProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
 
             return value;
         }))
+    }
+
+    async function deleteGenre(id: number): Promise<boolean> {
+        const canDelete = await GenreService.DeleteGenre(id);
+        if (canDelete) {
+            setGenres((pre) => pre.filter((value) => value.id !== id));
+        }
+
+        return canDelete;
     }
 
     const setSelectedGenre: IGenreContext['setSelectedGenre'] = (id, index) => {
@@ -56,6 +66,7 @@ export const GenreProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
             setSelectedGenre,
             addGenre,
             renameGenre,
+            deleteGenre,
         }}>
             {children}
         </GenreContext.Provider>

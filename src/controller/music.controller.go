@@ -65,11 +65,11 @@ func (c *MusicController) Update(updateMusic *model.UpdateMusic) (*model.Music, 
 }
 
 func (c *MusicController) Delete(id int64) error {
-	if c.authorRepository.DeleteOne(id) {
-		return nil
+	if deleted, err := c.musicRepository.DeleteOne(id); err != nil || !deleted {
+		return errors.ErrUnableToDelete
 	}
 
-	return errors.ErrUnableToDelete
+	return nil
 }
 
 func (c *MusicController) processMusicAuthor(music model.OptionalAuthorGetter) error {

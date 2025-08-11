@@ -12,7 +12,7 @@ export interface IMusicContext {
     performAction: (music: Music) => Promise<void>;
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 24;
 
 export const MusicContext = createContext<IMusicContext>(null as unknown as IMusicContext);
 

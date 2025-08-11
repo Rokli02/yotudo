@@ -4,6 +4,7 @@ import (
 	"testing"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
+	"yotudo/src/model"
 )
 
 func TestGenreFindAll(t *testing.T) {
@@ -44,4 +45,56 @@ func TestGenreRename(t *testing.T) {
 
 	allGenre = repo.FindAll()
 	logger.Info("All Genre After Rename:", allGenre)
+}
+
+func TestGenreIsAlreadyUsed(t *testing.T) {
+	db := getInMemoryDB()
+	defer db.Close()
+	genreRepository := repository.NewGenreRepository(db.Conn)
+	authorRepository := repository.NewAuthorRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn)
+
+	var expectedGenreId int64
+
+	genres := genreRepository.FindAll()
+	expectedGenreId = genres[0].Id
+	johnLenon, _ := authorRepository.SaveOne("John Lenon")
+	musicRepository.SaveOne(&model.NewMusic{
+		Name:    "Test Muzsik",
+		Url:     "http://youtoube.com/watch?v=abc1234567g",
+		Author:  model.OptionalAuthor{Id: &johnLenon.Id},
+		GenreId: expectedGenreId,
+	})
+
+	if !genreRepository.IsAlreadyUsed(expectedGenreId) {
+		t.Error("Genre is used in a music entity but did not found")
+
+		return
+	}
+}
+
+func TestGenreIsNotAlreadyUsed(t *testing.T) {
+	db := getInMemoryDB()
+	defer db.Close()
+	genreRepository := repository.NewGenreRepository(db.Conn)
+	authorRepository := repository.NewAuthorRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn)
+
+	var expectedGenreId int64
+
+	genres := genreRepository.FindAll()
+	expectedGenreId = genres[1].Id
+	johnLenon, _ := authorRepository.SaveOne("John Lenon")
+	musicRepository.SaveOne(&model.NewMusic{
+		Name:    "Test Muzsik",
+		Url:     "http://youtoube.com/watch?v=abc1234567g",
+		Author:  model.OptionalAuthor{Id: &johnLenon.Id},
+		GenreId: genres[0].Id,
+	})
+
+	if genreRepository.IsAlreadyUsed(expectedGenreId) {
+		t.Error("Genre is not used in a music entity but was found")
+
+		return
+	}
 }

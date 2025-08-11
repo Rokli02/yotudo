@@ -54,7 +54,7 @@ export const HeaderComponent: FC = () => {
                     <Select label="Filter" fullWidth options={statusOptions} value={currentStatus.value} onChange={onStatusSelect}/>
                 </FormControl>
             </Row>
-            <PaginationConteiner>
+            <PaginationContainer>
                 {
                     numOfPages === 1 ?
                         undefined :
@@ -66,7 +66,7 @@ export const HeaderComponent: FC = () => {
                             }}
                         />
                 }
-            </PaginationConteiner>
+            </PaginationContainer>
         </Header>
     )
 }
@@ -106,7 +106,7 @@ const Header = styled('div')({
     },
 })
 
-const PaginationConteiner = styled('div')({
+const PaginationContainer = styled('div')({
     height: 36,
     display: 'grid',
     alignItems: 'center',
@@ -121,7 +121,7 @@ const Row = styled('div')({
     gridTemplateColumns: '33% 33% 33%',
     '.searchbar': {
         marginInline: 'auto',
-        minWidth: 350,
+        minWidth: 300,
         width: '100%',
         maxWidth: 400,
     },
@@ -130,7 +130,7 @@ const Row = styled('div')({
         minWidth: 200,
         maxWidth: 250,
     },
-    '@media screen and (max-width: 1200px)': {
+    '@media screen and (max-width: 925px)': {
         gridTemplateColumns: 'none',
         justifyContent: 'center',
         rowGap: 24,

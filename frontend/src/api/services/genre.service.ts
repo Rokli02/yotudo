@@ -1,5 +1,5 @@
 import { Genre, NewGenre, UpdateGenre } from "@src/api/models/Misc";
-import { GetAll, Save, Rename } from '@controller/GenreController'
+import { GetAll, Save, Rename, Delete } from '@controller/GenreController'
 import { DataCache } from './serviceCacher';
 
 const genresCache = new DataCache<Array<Genre>>(undefined, 60);
@@ -9,7 +9,7 @@ export async function GetAllGenre(): Promise<Array<Genre>> {
         genresCache.data = (await GetAll()).map((g) => ({ id: g.Id, name: g.Name }))
     }
 
-    return genresCache.data
+    return [...genresCache.data]
 }
 
 export async function SaveGenre(newGenre: NewGenre): Promise<Genre> {
@@ -46,4 +46,16 @@ export async function RenameGenre(id: number, updateGenre: UpdateGenre, index?: 
 
     // return with value
     return updatedGenre;
+}
+
+export async function DeleteGenre(id: number): Promise<boolean> {
+    const canDelete = await Delete(id).then(() => true).catch(() => false)
+
+    const genres = genresCache.data;
+
+    if (genres !== undefined) {
+        genresCache.data = genres.filter((g) => g.id !== id)
+    }
+
+    return canDelete
 }

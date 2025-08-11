@@ -26,7 +26,6 @@ import {
 export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
     const { addMusic } = useMusicContext();
     const onSubmit: IForm['onSubmit'] = async (value: NewMusic) => {
-        console.log(value)
         return addMusic(value);
     }
 

@@ -30,21 +30,17 @@ interface ModifyMusicModalProps {
 }
 
 export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, music, onSubmit }) => {
-    //TODO: Valószínűleg nem fog működni, úgyhogy meg kell majd babrálni
     const _onSubmit: IForm['onSubmit'] = async (value: NewMusic) => {
-        // const response = await onSubmit({ ...music, ...value});
+        const response = await onSubmit({ ...music, ...value});
 
-        // if (response) {
-        //     onClose()
-        // }
+        if (response) {
+            onClose()
+        }
 
-        console.log("DEBUG [ModifyMusicModal]:", value)
-
-        return false;
+        return response;
     }
 
-    return (
-        <CustomDialag open={open} onClose={onClose}>
+    return ( <CustomDialag open={open} onClose={onClose}>
         <TopRightButton Icon={Close} onClick={onClose} />
         <Title>Zene módosítás</Title>
         <Form
@@ -97,9 +93,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                         name='contributor'
                         label='Közreműködők'
                         getOptions={getContributorOptions}
-                        renderChipContent={(v) => {
-                            return `${v.label} (TOM: ${v.trashOMeter}/10)`
-                        }}
+                        renderChipContent={(v) => v.label}
                         selectedOptions={music['contributor']?.map((v) => ({ label: v.name, ...v }))}
                     />
                 </FormControl>

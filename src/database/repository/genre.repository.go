@@ -42,6 +42,20 @@ func (g *Genre) FindAll() []entity.Genre {
 	return genres
 }
 
+func (g *Genre) IsAlreadyUsed(id int64) bool {
+	var musicId int64
+	row := g.db.QueryRow("SELECT id FROM music WHERE genre_id=? LIMIT 1", id)
+	if err := row.Scan(&musicId); err != nil {
+		return false
+	}
+
+	if musicId != 0 {
+		return true
+	}
+
+	return false
+}
+
 func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
 	res, err := g.db.Exec("INSERT INTO genre (name) VALUES (?);", name)
 	if err != nil {
@@ -87,4 +101,23 @@ func (g *Genre) Rename(id int64, newName string) (*entity.Genre, error) {
 		Id:   id,
 		Name: newName,
 	}, nil
+}
+
+func (g *Genre) DeleteOne(id int64) error {
+	res, err := g.db.Exec("DELETE FROM genre WHERE id=?", id)
+	if err != nil {
+		logger.Error(err)
+
+		return errors.ErrUnableToDelete
+	}
+
+	if affected, err := res.RowsAffected(); err != nil {
+		logger.Error(err)
+
+		return errors.ErrUnknown
+	} else if affected != 1 {
+		return errors.ErrUnableToDelete
+	}
+
+	return nil
 }

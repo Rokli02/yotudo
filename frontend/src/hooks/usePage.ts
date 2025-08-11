@@ -14,16 +14,6 @@ export function usePage<ExtraArgs extends Array<unknown> = []>(
     const [page, _setPage] = useState<Page>({ page: 0, size: initPageSize });
 
     function setPage(pageUpdate: Partial<Page>, ...extraArgs: ExtraArgs) {
-        // const modifiedKeys = Object.entries(pageUpdate) as Array<[keyof Page, unknown]>
-        // if (
-        //     modifiedKeys.length === 0 ||
-        //     modifiedKeys.every(([key, value]) => page[key] === value)
-        // ) {
-        //     console.warn("Unnecessary state update was blocked, go find out what caused it")
-
-        //     return;
-        // }
-
         _setPage((pre) => {
             const newState = {
                 ...pre,
@@ -34,10 +24,6 @@ export function usePage<ExtraArgs extends Array<unknown> = []>(
             
             return newState;
         })
-        
-        //TODO: Delete ha működik minden továbbra
-        // const mdfky = {...page, ...pageUpdate};
-        // onChange?.(mdfky, ...extraArgs)
 
         // Talán 'await'-elni kéne rá, de most jó lesz így
     }

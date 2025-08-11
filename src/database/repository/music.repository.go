@@ -386,6 +386,44 @@ func (m *Music) UpdateStatus(id int64, status int) error {
 	return nil
 }
 
-func (m *Music) DeleteOne(id int64) bool {
-	panic("TODO: Implement")
+func (m *Music) DeleteOne(id int64) (bool, error) {
+	tranx, err := m.db.Begin()
+	if err != nil {
+		logger.Error(err)
+
+		return false, errors.ErrUnknown
+	}
+	defer func() {
+		if err := tranx.Rollback(); err != nil && err != sql.ErrTxDone {
+			logger.Error(err)
+		}
+	}()
+
+	if _, err := tranx.Exec("DELETE FROM contributor WHERE music_id=?", id); err != nil {
+		logger.Error(err)
+
+		return false, errors.ErrUnknown
+	}
+
+	if res, err := tranx.Exec("DELETE FROM music WHERE id=?", id); err != nil {
+		logger.Error(err)
+
+		return false, errors.ErrUnknown
+	} else if affected, err := res.RowsAffected(); err != nil {
+		logger.Error(err)
+
+		return false, errors.ErrUnknown
+	} else if affected == 0 {
+		logger.ErrorF("Couldn't delete music with id (%d)", id)
+
+		return false, errors.ErrUnableToDelete
+	}
+
+	if err = tranx.Commit(); err != nil {
+		logger.Error(err)
+
+		return false, errors.ErrUnknown
+	}
+
+	return true, nil
 }

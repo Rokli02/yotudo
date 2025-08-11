@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"yotudo/src/database/errors"
 	"yotudo/src/database/repository"
 	"yotudo/src/model"
 )
@@ -40,4 +41,12 @@ func (c *GenreController) Rename(id int64, newGenreName string) (*model.Genre, e
 	}
 
 	return &model.Genre{Id: entity.Id, Name: entity.Name}, nil
+}
+
+func (c *GenreController) Delete(id int64) error {
+	if c.genreRepository.IsAlreadyUsed(id) {
+		return errors.ErrUnableToDelete
+	}
+
+	return c.genreRepository.DeleteOne(id)
 }

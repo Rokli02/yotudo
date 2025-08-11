@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { FC } from 'react'
+import { FC } from 'react';
 import StatusesComponent from './components/Statuses.component';
 import { GenresComponent } from './components/Genres.component';
 import { AddGenreComponent } from './components/AddGenre.component';
@@ -19,7 +19,7 @@ export const MiscPage: FC = () => {
       </GenreProvider>
     </Container>
   )
-}
+};
 
 export default MiscPage;
 
@@ -34,4 +34,4 @@ const Container = styled('div')({
     width: '100%',
     textAlign: 'center',
   },
-})
+});

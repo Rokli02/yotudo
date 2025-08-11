@@ -10,7 +10,7 @@ export interface IAuthorContext {
     deleteAuthor: (id: number) => Promise<boolean>;
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 12;
 
 export const AuthorContext = createContext<IAuthorContext>(null as unknown as IAuthorContext);
 
