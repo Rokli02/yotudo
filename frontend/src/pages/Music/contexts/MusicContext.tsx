@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { createContext, FC, ReactElement, useEffect, useState } from "react";
-import { StatusService, Music, MusicService, NewMusic, Page, Status, Pagination } from "@src/api";
+import { StatusService, Music, MusicService, NewMusic, Page, Status, Pagination, MusicUpdate } from "@src/api";
 import { PageSetter, usePage } from "@src/hooks/usePage";
 
 export interface IMusicContext {
@@ -8,7 +8,7 @@ export interface IMusicContext {
     page: Page;
     setPage: PageSetter<[number]>,
     addMusic: (music: NewMusic) => Promise<boolean>;
-    modifyMusic: (musicToUpdate: NewMusic, index?: number) => Promise<boolean>;
+    modifyMusic: (musicToUpdate: MusicUpdate, index?: number) => Promise<boolean>;
     performAction: (music: Music) => Promise<void>;
 }
 
@@ -38,7 +38,7 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
         });
     }
 
-    async function modifyMusic(musicToUpdate: NewMusic, index?: number) {
+    async function modifyMusic(musicToUpdate: MusicUpdate, index?: number) {
         return MusicService.UpdateMusic(musicToUpdate).then((updatedValue) => {
             if (!updatedValue) return false;
 

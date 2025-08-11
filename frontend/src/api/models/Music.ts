@@ -1,6 +1,6 @@
 import { AutocompleteOptions } from "@src/contexts/form";
 import { Author } from "./Author";
-import { Genre, Status } from "./Misc";
+import { Genre, ID, Status } from "./Misc";
 
 export interface Music {
     id: number;
@@ -26,6 +26,10 @@ export interface NewMusic {
     author: AutocompleteOptions;
     contributor: AutocompleteOptions[];
     useThumbnail: boolean;
+}
+
+export interface MusicUpdate extends NewMusic, ID {
+    status: Status;
 }
 
 export interface MusicFilter {

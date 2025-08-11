@@ -43,7 +43,7 @@ func TestSaveAuthorsThenGetSome(t *testing.T) {
 	}
 	logger.InfoF("Parameters: filter(\"%s\"), page(%v), sort(%v)", filter, page, sort)
 
-	authors, totalCount := repo.FindByPage(filter, page, sort)
+	authors, totalCount := repo.FindByPage(filter, &page, sort)
 
 	logger.Info("All Authors based on parameters", authors, totalCount)
 }

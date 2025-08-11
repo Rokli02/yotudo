@@ -17,7 +17,7 @@ func NewAuthorRepository(db *sql.DB) *Author {
 	return &Author{db: db}
 }
 
-func (a *Author) FindByPage(filter string, page model.Page, sort []model.Sort) ([]model.Author, int) {
+func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) ([]model.Author, int) {
 	args := make([]any, 0)
 
 	totalCountQuery := builders.
@@ -30,7 +30,7 @@ func (a *Author) FindByPage(filter string, page model.Page, sort []model.Sort) (
 		NewQueryBuilder(fmt.Sprintf("SELECT id, name, (%s) as total_count FROM author", totalCountQuery), &args).
 		WithFilter("name", filter).
 		WithSort(sort).
-		WithPagination(&page).
+		WithPagination(page).
 		Build()
 
 	logger.Debug(query)
@@ -85,7 +85,18 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 		return nil, errors.ErrNotReceivedInputs
 	}
 
-	stmt, err := a.db.Prepare("INSERT INTO author (name) VALUES (?);")
+	tranx, err := a.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := tranx.Rollback(); err != nil && err != sql.ErrTxDone {
+			logger.Error("Failed to rollback in \"SaveMany\":", err)
+		}
+	}()
+
+	stmt, err := tranx.Prepare("INSERT INTO author (name) VALUES (?);")
 	if err != nil {
 		logger.Error(err)
 
@@ -95,6 +106,8 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 	ids := make([]int64, 0, len(names))
 
 	for _, name := range names {
+		logger.DebugF("Saving Author(name=%s)", name)
+
 		res, err := stmt.Exec(name)
 		if err != nil {
 			logger.Warning(err)
@@ -112,7 +125,15 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 		ids = append(ids, id)
 	}
 
-	stmt.Close()
+	if err = stmt.Close(); err != nil {
+		logger.Error(err)
+	}
+
+	if err = tranx.Commit(); err != nil {
+		logger.Error(err)
+
+		return nil, err
+	}
 
 	qms, args := inClause(ids)
 	rows, err := a.db.Query(fmt.Sprintf("SELECT id, name FROM author WHERE id IN (%s)", qms), args...)

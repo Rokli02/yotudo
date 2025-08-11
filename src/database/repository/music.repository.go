@@ -12,14 +12,18 @@ import (
 )
 
 type Music struct {
-	db *sql.DB
+	db                    *sql.DB
+	contributorRepository *Contributor
 }
 
 func NewMusicRepository(db *sql.DB) *Music {
-	return &Music{db: db}
+	return &Music{
+		db:                    db,
+		contributorRepository: NewContributorRepository(db),
+	}
 }
 
-func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, sort []model.Sort) ([]model.Music, int) {
+func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page, sort []model.Sort) ([]model.Music, int) {
 	args := make([]any, 0)
 	totalCountQuery := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", &args).
 		WithFilter("name", filter).
@@ -45,7 +49,7 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page model.Page, 
 			return value.(int) > -1
 		}).
 		WithSort(sort).
-		WithPagination(&page).
+		WithPagination(page).
 		Build()
 
 	rows, err := m.db.Query(query, args...)
@@ -104,7 +108,7 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 		JOIN genre ON m.genre_id = genre.id
 		LEFT JOIN contributor ON m.id = contributor.music_id
 		LEFT JOIN author AS ac ON contributor.author_id = ac.id
-		WHERE m.id=? LIMIT 1;`,
+		WHERE m.id=?;`,
 		id,
 	)
 	if err != nil {
@@ -134,6 +138,7 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 
 			return nil, errors.ErrNotFound
 		} else if contributorId != nil {
+			logger.DebugF("Contributor(id=%d, name=%s)", *contributorId, *contributorName)
 			music.Contributors = append(music.Contributors, model.Author{Id: *contributorId, Name: *contributorName})
 		}
 	}
@@ -153,10 +158,8 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 
 	res, err := m.db.Exec(
 		"INSERT INTO music (name, published, album, url, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?);",
-		newMusic.Name,
-		published,
-		album,
-		newMusic.Url, newMusic.AuthorId, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
+		newMusic.Name, published, album, newMusic.Url,
+		newMusic.Author.Id, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
 	)
 	if err != nil {
 		logger.Warning(err)
@@ -170,7 +173,15 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		return 0, errors.ErrUnknown
 	}
 
-	//TODO: Contributor beillesztés is ebben a függvényben történjen
+	contributorIds := make([]int64, len(newMusic.Contributors))
+	for i := 0; i < len(newMusic.Contributors); i++ {
+		contributorIds[i] = *newMusic.Contributors[i].Id
+	}
+
+	_, err = m.contributorRepository.SaveMany(id, contributorIds)
+	if err != nil {
+		logger.Error(err)
+	}
 
 	return id, nil
 }
@@ -227,12 +238,12 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		}
 	}
 
-	if len(music.ContributorIds) > 0 {
-		for _, contributorId := range music.ContributorIds {
-			if _, found := contributorState[contributorId]; found {
-				delete(contributorState, contributorId)
+	if len(music.Contributors) > 0 {
+		for _, contributor := range music.Contributors {
+			if _, found := contributorState[*contributor.Id]; found {
+				delete(contributorState, *contributor.Id)
 			} else {
-				contributorState[contributorId] = true
+				contributorState[*contributor.Id] = true
 			}
 		}
 	}
@@ -265,7 +276,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, filename=?, pic_filename=?,
 			status=?, updated_at=?
 		WHERE id=?`,
-		music.AuthorId, music.Name, published, album, music.GenreId, music.Url, filename, picFilename,
+		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, filename, picFilename,
 		music.Status, time.Now().Format(DefaultDateFormat), musicId,
 	)
 	if err != nil {
@@ -354,6 +365,25 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	updateOneResponse, returnError = m.FindById(musicId)
 
 	return
+}
+
+func (m *Music) UpdateStatus(id int64, status int) error {
+	res, err := m.db.Exec("UPDATE music SET status=? WHERE id=?", status, id)
+	if err != nil {
+		logger.Error(err)
+
+		return errors.ErrUnableToUpdate
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return errors.ErrUnknown
+	}
+	if affected == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
 }
 
 func (m *Music) DeleteOne(id int64) bool {

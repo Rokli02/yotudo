@@ -13,10 +13,10 @@ func NewAuthorController(authorRepository *repository.Author) *AuthorController 
 	return &AuthorController{authorRepository: authorRepository}
 }
 
-func (c *AuthorController) GetManyByPagination(filter string, page model.Page, sort []model.Sort) model.Pagination[[]model.Author] {
+func (c *AuthorController) GetManyByPagination(filter string, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Author] {
 	authors, totalCount := c.authorRepository.FindByPage(filter, page, sort)
 
-	return model.Pagination[[]model.Author]{
+	return &model.Pagination[[]model.Author]{
 		Data:  authors,
 		Count: totalCount,
 	}

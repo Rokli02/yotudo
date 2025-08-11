@@ -5,6 +5,8 @@ import { GetManyByPagination, Save, Delete } from '@controller/AuthorController'
 export async function GetAuthors(page: Page = { page: 0, size: 25 }, excludeIds: number[] = []): Promise<Pagination<Array<Author>>> {
     const response = await GetManyByPagination(page.filter ?? '', { Page: page.page, Size: page.size }, [{ Key: "id", Dir: -1 }]);
 
+    console.log('Called GetAuthors', response.Data)
+
     return {
         count: response.Count,
         data: response.Data.map((a) => ({ id: a.Id, name: a.Name })),

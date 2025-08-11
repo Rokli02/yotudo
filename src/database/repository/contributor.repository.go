@@ -48,7 +48,7 @@ func (c *Contributor) FindByMusicId(musicId int64) []entity.Author {
 
 func (c *Contributor) SaveMany(musicId int64, authorIds []int64) (int64, error) {
 	if musicId <= 0 || len(authorIds) == 0 {
-		return 0, errors.ErrNotReceivedInputs
+		return 0, nil
 	}
 
 	args := make([]any, len(authorIds))
@@ -72,6 +72,32 @@ func (c *Contributor) SaveMany(musicId int64, authorIds []int64) (int64, error) 
 		logger.WarningF("Tried to insert %d records into \"contributor\" table, but only %d was inserted succesfully", len(authorIds), inserted)
 	} else {
 		return inserted, nil
+	}
+
+	return 0, errors.ErrUnknown
+}
+
+func (c *Contributor) DeleteMany(musicId int64, authorIds []int64) (int64, error) {
+	if musicId <= 0 || len(authorIds) == 0 {
+		return 0, nil
+	}
+
+	qms, args := inClause(authorIds, musicId)
+
+	query := fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN(%s)", qms)
+	res, err := c.db.Exec(query, args...)
+	if err != nil {
+		logger.Error(err)
+
+		return 0, errors.ErrUnableToDelete
+	}
+
+	if deleted, err := res.RowsAffected(); err != nil {
+		logger.Warning(err)
+	} else if deleted != int64(len(authorIds)) {
+		logger.WarningF("Tried to delete %d records into \"contributor\" table, but only %d was removed succesfully", len(authorIds), deleted)
+	} else {
+		return deleted, nil
 	}
 
 	return 0, errors.ErrUnknown

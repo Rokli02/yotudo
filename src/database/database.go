@@ -75,12 +75,12 @@ func newDatabase(dbOption *DatabaseOptions) *Database {
 }
 
 func (db *Database) Close() {
-	logger.Info("Closing Database")
+	logger.Info("Closing Database ...")
 	db.Conn.Close()
 }
 
 func (db *Database) init(infoRepository *repository.Info) {
-	logger.Info("Initializing Database")
+	logger.Info("Initializing Database ...")
 
 	databaseTableList := db.databaseTables()
 

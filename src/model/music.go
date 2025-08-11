@@ -14,28 +14,44 @@ type Music struct {
 	Contributors []Author
 }
 
-type NewMusic struct {
-	Name           string
-	Published      int
-	Album          string
-	Url            string
-	AuthorId       int64
-	ContributorIds []int64
-	GenreId        int64
+type OptionalAuthorGetter interface{ GetOptionalAuthor() *OptionalAuthor }
+type OptionalContributorsAccessor interface {
+	GetOptionalContributors() []OptionalAuthor
+	SetOptionalContributors([]OptionalAuthor)
 }
 
-type UpdateMusic struct {
-	Name           string
-	Published      int
-	Album          string
-	Url            string
-	Filename       string
-	PicFilename    string
-	Status         int8
-	GenreId        int64
-	AuthorId       int64
-	ContributorIds []int64
+type NewMusic struct {
+	Name         string
+	Published    int
+	Album        string
+	Url          string
+	Author       OptionalAuthor
+	Contributors []OptionalAuthor
+	GenreId      int64
+	UseThumbnail bool
 }
+
+func (m *NewMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Author }
+func (m *NewMusic) GetOptionalContributors() []OptionalAuthor  { return m.Contributors }
+func (m *NewMusic) SetOptionalContributors(c []OptionalAuthor) { m.Contributors = c }
+
+type UpdateMusic struct {
+	Id           int64
+	Name         string
+	Published    int
+	Album        string
+	Url          string
+	Author       OptionalAuthor
+	Contributors []OptionalAuthor
+	Status       int8
+	GenreId      int64
+	Filename     string
+	PicFilename  string
+}
+
+func (m *UpdateMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Author }
+func (m *UpdateMusic) GetOptionalContributors() []OptionalAuthor  { return m.Contributors }
+func (m *UpdateMusic) SetOptionalContributors(c []OptionalAuthor) { m.Contributors = c }
 
 func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicFilename *string) {
 	if m.Published != 0 {

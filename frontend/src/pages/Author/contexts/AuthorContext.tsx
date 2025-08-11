@@ -42,13 +42,12 @@ export const AuthorProvider: FC<{ children: ReactElement | ReactElement[] }> = (
         if (response) {
             if (authors.data.length <= 1) {
                 _setPage((pre) => {
-                    const newState = { ...pre, page: Math.max(pre.page - 1, 0) };
-
-                    AuthorService.GetAuthors(newState).then(setAuthors);
-                    
-                    return newState;
+                    return { ...pre, page: Math.max(pre.page - 1, 0) };
                 });
+                
             }
+
+            AuthorService.GetAuthors(page).then(setAuthors);
         }
 
         return response;

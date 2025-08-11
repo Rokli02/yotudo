@@ -11,5 +11,8 @@ export interface Status {
     id: number;
     name: string;
     description: string;
-  }
-  
+}
+
+export interface ID {
+    id: number;
+}

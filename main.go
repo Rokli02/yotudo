@@ -22,6 +22,12 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp(db)
 
+	statusRepository := repository.NewStatusRepository(db.Conn)
+	genreRepository := repository.NewGenreRepository(db.Conn)
+	authorRepository := repository.NewAuthorRepository(db.Conn)
+	contributorRepository := repository.NewContributorRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn)
+
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "yotudo",
@@ -35,9 +41,10 @@ func main() {
 		OnShutdown:       app.shutdown,
 		Bind: []any{
 			app,
-			controller.NewStatusController(repository.NewStatusRepository(db.Conn)),
-			controller.NewGenreController(repository.NewGenreRepository(db.Conn)),
-			controller.NewAuthorController(repository.NewAuthorRepository(db.Conn)),
+			controller.NewStatusController(statusRepository),
+			controller.NewGenreController(genreRepository),
+			controller.NewAuthorController(authorRepository),
+			controller.NewMusicController(musicRepository, authorRepository, contributorRepository),
 		},
 		Linux: &linux.Options{},
 	})

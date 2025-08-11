@@ -11,7 +11,7 @@ import {
 import { IForm } from '@src/contexts/form/interface'
 import { Button, FormControl, InputLabel } from '@src/components/form'
 import { DialogActions, DialogContent } from '@mui/material'
-import { Music, NewMusic } from '@src/api'
+import { Music, MusicUpdate, NewMusic } from '@src/api'
 import {
     CustomDialag,
     getAuthorOptions,
@@ -26,7 +26,7 @@ interface ModifyMusicModalProps {
     open: boolean,
     onClose: () => void,
     music: Music,
-    onSubmit: (musicToUpdate: NewMusic, index?: number) => Promise<boolean>,
+    onSubmit: (musicToUpdate: MusicUpdate, index?: number) => Promise<boolean>,
 }
 
 export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, music, onSubmit }) => {
