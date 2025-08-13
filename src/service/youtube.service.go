@@ -20,6 +20,11 @@ func NewYoutubeService() *YoutubeService {
 	return &YoutubeService{}
 }
 
+const (
+	FILE_EXTENSION  = "mp3"
+	IMAGE_EXTENSION = "webp"
+)
+
 func (s YoutubeService) PrepareUrl(url string, stripUnnecessaryParameters bool) (string, error) {
 	if !ytRegexp.Match([]byte(url)) {
 		return "", fmt.Errorf("the given url is not a youtube video link")

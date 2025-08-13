@@ -24,9 +24,9 @@ export async function SaveMusic(newMusic: NewMusic): Promise<Music | null> {
         GenreId: newMusic.genre.id,
         Url: newMusic.url,
         Published: newMusic.published,
-        UseThumbnail: newMusic.useThumbnail,
+        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': "",
         Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
-    }));
+    } as model.NewMusic));
 
     const statusMap = await GetAllStatus(true);
 
@@ -44,8 +44,7 @@ export async function UpdateMusic(newMusic: MusicUpdate): Promise<Music | null> 
         Published: newMusic.published,
         Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
         Status: newMusic.status.id,
-        Filename: "",
-        PicFilename: "",
+        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': undefined,
     }))
 
     const statusMap = await GetAllStatus(true);

@@ -1,22 +1,3 @@
-export namespace controller {
-	
-	export class DownloadEvents {
-	    EventName: string;
-	    StopEventName: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DownloadEvents(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.EventName = source["EventName"];
-	        this.StopEventName = source["StopEventName"];
-	    }
-	}
-
-}
-
 export namespace database {
 	
 	export class Database {
@@ -155,7 +136,7 @@ export namespace model {
 	    Author: OptionalAuthor;
 	    Contributors: OptionalAuthor[];
 	    GenreId: number;
-	    UseThumbnail: boolean;
+	    PicFilename: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new NewMusic(source);
@@ -170,7 +151,7 @@ export namespace model {
 	        this.Author = this.convertValues(source["Author"], OptionalAuthor);
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.GenreId = source["GenreId"];
-	        this.UseThumbnail = source["UseThumbnail"];
+	        this.PicFilename = source["PicFilename"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -310,7 +291,6 @@ export namespace model {
 	    Contributors: OptionalAuthor[];
 	    Status: number;
 	    GenreId: number;
-	    Filename: string;
 	    PicFilename: string;
 	
 	    static createFrom(source: any = {}) {
@@ -328,7 +308,6 @@ export namespace model {
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.Status = source["Status"];
 	        this.GenreId = source["GenreId"];
-	        this.Filename = source["Filename"];
 	        this.PicFilename = source["PicFilename"];
 	    }
 	

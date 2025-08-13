@@ -11,9 +11,8 @@ export interface Music {
     updatedAt?: string;
     author: Author;
     genre: Genre;
-    useThumbnail?: boolean;
     status: Status;
-    pic_id?: number;
+    picName?: string;
     contributor?: Author[];
 }
 
@@ -26,6 +25,7 @@ export interface NewMusic {
     author: AutocompleteOptions;
     contributor: AutocompleteOptions[];
     useThumbnail: boolean;
+    picUri: string;
 }
 
 export interface MusicUpdate extends NewMusic, ID {

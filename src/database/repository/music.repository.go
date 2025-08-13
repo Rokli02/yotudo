@@ -270,13 +270,13 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	}()
 
 	// Update 'music' record based on the given properties
-	published, album, filename, picFilename := music.GetOptionalParams()
+	published, album, picFilename := music.GetOptionalParams()
 	res, err := trans.Exec(`
 		UPDATE music
-		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, filename=?, pic_filename=?,
+		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, pic_filename=?,
 			status=?, updated_at=?
 		WHERE id=?`,
-		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, filename, picFilename,
+		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, picFilename,
 		music.Status, time.Now().Format(DefaultDateFormat), musicId,
 	)
 	if err != nil {

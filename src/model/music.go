@@ -28,7 +28,7 @@ type NewMusic struct {
 	Author       OptionalAuthor
 	Contributors []OptionalAuthor
 	GenreId      int64
-	UseThumbnail bool
+	PicFilename  string
 }
 
 func (m *NewMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Author }
@@ -45,7 +45,6 @@ type UpdateMusic struct {
 	Contributors []OptionalAuthor
 	Status       int8
 	GenreId      int64
-	Filename     string
 	PicFilename  string
 }
 
@@ -53,17 +52,13 @@ func (m *UpdateMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Au
 func (m *UpdateMusic) GetOptionalContributors() []OptionalAuthor  { return m.Contributors }
 func (m *UpdateMusic) SetOptionalContributors(c []OptionalAuthor) { m.Contributors = c }
 
-func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicFilename *string) {
+func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, PicFilename *string) {
 	if m.Published != 0 {
 		Published = &m.Published
 	}
 
 	if m.Album != "" {
 		Album = &m.Album
-	}
-
-	if m.Filename != "" {
-		Filename = &m.Filename
 	}
 
 	if m.PicFilename != "" {

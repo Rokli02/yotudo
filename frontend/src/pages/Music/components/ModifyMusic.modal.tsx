@@ -85,7 +85,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                         value={{ label: music['genre'].name, ...music['genre'] }}
                     />
                 </FormControl>
-                <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.useThumbnail} />
+                <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.picName == 'thumbnail'} />
                 <FormControl>
                     <FormMultiselectAutocomplete
                         debounceTime={600}
