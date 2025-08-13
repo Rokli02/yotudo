@@ -52,7 +52,7 @@ func TestGenreIsAlreadyUsed(t *testing.T) {
 	defer db.Close()
 	genreRepository := repository.NewGenreRepository(db.Conn)
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	var expectedGenreId int64
 
@@ -78,7 +78,7 @@ func TestGenreIsNotAlreadyUsed(t *testing.T) {
 	defer db.Close()
 	genreRepository := repository.NewGenreRepository(db.Conn)
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	var expectedGenreId int64
 

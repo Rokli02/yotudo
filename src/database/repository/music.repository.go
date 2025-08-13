@@ -16,10 +16,10 @@ type Music struct {
 	contributorRepository *Contributor
 }
 
-func NewMusicRepository(db *sql.DB) *Music {
+func NewMusicRepository(db *sql.DB, contributorRepository *Contributor) *Music {
 	return &Music{
 		db:                    db,
-		contributorRepository: NewContributorRepository(db),
+		contributorRepository: contributorRepository,
 	}
 }
 

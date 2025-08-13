@@ -8,7 +8,7 @@ func LoadSettings() Settings {
 			TempLocation:   "./data/tmp",
 			ImagesLocation: "./data/imgs",
 			MusicsLocation: "./data/mscs",
-			YtdlLocation:   "/usr/local/bin/youtube-dl",
+			YtdlLocation:   "/usr/lib/yt-dlp_linux",
 			FfmpegLocation: "/bin/ffmpeg:",
 		},
 		Database: DatabaseSettings{

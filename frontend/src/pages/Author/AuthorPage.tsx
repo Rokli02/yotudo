@@ -9,7 +9,7 @@ export const AuthorPage: FC = () => {
     return (
         <PageContainer>
             <AuthorProvider>
-            <h1>Zenészek</h1>
+            <h1>Szerzők</h1>
                 <HeaderComponent />
                 <AuthorItemsComponent />
                 <AddAuthorComponent />

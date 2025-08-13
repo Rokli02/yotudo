@@ -1,14 +1,14 @@
-package file
+package service
 
 import (
 	"strings"
 	"testing"
-	"yotudo/src/service/file"
+	"yotudo/src/service"
 )
 
 func TestValidName(t *testing.T) {
 	fileName := "valami jo.exe"
-	service := file.NewFileService()
+	service := service.NewFileService()
 
 	if !service.ValidName(fileName) {
 		t.Errorf("\"%s\"is a valid filename", fileName)
@@ -17,7 +17,7 @@ func TestValidName(t *testing.T) {
 
 func TestBlankStringAsName(t *testing.T) {
 	fileName := "       "
-	service := file.NewFileService()
+	service := service.NewFileService()
 
 	if service.ValidName(fileName) {
 		t.Errorf("\"%s\"is not a valid filename", fileName)
@@ -26,7 +26,7 @@ func TestBlankStringAsName(t *testing.T) {
 
 func TestInvalidFilename(t *testing.T) {
 	fileName := "nem|jo:.exe"
-	service := file.NewFileService()
+	service := service.NewFileService()
 
 	if service.ValidName(fileName) {
 		t.Errorf("\"%s\"is not a valid filename", fileName)
@@ -36,7 +36,7 @@ func TestInvalidFilename(t *testing.T) {
 func TestPurgeFilename(t *testing.T) {
 	fileName := " nem|jo:.exe"
 	expectedName := "nem_jo_.exe"
-	service := file.NewFileService()
+	service := service.NewFileService()
 
 	purgedFileName := service.PurgeFileName(fileName)
 
@@ -47,7 +47,7 @@ func TestPurgeFilename(t *testing.T) {
 
 func TestPurgeFilenameNotNeeded(t *testing.T) {
 	fileName := "jo fajlnev.png"
-	service := file.NewFileService()
+	service := service.NewFileService()
 
 	purgedFileName := service.PurgeFileName(fileName)
 

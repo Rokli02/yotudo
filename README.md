@@ -2,6 +2,7 @@
 
 ## Backend TODO:
 - Service réteg a hangfájlok kezeléséhez
+- A beállításokat egy config.yaml fájlból olvassa ki
 
 ## Frontend TODO:
 - MusicService Api réteg bővítés

@@ -1,7 +1,8 @@
 /* eslint-disable no-case-declarations */
-import { createContext, FC, ReactElement, useEffect, useState } from "react";
-import { StatusService, Music, MusicService, NewMusic, Page, Status, Pagination, MusicUpdate } from "@src/api";
+import { createContext, FC, ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { Music, MusicService, NewMusic, Page, Pagination, MusicUpdate, StatusService, Status } from "@src/api";
 import { PageSetter, usePage } from "@src/hooks/usePage";
+import { EventsOn } from "@wailsjs/runtime/runtime";
 
 export interface IMusicContext {
     musics: Pagination<Music[]>;
@@ -13,13 +14,14 @@ export interface IMusicContext {
 }
 
 const PAGE_SIZE = 24;
+const MUSIC_STATUS_EVENT_NAME = 'download-progress'
 
 export const MusicContext = createContext<IMusicContext>(null as unknown as IMusicContext);
 
 export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({ children }) => {
-    const [musics, setMusics] = useState<Pagination<Music[]>>({ data: [], count: 0 })
-    const [statuses, setStatuses] = useState<Status[]>([]);
+    const [musics, setMusics] = useState<Pagination<Music[]>>({ data: [], count: 0 });
     const [page, setPage, _setPage] = usePage<[number]>(PAGE_SIZE, (state, status) => MusicService.GetMusics(state, status).then(setMusics));
+    const [status, setStatus] = useState<Status[]>([])
 
     async function addMusic(music: NewMusic): Promise<boolean> {
         return await MusicService.SaveMusic(music).then((value) => {
@@ -57,35 +59,20 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
     async function performAction(music: Music, index?: number) {
         switch (music.status.id) {
             case 0:
-                setMusics((pre) => {
-                    if (modifyMusicAt(pre.data, { ...music, status: statuses[1] }, index)) {
-                        return { ...pre };
-                    }
+                MusicService.DownloadMusic(music.id, MUSIC_STATUS_EVENT_NAME);
 
-                    return pre;
-                })
+                setMusics((pre) => ({
+                    count: pre.count,
+                    data: pre.data.map((_music) => {
+                        if (_music.id !== music.id || _music.status.id == status[1].id) return _music;
 
-                const response = await MusicService.ProcessMusic(music.id);
+                        return { ..._music, status: status[1] };
+                    }),   
+                }));
 
-                if (!response) {
-                    return setMusics((pre) => {
-                        if (modifyMusicAt(pre.data, { ...music, status: statuses[0] }, index)) {
-                            return { ...pre };
-                        }
-
-                        return pre;
-                    })
-                }
-
-                return setMusics((pre) => {
-                    if (modifyMusicAt(pre.data, response, index)) {
-                        return { ...pre };
-                    }
-
-                    return pre;
-                })
+                return;
             case 2:
-                await MusicService.DownloadMusic(music.id);
+                await MusicService.MoveMusicTo(music.id);
 
                 return;
         }
@@ -110,16 +97,56 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
     }
 
     useEffect(() => {
-        MusicService.GetMusics(page).then((res) => {
-            if (!res || (Array.isArray(res) && res.length == 0)) {
-                return;
-            }
+        MusicService.GetMusics(page).then(setMusics);
+        // The chance of this line causing any error is extremely low, so I just don't care about it
+        StatusService.GetAllStatus().then(setStatus);
 
-            setMusics(res);
+        const cancelEvent = EventsOn(MUSIC_STATUS_EVENT_NAME, function([musicId, progress, stat, err]: [number, number, string, string?]) {
+            switch (stat) {
+                case 'start':
+                    setMusics((pre) => ({
+                        count: pre.count,
+                        data: pre.data.map((music) => {
+                            if (music.id !== musicId || music.status.id == status[1].id) return music;
+
+                            return { ...music, status: status[1] };
+                        }),   
+                    }));
+
+                    break;
+                case 'downloading':
+                    console.log(`Download progress for id=${musicId} is ${progress}%`)
+                    break;
+                case 'completed':
+                    setMusics((pre) => ({
+                        count: pre.count,
+                        data: pre.data.map((music) => {
+                            if (music.id !== musicId || music.status.id == status[2].id) return music;
+
+                            return { ...music, status: status[2] };
+                        }),   
+                    }));
+
+                    break;
+                case 'failed':
+                    setMusics((pre) => ({
+                        count: pre.count,
+                        data: pre.data.map((music) => {
+                            if (music.id !== musicId || music.status.id == status[0].id) return music;
+
+                            return { ...music, status: status[0] };
+                        }),   
+                    }));
+
+                    console.error(`Failed to download music with id=${musicId}. Reason: "${err ?? 'Unknown'}"`);
+
+                    break;
+            }
         })
 
-        StatusService.GetAllStatus().then((s) => setStatuses(s))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        return () => {
+            cancelEvent()
+        }
     }, [])
 
     return (

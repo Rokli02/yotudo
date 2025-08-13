@@ -11,7 +11,7 @@ func TestSaveMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	johnLenon, _ := authorRepository.SaveOne("John Lenon")
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
@@ -42,7 +42,7 @@ func TestSaveMusicWithContributors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	johnLenon, _ := authorRepository.SaveOne("John Lenon")
 	eltonBro, _ := authorRepository.SaveOne("Elton Bro")
@@ -94,7 +94,7 @@ func TestFindMusicById(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	johnLenon, _ := authorRepository.SaveOne("John Lenon")
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
@@ -123,7 +123,7 @@ func TestFindMusicByIdAfterSavingContributors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	johnLenon, _ := authorRepository.SaveOne("John Lenon")
 	eltonJohn, _ := authorRepository.SaveOne("Elton John")
@@ -159,7 +159,7 @@ func TestUpdateOneMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	authors, _ := authorRepository.SaveMany([]string{"Test1", "Test2", "Test12", "Test30", "Test23"})
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
@@ -219,7 +219,7 @@ func TestUpdateOneMusic_ErrNotFound(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	author, _ := authorRepository.SaveOne("Test1")
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
@@ -254,7 +254,7 @@ func TestFindManyMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
 
 	logger.Info("Repos created")
 
