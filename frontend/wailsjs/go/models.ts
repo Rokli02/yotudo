@@ -291,6 +291,7 @@ export namespace model {
 	    Contributors: OptionalAuthor[];
 	    Status: number;
 	    GenreId: number;
+	    Filename: string;
 	    PicFilename: string;
 	
 	    static createFrom(source: any = {}) {
@@ -308,6 +309,7 @@ export namespace model {
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.Status = source["Status"];
 	        this.GenreId = source["GenreId"];
+	        this.Filename = source["Filename"];
 	        this.PicFilename = source["PicFilename"];
 	    }
 	

@@ -1,7 +1,7 @@
 # **Yo**(_u_)**Tu**(_be_) **Do**(_wnload_)
 
 ## Backend TODO:
-- Service réteg a hangfájlok kezeléséhez
+- FFMPEG letöltő elkészítés
 - A beállításokat egy config.yaml fájlból olvassa ki
 
 ## Frontend TODO:

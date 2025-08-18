@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"yotudo/src/database/errors"
 	"yotudo/src/database/repository"
+	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 )
 
@@ -26,6 +28,12 @@ func (c *AuthorController) Save(newAuthorName string) (*model.Author, error) {
 	return c.authorRepository.SaveOne(newAuthorName)
 }
 
-func (c *AuthorController) Delete(id int64) bool {
-	return c.authorRepository.DeleteOne(id)
+func (c *AuthorController) Delete(id int64) (bool, error) {
+	if c.authorRepository.IsReferencingToMusic(id) {
+		logger.Warning("Unable to delete Author, because it was used in a music, or contributor records")
+
+		return false, errors.ErrUnableToDelete
+	}
+
+	return c.authorRepository.DeleteOne(id), nil
 }

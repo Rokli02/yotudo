@@ -20,6 +20,47 @@ type OptionalContributorsAccessor interface {
 	SetOptionalContributors([]OptionalAuthor)
 }
 
+func (m *Music) ToUpdateMusic() *UpdateMusic {
+	updateMusic := &UpdateMusic{
+		Id:      m.Id,
+		Name:    m.Name,
+		Url:     m.Url,
+		Status:  m.Status,
+		GenreId: m.Genre.Id,
+		Author:  OptionalAuthor{Id: &m.Author.Id, Name: &m.Author.Name},
+	}
+
+	if m.Published != nil {
+		updateMusic.Published = *m.Published
+	}
+
+	if m.Album != nil {
+		updateMusic.Album = *m.Album
+	}
+
+	if m.Filename != nil {
+		updateMusic.Filename = *m.Filename
+	}
+
+	if m.PicFilename != nil {
+		updateMusic.PicFilename = *m.PicFilename
+	}
+
+	if len(m.Contributors) != 0 {
+		updateMusic.Contributors = make([]OptionalAuthor, len(m.Contributors))
+
+		for i := 0; i < len(updateMusic.Contributors); i++ {
+			updateMusic.Contributors[i] = OptionalAuthor{
+				Id:   &m.Contributors[i].Id,
+				Name: &m.Contributors[i].Name,
+			}
+		}
+
+	}
+
+	return updateMusic
+}
+
 type NewMusic struct {
 	Name         string
 	Published    int
@@ -45,6 +86,7 @@ type UpdateMusic struct {
 	Contributors []OptionalAuthor
 	Status       int8
 	GenreId      int64
+	Filename     string
 	PicFilename  string
 }
 
@@ -52,7 +94,7 @@ func (m *UpdateMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Au
 func (m *UpdateMusic) GetOptionalContributors() []OptionalAuthor  { return m.Contributors }
 func (m *UpdateMusic) SetOptionalContributors(c []OptionalAuthor) { m.Contributors = c }
 
-func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, PicFilename *string) {
+func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicFilename *string) {
 	if m.Published != 0 {
 		Published = &m.Published
 	}
@@ -63,6 +105,10 @@ func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, PicFilename *s
 
 	if m.PicFilename != "" {
 		PicFilename = &m.PicFilename
+	}
+
+	if m.Filename != "" {
+		Filename = &m.Filename
 	}
 
 	return

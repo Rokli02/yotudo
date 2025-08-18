@@ -2,14 +2,14 @@ package settings
 
 var Global Settings
 
-func LoadSettings() Settings {
+func LoadSettings() *Settings {
 	Global = Settings{
 		App: AppSettings{
 			TempLocation:   "./data/tmp",
 			ImagesLocation: "./data/imgs",
 			MusicsLocation: "./data/mscs",
 			YtdlLocation:   "/usr/lib/yt-dlp_linux",
-			FfmpegLocation: "/bin/ffmpeg:",
+			FfmpegLocation: "/bin/ffmpeg",
 		},
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
@@ -17,5 +17,5 @@ func LoadSettings() Settings {
 		},
 	}
 
-	return Global
+	return &Global
 }

@@ -70,13 +70,14 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 			Author: model.Author{},
 			Genre:  model.Genre{},
 		}
-		contributor := model.Author{}
+		var contributorId *int64
+		var contributorName *string
 
 		if err := rows.Scan(
 			&currentMusic.Id, &currentMusic.Name, &currentMusic.Published, &currentMusic.Album, &currentMusic.Url, &currentMusic.Filename, &currentMusic.PicFilename, &currentMusic.Status,
-			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributor.Id, &contributor.Name, &totalCount,
+			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributorId, &contributorName, &totalCount,
 		); err != nil {
-			logger.Warning(err)
+			logger.Warning("Music.FindByPageAndStatus:", err)
 		} else {
 			if len(musics) == 0 || musics[lastIndex].Id != currentMusic.Id {
 				lastIndex++
@@ -87,8 +88,8 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 				musics[lastIndex].Contributors = make([]model.Author, 0)
 			}
 
-			if contributor.Id != 0 {
-				musics[lastIndex].Contributors = append(musics[lastIndex].Contributors, contributor)
+			if contributorId != nil && contributorName != nil {
+				musics[lastIndex].Contributors = append(musics[lastIndex].Contributors, model.Author{Id: *contributorId, Name: *contributorName})
 			}
 		}
 	}
@@ -112,7 +113,7 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 		id,
 	)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return nil, errors.ErrUnknown
 	}
@@ -134,7 +135,7 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 			&music.Name, &music.Published, &music.Album, &music.Url, &music.Filename, &music.PicFilename, &music.Status,
 			&music.Author.Id, &music.Author.Name, &music.Genre.Id, &music.Genre.Name, &contributorId, &contributorName,
 		); err != nil {
-			logger.Warning(err)
+			logger.Warning("Music.FinyById", err)
 
 			return nil, errors.ErrNotFound
 		} else if contributorId != nil {
@@ -162,13 +163,13 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		newMusic.Author.Id, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
 	)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return 0, errors.ErrUnableToSave
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		logger.Error(err)
+		logger.Warning(err)
 
 		return 0, errors.ErrUnknown
 	}
@@ -207,7 +208,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	var idFromDB int64
 
 	if err := row.Scan(&idFromDB); err != nil {
-		logger.Warning(err)
+		logger.Warning("Music.UpdateOne", err)
 		returnError = errors.ErrNotFound
 
 		return
@@ -270,14 +271,14 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	}()
 
 	// Update 'music' record based on the given properties
-	published, album, picFilename := music.GetOptionalParams()
+	published, album, filename, picFilename := music.GetOptionalParams()
 	res, err := trans.Exec(`
 		UPDATE music
-		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, pic_filename=?,
-			status=?, updated_at=?
+		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, filename=?,
+			pic_filename=?, status=?, updated_at=?
 		WHERE id=?`,
-		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, picFilename,
-		music.Status, time.Now().Format(DefaultDateFormat), musicId,
+		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, filename,
+		picFilename, music.Status, time.Now().Format(DefaultDateFormat), musicId,
 	)
 	if err != nil {
 		logger.Error(err)
@@ -315,7 +316,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 			qms, args := inClause(contributorsToDelete, musicId)
 			res, err := trans.Exec(fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN (%s)", qms), args...)
 			if err != nil {
-				logger.Warning(err)
+				logger.Error(err)
 			}
 
 			if affected, err := res.RowsAffected(); affected != int64(len(contributorsToDelete)) {

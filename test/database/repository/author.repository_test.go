@@ -78,3 +78,56 @@ func TestSaveManyAuthorsFailUniqueNameRestraint(t *testing.T) {
 		t.Errorf("Saved %d authors, with the same name", len(authorNames))
 	}
 }
+
+func TestIsReferencingToMusic(t *testing.T) {
+	db := getInMemoryDB()
+	defer db.Close()
+	repo := repository.NewAuthorRepository(db.Conn)
+	contributorRepository := repository.NewContributorRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository)
+
+	savedAuthors, err := repo.SaveMany([]string{"TestR", "Másodpilóta", "Harmadlegény", "Ismeretlen Kukac"})
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	a1 := savedAuthors[0]
+	a3 := savedAuthors[2]
+
+	_, err = musicRepository.SaveOne(&model.NewMusic{
+		Name:   "Igeiglenes Muzsika",
+		Author: model.OptionalAuthor{Id: &a1.Id, Name: &a1.Name},
+		Contributors: []model.OptionalAuthor{
+			{Id: &a3.Id, Name: &a3.Name},
+		},
+		Published: 2025,
+		Url:       "https://eztmostjolkitalaltam.com/watch?stonks=bigmoney",
+	})
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	for i, author := range savedAuthors {
+		isRefs := repo.IsReferencingToMusic(author.Id)
+		expectedRefs := false
+
+		switch i {
+		case 0:
+			fallthrough
+		case 2:
+			expectedRefs = true
+		default:
+			expectedRefs = false
+		}
+
+		if isRefs != expectedRefs {
+			t.Errorf("In IsReferencingToMusic(...) expected value was(%t), but returned with (%t) [index=%d]", expectedRefs, isRefs, i)
+
+			return
+		}
+	}
+}

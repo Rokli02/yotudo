@@ -24,7 +24,7 @@ export async function SaveMusic(newMusic: NewMusic): Promise<Music | null> {
         GenreId: newMusic.genre.id,
         Url: newMusic.url,
         Published: newMusic.published,
-        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': "",
+        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': undefined,
         Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
     } as model.NewMusic));
 
@@ -60,11 +60,17 @@ export async function MoveMusicTo(id: number): Promise<Music | null> {
     return Promise.resolve(null);
 }
 
+/**
+ * Letölti a 'Music' modellhez kötődő zenét
+ * @param id Music ID
+ * @param eventName Event name, amin keresztül érkezik az aszinkron esemény információ
+ * @throws MusicNotFoundError
+ */
 export async function DownloadMusic(id: number, eventName: string): Promise<void> {
     return DownloadByMusicId(id, eventName);
 }
 
-function convertGoMusicToTsMusic(music: model.Music, statusMap: Record<number, Status>) {
+function convertGoMusicToTsMusic(music: model.Music, statusMap: Record<number, Status>): Music {
     return {
         id: music.Id,
         name: music.Name,
@@ -81,6 +87,6 @@ function convertGoMusicToTsMusic(music: model.Music, statusMap: Record<number, S
             name: music.Author.Name,
         },
         contributor: music.Contributors.map((c) => ({ id: c.Id, name: c.Name })),
-        useThumbnail: undefined,
+        picName: music.PicFilename,
     }
 }

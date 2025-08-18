@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useEffect } from 'react'
 import { TopRightButton } from '@src/components/common'
 import { Close } from '@mui/icons-material'
 import {

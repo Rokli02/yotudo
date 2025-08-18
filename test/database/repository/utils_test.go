@@ -4,6 +4,6 @@ import "yotudo/src/database"
 
 func getInMemoryDB() *database.Database {
 	return database.LoadDatabase(func(opts *database.DatabaseOptions) {
-		opts.SetLocation(":memory:")
+		opts.SetLocation("file::memory:?cache=shared")
 	})
 }

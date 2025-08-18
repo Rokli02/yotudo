@@ -3,7 +3,7 @@ import { RouteObject } from 'react-router-dom';
 import NavbarLayout from './Navbar/NavbarLayout';
 import { LoadingPage, UnknownPage } from '@src/pages/Common';
 import { Status, StatusService } from '@src/api';
-const MusicPageLazy = lazy(() => import('@src/pages/Music/MusicPage'))
+import MusicPage from '@src/pages/Music/MusicPage';
 const MiscPageLazy = lazy(() => import('@src/pages/Misc/MiscPage'))
 const AuthorPageLazy = lazy(() => import('@src/pages/Author/AuthorPage'))
 
@@ -14,9 +14,7 @@ export const routes: Array<RouteObject> = [
         children: [
             {
               index: true,
-              element: (<Suspense fallback={<LoadingPage />}>
-                  <MusicPageLazy />
-              </Suspense>)
+              element: <MusicPage />
             },
             {
               path: "misc",

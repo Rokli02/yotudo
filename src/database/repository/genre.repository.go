@@ -20,7 +20,7 @@ func (g *Genre) FindAll() []entity.Genre {
 
 	rows, err := g.db.Query("SELECT id, name FROM genre;")
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return []entity.Genre{}
 	}
@@ -33,7 +33,7 @@ func (g *Genre) FindAll() []entity.Genre {
 
 		err := rows.Scan(&genre.Id, &genre.Name)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warning("Genre.FindAll:", err)
 		} else {
 			genres = append(genres, genre)
 		}
@@ -59,7 +59,7 @@ func (g *Genre) IsAlreadyUsed(id int64) bool {
 func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
 	res, err := g.db.Exec("INSERT INTO genre (name) VALUES (?);", name)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error("Genre.SaveOne:", err)
 
 		return nil, errors.ErrUnableToSave
 	}
@@ -81,7 +81,7 @@ func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
 func (g *Genre) Rename(id int64, newName string) (*entity.Genre, error) {
 	res, err := g.db.Exec("UPDATE genre SET name=? WHERE id=?", newName, id)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error("Genre.Rename", err)
 
 		return nil, errors.ErrUnableToUpdate
 	}

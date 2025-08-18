@@ -31,7 +31,14 @@ func main() {
 	contributorRepository := repository.NewContributorRepository(db.Conn)
 	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository)
 
-	ytService := service.NewYoutubeService()
+	fileService := service.NewFileService()
+	ytService := service.NewYoutubeService(fileService)
+
+	statusController := controller.NewStatusController(statusRepository)
+	genreController := controller.NewGenreController(genreRepository)
+	authorController := controller.NewAuthorController(authorRepository)
+	musicController := controller.NewMusicController(musicRepository, authorRepository, contributorRepository)
+	ytController := controller.NewYtController(app, musicRepository, fileService, ytService)
 
 	if ytService.HasExecutable() {
 		logger.Info("Found youtube helper executable")
@@ -52,11 +59,11 @@ func main() {
 		OnShutdown:       app.Shutdown,
 		Bind: []any{
 			app,
-			controller.NewStatusController(statusRepository),
-			controller.NewGenreController(genreRepository),
-			controller.NewAuthorController(authorRepository),
-			controller.NewMusicController(musicRepository, authorRepository, contributorRepository),
-			controller.NewYtController(app, ytService, musicRepository),
+			statusController,
+			genreController,
+			authorController,
+			musicController,
+			ytController,
 		},
 		Linux: &linux.Options{},
 	})

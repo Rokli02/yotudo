@@ -3,6 +3,7 @@ package service
 import (
 	"strings"
 	"testing"
+	"yotudo/src/model"
 	"yotudo/src/service"
 )
 
@@ -53,5 +54,47 @@ func TestPurgeFilenameNotNeeded(t *testing.T) {
 
 	if purgedFileName != fileName {
 		t.Error("Unnecessary filename purge was executed")
+	}
+}
+
+func TestCreateFilename(t *testing.T) {
+	music := &model.Music{
+		Name:   "test",
+		Author: model.Author{Name: "test.author"},
+		Contributors: []model.Author{
+			{Name: "sanesz"},
+			{Name: "kanesz"},
+		},
+	}
+	expectedFilenamePrefix := "test.author (sanesz, kanesz) - test ["
+	service := service.NewFileService()
+
+	filename := service.CreateFilename(music)
+
+	if !strings.HasPrefix(filename, expectedFilenamePrefix) {
+		t.Errorf("Unexpected filename was created (%s)", filename)
+
+		return
+	}
+}
+
+func TestCreateFilenameWithPurge(t *testing.T) {
+	music := &model.Music{
+		Name:   "test\\/",
+		Author: model.Author{Name: "test.author:"},
+		Contributors: []model.Author{
+			{Name: "sanesz"},
+			{Name: "kanesz"},
+		},
+	}
+	expectedFilenamePrefix := "test.author_ (sanesz, kanesz) - test__ ["
+	service := service.NewFileService()
+
+	filename := service.CreateFilename(music)
+
+	if !strings.HasPrefix(filename, expectedFilenamePrefix) {
+		t.Errorf("Unexpected filename was created (%s)", filename)
+
+		return
 	}
 }

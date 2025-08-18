@@ -19,7 +19,7 @@ func (s *Status) FindAll() []entity.Status {
 
 	rows, err := s.db.Query("SELECT id, name, description FROM status;")
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return []entity.Status{}
 	}
@@ -32,7 +32,7 @@ func (s *Status) FindAll() []entity.Status {
 
 		err := rows.Scan(&status.Id, &status.Name, &status.Description)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warning("Status.FindAll:", err)
 		} else {
 			statuses = append(statuses, status)
 		}

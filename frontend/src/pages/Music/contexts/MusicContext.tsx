@@ -99,7 +99,11 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
     useEffect(() => {
         MusicService.GetMusics(page).then(setMusics);
         // The chance of this line causing any error is extremely low, so I just don't care about it
-        StatusService.GetAllStatus().then(setStatus);
+        const status: Status[] = []
+        StatusService.GetAllStatus().then((s) => {
+            status.push(...s);
+            setStatus(s)
+        });
 
         const cancelEvent = EventsOn(MUSIC_STATUS_EVENT_NAME, function([musicId, progress, stat, err]: [number, number, string, string?]) {
             switch (stat) {

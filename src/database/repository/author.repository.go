@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 	"yotudo/src/database/builders"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
@@ -52,7 +54,7 @@ func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) 
 
 		err = rows.Scan(&author.Id, &author.Name, &totalCount)
 		if err != nil {
-			logger.Warning(err)
+			logger.Warning("Author.FindByPage:", err)
 		} else {
 			authors = append(authors, author)
 		}
@@ -66,13 +68,13 @@ func (a *Author) SaveOne(name string) (*model.Author, error) {
 
 	res, err := a.db.Exec("INSERT INTO author (name) VALUES(?);", name)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return newAuthor, errors.ErrUnableToSave
 	}
 
 	if id, err := res.LastInsertId(); err != nil {
-		logger.Warning(err)
+		logger.Warning("Author.SaveOne:", err)
 
 		return nil, errors.ErrUnknown
 	} else {
@@ -110,14 +112,14 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 
 		res, err := stmt.Exec(name)
 		if err != nil {
-			logger.Warning(err)
+			logger.Error("Author.SaveMany:", err)
 
 			return nil, errors.ErrUnableToSave
 		}
 
 		id, err := res.LastInsertId()
 		if err != nil {
-			logger.Error(err)
+			logger.Warning(err)
 
 			return nil, errors.ErrUnknown
 		}
@@ -160,16 +162,71 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 	return authors, nil
 }
 
+func (a *Author) IsReferencingToMusic(musicId int64) bool {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*4)
+	defer cancelCtx()
+
+	activeChannelCount := 2
+	musicChan := a.isReferencedQuery(ctx, "SELECT COUNT(1) FROM music WHERE author_id=? LIMIT 1", musicId)
+	contributorChan := a.isReferencedQuery(ctx, "SELECT COUNT(1) FROM contributor WHERE author_id=? LIMIT 1", musicId)
+	isRefed := false
+
+	defer func() {
+		close(musicChan)
+		close(contributorChan)
+	}()
+
+	for activeChannelCount > 0 {
+		select {
+		case <-ctx.Done():
+			logger.Warning("Query timed out, so \"IsReferencingToMusic\" was marked as 'true'")
+
+			return true
+
+		case isReferenced := <-musicChan:
+			activeChannelCount--
+			isRefed = isRefed || isReferenced
+
+		case isReferenced := <-contributorChan:
+			activeChannelCount--
+			isRefed = isRefed || isReferenced
+		}
+	}
+
+	return isRefed
+}
+
+func (a *Author) isReferencedQuery(ctx context.Context, queryString string, musicId int64) chan bool {
+	isRefChan := make(chan bool)
+
+	go func() {
+		var count int
+
+		row := a.db.QueryRowContext(ctx, queryString, musicId)
+		if err := row.Scan(&count); err != nil {
+			logger.Error(err)
+
+			isRefChan <- true
+
+			return
+		}
+
+		isRefChan <- count != 0
+	}()
+
+	return isRefChan
+}
+
 func (a *Author) DeleteOne(id int64) bool {
 	res, err := a.db.Exec("DELETE FROM author WHERE id=?", id)
 	if err != nil {
-		logger.Warning(err)
+		logger.Error(err)
 
 		return false
 	}
 
 	if affected, err := res.RowsAffected(); err != nil {
-		logger.Warning(err)
+		logger.Warning("Author.DeleteOne:", err)
 	} else if affected == 0 {
 		logger.WarningF("Couldn't delete author(%d) for some reason", id)
 	} else {

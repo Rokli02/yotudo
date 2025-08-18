@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -14,10 +15,12 @@ import (
 
 var ytRegexp = regexp.MustCompile(`^(https?://)?(www.)?(youtube.com|youtu.be)/(watch\?v=\S{11})`)
 
-type YoutubeService struct{}
+type YoutubeService struct {
+	fileService FileService
+}
 
-func NewYoutubeService() *YoutubeService {
-	return &YoutubeService{}
+func NewYoutubeService(fileService FileService) *YoutubeService {
+	return &YoutubeService{fileService: fileService}
 }
 
 const (
@@ -83,40 +86,103 @@ func (s YoutubeService) HasExecutable() bool {
 	}
 }
 
-func (s YoutubeService) DownloadVideo(music *model.Music) error {
-	// HA "music.PicFilename" === "thumbnail" ---> Használja a youtube-os képet, különben a megadottat töltse le, ha még nincs
-	var useThumbnail bool
-	var hasPic bool
-	if music.PicFilename != nil {
-		hasPic = true
+func (s YoutubeService) DownloadVideo(ctxArg context.Context, music *model.Music) (*model.Music, error) {
+	baseFilename := s.fileService.CreateFilename(music)
+	filename := fmt.Sprintf("%s.%s", baseFilename, FILE_EXTENSION)
+	tempFilePath := path.Join(settings.Global.App.TempLocation, filename)
+	var picFilename, tempPicFilePath string
 
-		if *music.PicFilename == "thumbnail" {
-			useThumbnail = true
+	var hasThumbnail bool
+	if music.PicFilename != nil && *music.PicFilename == "thumbnail" {
+		hasThumbnail = true
+		picFilename = fmt.Sprintf("%s.%s", baseFilename, IMAGE_EXTENSION)
+		tempPicFilePath = path.Join(settings.Global.App.TempLocation, picFilename)
+
+		music.PicFilename = &picFilename
+	}
+
+	music.Filename = &filename
+	music.Status = 1
+
+	logger.DebugF("DownloadVideo hasThumbnail=(%t)", hasThumbnail)
+
+	// Build command
+	commandArgs := []string{
+		"--ffmpeg-location", settings.Global.App.FfmpegLocation,
+		"--no-playlist",
+		"-R", "3",
+		"--windows-filenames",
+		"-f", "bestaudio",
+		"--audio-quality", "0",
+	}
+
+	if hasThumbnail {
+		commandArgs = append(commandArgs, "--write-thumbnail")
+	}
+
+	logger.Debug("Temp File Path:", tempFilePath)
+
+	commandArgs = append(commandArgs, "-o", path.Join(settings.Global.App.TempLocation, filename))
+
+	if hasThumbnail {
+		commandArgs = append(commandArgs, "-o", "thumbnail:"+path.Join(settings.Global.App.TempLocation, baseFilename))
+	}
+
+	commandArgs = append(commandArgs, music.Url)
+	logger.Debug("Command was built, now executing it")
+
+	ctx, cancelCtx := context.WithTimeout(ctxArg, time.Second*60)
+	defer cancelCtx()
+
+	// Download to Temp
+	cmd := exec.CommandContext(ctx, settings.Global.App.YtdlLocation, commandArgs...)
+	if err := cmd.Start(); err != nil {
+		logger.Error("YoutubeService.DownloadVideo [Couldn't start command]:", err)
+		return music, err
+	}
+
+	// Logging the messages of YT download process
+	if stdout, err := cmd.StdoutPipe(); err != nil {
+		var buff []byte = make([]byte, 256)
+		var read int
+
+		for err == nil {
+			read, err = stdout.Read(buff)
+
+			if read > 0 {
+				logger.Debug("YT_CMD:", string(buff[:read]))
+			}
+		}
+	} else {
+		logger.Warning("Something during video download:", err)
+
+		return music, err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		logger.Error("YoutubeService.DownloadVideo [Something happend during command execution]:", err)
+
+		return music, err
+	}
+
+	// Move file to music dir
+	if err := s.fileService.MoveTo(tempFilePath, settings.Global.App.MusicsLocation); err != nil {
+		logger.Warning("YoutubeService.DownloadVideo [Couldn't move music to its directory]", err)
+
+		return music, nil
+	}
+
+	// Move thumbnail (if downloaded) to imgs dir
+	if hasThumbnail {
+		if err := s.fileService.MoveTo(tempPicFilePath, settings.Global.App.ImagesLocation); err != nil {
+			logger.Warning("YoutubeService.DownloadVideo [Couldn't move thumbnail to its directory]", err)
+
+			return music, nil
 		}
 	}
 
-	logger.DebugF("DownloadVideo hasPic=%t, useThumbnail=%t", hasPic, useThumbnail)
+	// Mark music as downloaded
+	music.Status = 2
 
-	// Download to Temp
-
-	// Link filename to DB record
-	// Link thumbnail pic filename to DB record
-
-	// Move file to music dir
-	// Move pic to imgs dir
-
-	// yt-dl download
-	// --extract-audio
-	// --audio-format best
-	// --audio-quality 0
-	// --ffmpeg-location settings.Global.App.FfmpegLocation
-
-	// if music.saveThumbnail {
-	// save thumbnail image IF got downloaded
-	// --write-thumbnail
-	// }
-
-	// Ha mindent sikeresen letöltött, a music-on belül állítsa át a "FileName" és "PicFileName" mezőket
-
-	return nil
+	return music, nil
 }

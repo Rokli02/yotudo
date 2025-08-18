@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"time"
 	"yotudo/src"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
@@ -13,15 +12,22 @@ import (
 
 type YtController struct {
 	app             *src.App
-	ytService       *service.YoutubeService
 	musicRepository *repository.Music
+	fileService     service.FileService
+	ytService       *service.YoutubeService
 }
 
-func NewYtController(app *src.App, ytService *service.YoutubeService, musicRepository *repository.Music) *YtController {
+func NewYtController(
+	app *src.App,
+	musicRepository *repository.Music,
+	fileService service.FileService,
+	ytService *service.YoutubeService,
+) *YtController {
 	return &YtController{
 		app:             app,
-		ytService:       ytService,
 		musicRepository: musicRepository,
+		fileService:     fileService,
+		ytService:       ytService,
 	}
 }
 
@@ -58,21 +64,24 @@ func (c *YtController) DownloadByMusicId(musicId int64, eventName string) error 
 			music.Url = url
 		}
 
-		if err := c.ytService.DownloadVideo(music); err != nil {
+		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 10, eventResultDownloading, nil))
+		savedMusic, err := c.ytService.DownloadVideo(ctx, music)
+		if err != nil {
 			logger.Warning(err)
 
 			runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, -1, eventResultFailed, err))
 			return
 		}
 
-		/* DELETE start*/
-		for i := range 3 {
-			runtime.EventsEmit(ctx, eventName, musicId, i)
-			logger.Debug("download-progress event")
+		// shouldDownloadThumbnail := music.PicFilename != nil && *music.PicFilename != "thumbnail"
+		// TODO: A FileService segítségével lementeni a 'PicFilename'-ban található képet, majd hozzáadni a rekordhoz
 
-			time.Sleep(time.Second * 1)
+		_, err = c.musicRepository.UpdateOne(savedMusic.Id, savedMusic.ToUpdateMusic())
+		if err != nil {
+			logger.Error("CRITICAL ERROR: video got downloaded but couldn't update its record in db:", err)
+
+			return
 		}
-		/* DELETE end*/
 
 		// Mark event as finished
 		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 100, eventResultCompleted, nil))
@@ -82,5 +91,11 @@ func (c *YtController) DownloadByMusicId(musicId int64, eventName string) error 
 }
 
 func (c *YtController) createEventData(musicId int64, progress float32, status eventResult, err error) []any {
-	return []any{musicId, progress, status, err}
+	var _err *string
+	if err != nil {
+		tmp := err.Error()
+		_err = &tmp
+	}
+
+	return []any{musicId, progress, status, _err}
 }

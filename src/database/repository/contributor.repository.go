@@ -37,7 +37,7 @@ func (c *Contributor) FindByMusicId(musicId int64) []entity.Author {
 		author := entity.Author{}
 
 		if err := rows.Scan(&author.Id, &author.Name); err != nil {
-			logger.Warning(err)
+			logger.Warning("Contributor.FindByMusicId:", err)
 		} else {
 			authors = append(authors, author)
 		}
@@ -61,7 +61,7 @@ func (c *Contributor) SaveMany(musicId int64, authorIds []int64) (int64, error) 
 	query := fmt.Sprintf("INSERT INTO contributor (music_id, author_id) VALUES%s;", strings.Join(values, ", "))
 	res, err := c.db.Exec(query, args...)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Contributor.SaveMany:", err)
 
 		return 0, errors.ErrUnableToSave
 	}
@@ -87,7 +87,7 @@ func (c *Contributor) DeleteMany(musicId int64, authorIds []int64) (int64, error
 	query := fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN(%s)", qms)
 	res, err := c.db.Exec(query, args...)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Contributor.DeleteMany:", err)
 
 		return 0, errors.ErrUnableToDelete
 	}
