@@ -7,6 +7,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -62,6 +63,12 @@ func (s YoutubeService) HasExecutable() bool {
 	res := make(chan bool)
 	go func() {
 		cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, "--version")
+		if settings.USE_CMD_HIDE_WINDOW {
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				HideWindow:    true,
+				CreationFlags: 0x08000000,
+			}
+		}
 
 		if stdout, err := cmd.Output(); err != nil {
 			logger.Error(err)
@@ -136,6 +143,12 @@ func (s YoutubeService) DownloadVideo(ctxArg context.Context, music *model.Music
 
 	// Download to Temp
 	cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, commandArgs...)
+	if settings.USE_CMD_HIDE_WINDOW {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
 	if err := cmd.Start(); err != nil {
 		logger.Error("YoutubeService.DownloadVideo [Couldn't start command]:", err)
 		return music, err

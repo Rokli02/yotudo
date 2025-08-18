@@ -2,12 +2,18 @@ package service
 
 import (
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 	pathModule "path"
 	"regexp"
 	"strings"
 	"time"
 	"yotudo/src/model"
+	"yotudo/src/settings"
+
+	"golang.org/x/image/webp"
 )
 
 type FileService uint8
@@ -79,4 +85,66 @@ func (s FileService) IsExists(path string) bool {
 	}
 
 	return false
+}
+
+func (s FileService) DownloadImageToTemp(imageUri string) {
+	if file, err := os.Open(imageUri); err == nil {
+		defer file.Close()
+		// Image found on the PC locally
+	} else {
+		// Image must be found on the web
+
+	}
+}
+
+func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) {
+	ext := pathModule.Ext(imagePath)
+	var width, height int
+	picturePath := pathModule.Join(settings.Global.App.ImagesLocation, imagePath)
+	picFile, err := os.Open(picturePath)
+	if err != nil {
+		return 0, 0, ext, err
+	}
+
+	// Get Image's dimensions, so it can be scaled down, if necessary
+	switch ext {
+	case "webp":
+		config, err := webp.DecodeConfig(picFile)
+		if err != nil {
+			return 0, 0, ext, err
+		}
+
+		width = config.Width
+		height = config.Height
+	case "jpeg":
+		fallthrough
+	case "jpg":
+		fallthrough
+	case "png":
+		config, _, err := image.DecodeConfig(picFile)
+		if err != nil {
+			return 0, 0, ext, err
+		}
+
+		width = config.Width
+		height = config.Height
+	}
+
+	// Get max size - actual size ration
+	var ratio float32
+	if width < height {
+		ratio = THUMBNAIL_SIZE / float32(width)
+	} else {
+		ratio = THUMBNAIL_SIZE / float32(height)
+	}
+
+	// Calculate new size based on the ratio
+	var newWidth int
+	var newHeight int
+	if ratio < 1 {
+		newWidth = max(int(float32(width)*ratio), THUMBNAIL_SIZE)
+		newHeight = max(int(float32(height)*ratio), THUMBNAIL_SIZE)
+	}
+
+	return newWidth, newHeight, ext, nil
 }

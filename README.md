@@ -4,7 +4,7 @@
 
 A futtatásához még kötelezően jelen kell lennie a `wails` futtatókörnyezetnek, de ez a későbbiekben változhat.
 
-A `make.sh` fájl magába foglalja a development szerver futtatását, production build elkészítését és a tesztek futtatását.
+A `make.sh` fájl magába foglalja a development szerver futtatását, production build elkészítését és a tesztek futtatását (többnyire linuxon történő futtatáshoz készült).
 
 ## Configuráció
 
@@ -27,3 +27,4 @@ database:
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
+- Ha a letöltés mappába mozgatjuk át a zenét, a státuszt állítsa át ("Folyamatban" típusra)

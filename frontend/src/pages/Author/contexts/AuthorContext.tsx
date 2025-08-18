@@ -26,9 +26,10 @@ export const AuthorProvider: FC<{ children: ReactElement | ReactElement[] }> = (
 
         setAuthors((pre) => {
             if (pre.data.unshift(newAuthor) > page.size) {
-                pre.count++;
                 pre.data.pop();
             }
+
+            pre.count++;
 
             return {...pre};
         })

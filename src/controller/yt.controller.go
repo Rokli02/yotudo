@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 	"yotudo/src"
 	"yotudo/src/database/repository"
@@ -17,7 +18,6 @@ import (
 	"yotudo/src/settings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.org/x/image/webp"
 )
 
 type YtController struct {
@@ -159,21 +159,14 @@ func (c *YtController) MoveToDownloadDir(musicId int64) error {
 
 	// Check for a thumbnail that might be attached to the music
 	if music.PicFilename != nil {
-		picturePath := path.Join(settings.Global.App.ImagesLocation, *music.PicFilename)
-		picFile, err := os.Open(picturePath)
+		imageWidth, imageHeight, imageExt, err := c.fileService.GetImageConfig(*music.PicFilename)
 		if err != nil {
-			goto leave_music_picfile
-		}
-
-		// Get Image's dimensions, so it can be scaled down, if necessary
-		config, err := webp.DecodeConfig(picFile)
-		if err != nil {
-			logger.Warning("YtController.MoveToDownloadDir.decodePicFilename", err)
+			logger.Error(err)
 
 			goto leave_music_picfile
 		}
 
-		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, service.IMAGE_EXTENSION); found {
+		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, imageExt); found {
 			tempPicturePath = tempPictureBase + "jpeg"
 		} else {
 			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", service.IMAGE_EXTENSION, *music.PicFilename)
@@ -182,28 +175,23 @@ func (c *YtController) MoveToDownloadDir(musicId int64) error {
 		}
 
 		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
-		var ratio float32
-		if config.Width < config.Height {
-			ratio = service.THUMBNAIL_SIZE / float32(config.Width)
-		} else {
-			ratio = service.THUMBNAIL_SIZE / float32(config.Height)
-		}
-
-		var width int
-		var height int
-		if ratio < 1 {
-			width = max(int(float32(config.Width)*ratio), service.THUMBNAIL_SIZE)
-			height = max(int(float32(config.Height)*ratio), service.THUMBNAIL_SIZE)
-		}
 
 		ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*10)
 		defer cancelCtx()
 
 		logger.Debug("Creating temporary image file for thumbnail")
-		if err := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, "-i", picturePath,
-			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", width, height, service.THUMBNAIL_SIZE, service.THUMBNAIL_SIZE, (width-service.THUMBNAIL_SIZE)/2, height-service.THUMBNAIL_SIZE/2),
+		cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation,
+			"-i", path.Join(settings.Global.App.ImagesLocation, *music.PicFilename),
+			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", imageWidth, imageHeight, service.THUMBNAIL_SIZE, service.THUMBNAIL_SIZE, (imageWidth-service.THUMBNAIL_SIZE)/2, imageHeight-service.THUMBNAIL_SIZE/2),
 			tempPicturePath,
-		).Run(); err != nil {
+		)
+		if settings.USE_CMD_HIDE_WINDOW {
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				HideWindow:    true,
+				CreationFlags: 0x08000000,
+			}
+		}
+		if err := cmd.Run(); err != nil {
 			logger.Error(err)
 
 			goto leave_music_picfile
@@ -230,7 +218,15 @@ leave_music_picfile:
 
 	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))
 
-	if err := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, ffmpegArguments...).Run(); err != nil {
+	cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, ffmpegArguments...)
+	if settings.USE_CMD_HIDE_WINDOW {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: 0x08000000,
+		}
+	}
+
+	if err := cmd.Run(); err != nil {
 		logger.Error(err)
 
 		return err

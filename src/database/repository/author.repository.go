@@ -35,8 +35,6 @@ func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) 
 		WithPagination(page).
 		Build()
 
-	logger.Debug(query)
-
 	rows, err := a.db.Query(query, args...)
 	if err != nil {
 		logger.Error(err)

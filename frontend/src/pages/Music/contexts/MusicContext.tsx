@@ -29,10 +29,11 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
 
             setMusics((pre) => {
                 if (pre.data.unshift(value) > page.size) {
-                    pre.count++;
                     pre.data.pop();
                 }
 
+                pre.count++;
+                
                 return {...pre};
             });
 

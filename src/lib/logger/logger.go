@@ -9,6 +9,11 @@ import (
 const isDebugMode = false
 const dateFormat = "2006-01-02_15:04:05.0000"
 
+func InitializeLogger() error {
+
+	return nil
+}
+
 func Info(a ...any) {
 	fmt.Printf("\x1B[38;2;110;195;235m[INFO]\t%s  ", time.Now().Format(dateFormat))
 	fmt.Println(a...)

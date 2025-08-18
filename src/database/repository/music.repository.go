@@ -157,9 +157,14 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		album = &newMusic.Album
 	}
 
+	var picFilename *string
+	if newMusic.PicFilename != "" {
+		picFilename = &newMusic.PicFilename
+	}
+
 	res, err := m.db.Exec(
-		"INSERT INTO music (name, published, album, url, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?);",
-		newMusic.Name, published, album, newMusic.Url,
+		"INSERT INTO music (name, published, album, url, pic_filename, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?,?);",
+		newMusic.Name, published, album, newMusic.Url, picFilename,
 		newMusic.Author.Id, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
 	)
 	if err != nil {
