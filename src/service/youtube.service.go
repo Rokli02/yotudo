@@ -61,7 +61,7 @@ func (s YoutubeService) HasExecutable() bool {
 
 	res := make(chan bool)
 	go func() {
-		cmd := exec.CommandContext(ctx, settings.Global.App.YtdlLocation, "--version")
+		cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, "--version")
 
 		if stdout, err := cmd.Output(); err != nil {
 			logger.Error(err)
@@ -108,7 +108,7 @@ func (s YoutubeService) DownloadVideo(ctxArg context.Context, music *model.Music
 
 	// Build command
 	commandArgs := []string{
-		"--ffmpeg-location", settings.Global.App.FfmpegLocation,
+		"--ffmpeg-location", settings.Global.App.FFMPEGLocation,
 		"--no-playlist",
 		"-R", "3",
 		"--windows-filenames",
@@ -135,7 +135,7 @@ func (s YoutubeService) DownloadVideo(ctxArg context.Context, music *model.Music
 	defer cancelCtx()
 
 	// Download to Temp
-	cmd := exec.CommandContext(ctx, settings.Global.App.YtdlLocation, commandArgs...)
+	cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, commandArgs...)
 	if err := cmd.Start(); err != nil {
 		logger.Error("YoutubeService.DownloadVideo [Couldn't start command]:", err)
 		return music, err

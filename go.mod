@@ -7,6 +7,7 @@ toolchain go1.24.4
 require (
 	github.com/wailsapp/wails/v2 v2.10.1
 	golang.org/x/image v0.12.0
+	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.38.0
 )
 

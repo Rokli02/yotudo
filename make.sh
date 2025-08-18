@@ -10,6 +10,14 @@ create_data_dir_if_not_found() {
         echo Making data folder in \"$base_dir\" directory
 
         mkdir -p $base_dir/data/{imgs,mscs,tmp}
+
+        touch "$base_dir/data/config.yaml"
+        echo '
+app:
+    downloadLocation: ""
+    ytdlLocation: ""
+    ffmpegLocation: ""
+' >> "$base_dir/data/config.yaml"
     fi
 }
 

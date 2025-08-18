@@ -200,7 +200,7 @@ func (c *YtController) MoveToDownloadDir(musicId int64) error {
 		defer cancelCtx()
 
 		logger.Debug("Creating temporary image file for thumbnail")
-		if err := exec.CommandContext(ctx, settings.Global.App.FfmpegLocation, "-i", picturePath,
+		if err := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, "-i", picturePath,
 			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", width, height, service.THUMBNAIL_SIZE, service.THUMBNAIL_SIZE, (width-service.THUMBNAIL_SIZE)/2, height-service.THUMBNAIL_SIZE/2),
 			tempPicturePath,
 		).Run(); err != nil {
@@ -230,7 +230,7 @@ leave_music_picfile:
 
 	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))
 
-	if err := exec.CommandContext(ctx, settings.Global.App.FfmpegLocation, ffmpegArguments...).Run(); err != nil {
+	if err := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, ffmpegArguments...).Run(); err != nil {
 		logger.Error(err)
 
 		return err

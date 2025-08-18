@@ -20,7 +20,9 @@ import (
 var assets embed.FS
 
 func main() {
-	settings.LoadSettings()
+	if _, err := settings.LoadSettings(); err != nil {
+		panic(err)
+	}
 	db := database.LoadDatabase()
 	app := src.NewApp()
 	app.AddDatabaseConnection(db)
