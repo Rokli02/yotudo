@@ -1,6 +1,7 @@
 #!/bin/bash
 
 MODE=$1
+shift
 WAILS_PATH=$HOME/go/bin
 
 create_data_dir_if_not_found() {
@@ -26,7 +27,7 @@ case $MODE in
         create_data_dir_if_not_found .
 
         echo Launching DEV application
-        sudo $WAILS_PATH/wails dev -tags webkit2_41
+        sudo $WAILS_PATH/wails dev -tags webkit2_41 $@
         ;;
     "build")
         echo Building production application
@@ -34,7 +35,7 @@ case $MODE in
         sudo chmod -R 777 frontend/dist
         sudo chmod -R 777 frontend/wailsjs/runtime
 
-        wails build -tags webkit2_41
+        wails build -tags webkit2_41 $@
 
         echo Copying dynamic assets to build directory
 

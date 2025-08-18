@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const isDebugMode = true
+const isDebugMode = false
 const dateFormat = "2006-01-02_15:04:05.0000"
 
 func Info(a ...any) {
