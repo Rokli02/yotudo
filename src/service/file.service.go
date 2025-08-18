@@ -108,7 +108,7 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 
 	// Get Image's dimensions, so it can be scaled down, if necessary
 	switch ext {
-	case "webp":
+	case ".webp":
 		config, err := webp.DecodeConfig(picFile)
 		if err != nil {
 			return 0, 0, ext, err
@@ -116,11 +116,11 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 
 		width = config.Width
 		height = config.Height
-	case "jpeg":
+	case ".jpeg":
 		fallthrough
-	case "jpg":
+	case ".jpg":
 		fallthrough
-	case "png":
+	case ".png":
 		config, _, err := image.DecodeConfig(picFile)
 		if err != nil {
 			return 0, 0, ext, err

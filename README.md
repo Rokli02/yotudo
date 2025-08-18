@@ -24,6 +24,7 @@ database:
 
 ## Backend továbbfejlesztés:
 - TODO-k megcsinálása
+- ffmpeg beágyazás a forrásba?
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása

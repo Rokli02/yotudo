@@ -167,13 +167,14 @@ func (c *YtController) MoveToDownloadDir(musicId int64) error {
 		}
 
 		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, imageExt); found {
-			tempPicturePath = tempPictureBase + "jpeg"
+			tempPicturePath = tempPictureBase + ".jpeg"
 		} else {
 			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", service.IMAGE_EXTENSION, *music.PicFilename)
 
 			goto leave_music_picfile
 		}
 
+		picturePath := path.Join(settings.Global.App.ImagesLocation, *music.PicFilename)
 		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
 
 		ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*10)
@@ -181,7 +182,7 @@ func (c *YtController) MoveToDownloadDir(musicId int64) error {
 
 		logger.Debug("Creating temporary image file for thumbnail")
 		cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation,
-			"-i", path.Join(settings.Global.App.ImagesLocation, *music.PicFilename),
+			"-i", picturePath,
 			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", imageWidth, imageHeight, service.THUMBNAIL_SIZE, service.THUMBNAIL_SIZE, (imageWidth-service.THUMBNAIL_SIZE)/2, imageHeight-service.THUMBNAIL_SIZE/2),
 			tempPicturePath,
 		)
