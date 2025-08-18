@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 )
 
@@ -25,7 +26,8 @@ func Debug(a ...any) {
 		return
 	}
 
-	fmt.Printf("\x1B[38;2;38;161;34m[DEBUG]\t%s  ", time.Now().Format(dateFormat))
+	_, filename, line, _ := runtime.Caller(1)
+	fmt.Printf("\x1B[38;2;38;161;34m[DEBUG]\t%s [%s:%d]  ", time.Now().Format(dateFormat), filename, line)
 	fmt.Println(a...)
 	fmt.Printf("\x1B[0m")
 }
@@ -35,7 +37,8 @@ func DebugF(format string, a ...any) {
 		return
 	}
 
-	fmt.Printf("\x1B[38;2;38;161;34m[DEBUG]\t%s  ", time.Now().Format(dateFormat))
+	_, filename, line, _ := runtime.Caller(1)
+	fmt.Printf("\x1B[38;2;38;161;34m[DEBUG]\t%s [%s:%d]  ", time.Now().Format(dateFormat), filename, line)
 	fmt.Printf(format, a...)
 	fmt.Printf("\x1B[0m\n")
 }
@@ -53,13 +56,15 @@ func Warning(a ...any) {
 }
 
 func ErrorF(format string, a ...any) {
-	fmt.Printf("\x1B[38;2;171;15;18m[ERR]\t%s  ", time.Now().Format(dateFormat))
+	_, filename, line, _ := runtime.Caller(1)
+	fmt.Printf("\x1B[38;2;171;15;18m[ERR]\t%s [%s:%d] ", time.Now().Format(dateFormat), filename, line)
 	fmt.Printf(format, a...)
 	fmt.Printf("\x1B[0m\n")
 }
 
 func Error(a ...any) {
-	fmt.Printf("\x1B[38;2;171;15;18m[ERR]\t%s  ", time.Now().Format(dateFormat))
+	_, filename, line, _ := runtime.Caller(1)
+	fmt.Printf("\x1B[38;2;171;15;18m[ERR]\t%s [%s:%d] ", time.Now().Format(dateFormat), filename, line)
 	fmt.Println(a...)
 	fmt.Printf("\x1B[0m")
 }

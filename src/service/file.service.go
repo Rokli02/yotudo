@@ -12,6 +12,8 @@ import (
 
 type FileService uint8
 
+const THUMBNAIL_SIZE = 512
+
 var (
 	validFilenameRegexp       = regexp.MustCompile(`^([^\\\:\*\?\"\/\<\>\|\0]{1,255})$`)
 	invalidFilenameCharacters = regexp.MustCompile(`[\\\:\*\?\"\/\<\>\|\0]`)

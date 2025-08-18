@@ -6,11 +6,12 @@ type DatabaseSettings struct {
 }
 
 type AppSettings struct {
-	TempLocation   string
-	MusicsLocation string
-	ImagesLocation string
-	YtdlLocation   string
-	FfmpegLocation string
+	TempLocation     string
+	MusicsLocation   string
+	ImagesLocation   string
+	DownloadLocation string
+	YtdlLocation     string
+	FfmpegLocation   string
 }
 
 type Settings struct {

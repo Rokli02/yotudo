@@ -97,7 +97,7 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
     }
 
     useEffect(() => {
-        MusicService.GetMusics(page).then(setMusics);
+        MusicService.GetMusics(page, -1).then(setMusics);
         // The chance of this line causing any error is extremely low, so I just don't care about it
         const status: Status[] = []
         StatusService.GetAllStatus().then((s) => {

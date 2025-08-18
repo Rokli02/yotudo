@@ -24,7 +24,7 @@ func NewYoutubeService(fileService FileService) *YoutubeService {
 }
 
 const (
-	FILE_EXTENSION  = "mp3"
+	FILE_EXTENSION  = "webm"
 	IMAGE_EXTENSION = "webp"
 )
 

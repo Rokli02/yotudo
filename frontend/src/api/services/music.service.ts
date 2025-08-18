@@ -2,11 +2,11 @@ import { model } from "@wailsjs/go/models";
 import { Music, NewMusic, MusicUpdate } from "../models/Music";
 import { Page, Pagination } from "../models/Page";
 import { GetManyByPagination, Save, Update } from '@controller/MusicController';
-import { DownloadByMusicId } from '@controller/YtController';
+import { DownloadByMusicId, MoveToDownloadDir } from '@controller/YtController';
 import { GetAllStatus } from "./status.service";
 import { Status } from "../models/Misc";
 
-export async function GetMusics(page: Page = { page: 0, size: 25 }, statusId: number = 0): Promise<Pagination<Music[]>> {
+export async function GetMusics(page: Page = { page: 0, size: 25 }, statusId: number = -1): Promise<Pagination<Music[]>> {
     const result = await GetManyByPagination(page.filter ?? '', statusId, { Page: page.page, Size: page.size }, [{ Key: 'updated_at', Dir: -1 }]);
     const statusMap = await GetAllStatus();
 
@@ -56,8 +56,8 @@ export async function DeleteMusic(id: number): Promise<boolean> {
     return Promise.resolve(false);
 }
 
-export async function MoveMusicTo(id: number): Promise<Music | null> {
-    return Promise.resolve(null);
+export async function MoveMusicTo(id: number): Promise<void> {
+    return MoveToDownloadDir(id);
 }
 
 /**

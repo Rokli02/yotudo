@@ -5,11 +5,12 @@ var Global Settings
 func LoadSettings() *Settings {
 	Global = Settings{
 		App: AppSettings{
-			TempLocation:   "./data/tmp",
-			ImagesLocation: "./data/imgs",
-			MusicsLocation: "./data/mscs",
-			YtdlLocation:   "/usr/lib/yt-dlp_linux",
-			FfmpegLocation: "/bin/ffmpeg",
+			TempLocation:     "./data/tmp",
+			ImagesLocation:   "./data/imgs",
+			MusicsLocation:   "./data/mscs",
+			DownloadLocation: "/home/roli/Music",
+			YtdlLocation:     "/usr/lib/yt-dlp_linux",
+			FfmpegLocation:   "/bin/ffmpeg",
 		},
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
