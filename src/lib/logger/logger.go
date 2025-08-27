@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const isDebugMode = false
+const isDebugMode = true
 const dateFormat = "2006-01-02_15:04:05.0000"
 
 func InitializeLogger() error {

@@ -53,10 +53,16 @@ func main() {
 	musicController := controller.NewMusicController(musicRepository, authorRepository, contributorRepository)
 	ytController := controller.NewYtController(app, musicRepository, fileService, ytService)
 
-	if ytService.HasExecutable() {
-		logger.Info("Found youtube helper executable")
-	} else {
-		logger.Info("Couldn't find youtube helper executable")
+	if !fileService.HasExecutable() {
+		logger.Error("Couldn't find ffmpeg executable")
+
+		panic("Couldn't find ffmpeg executable")
+	}
+
+	if !ytService.HasExecutable() {
+		logger.Error("Couldn't find youtube helper executable")
+
+		panic("Couldn't find youtube helper executable")
 	}
 
 	// Create application with options

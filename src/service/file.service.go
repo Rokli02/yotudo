@@ -148,3 +148,7 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 
 	return newWidth, newHeight, ext, nil
 }
+
+func (s FileService) HasExecutable() bool {
+	return false
+}

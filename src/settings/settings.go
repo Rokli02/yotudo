@@ -3,6 +3,7 @@ package settings
 import (
 	"os"
 	"yotudo/src/lib/logger"
+	"yotudo/src/lib/yaml"
 )
 
 var Global Settings
@@ -17,7 +18,7 @@ func createMultipleDirectories(paths []string) error {
 			continue
 		}
 
-		if err := os.Mkdir(path, os.ModeDir); err != nil {
+		if err := os.MkdirAll(path, os.ModeDir); err != nil {
 			return err
 		}
 	}
@@ -26,7 +27,7 @@ func createMultipleDirectories(paths []string) error {
 }
 
 func CreateEssentialDirectoriesAndFiles() error {
-	if err := createMultipleDirectories([]string{"./data", "./data/tmp", "./data/imgs", "./data/mscs"}); err != nil {
+	if err := createMultipleDirectories([]string{"./data/tmp", "./data/imgs", "./data/mscs"}); err != nil { //TODO: Ellenőrizni, hogy nem-e rontott el semmit, mert "./data", ki lett véve a listából
 		logger.Error(err)
 
 		return err
@@ -34,7 +35,19 @@ func CreateEssentialDirectoriesAndFiles() error {
 
 	if config, err := os.Open("./data/config.yaml"); err == nil {
 		config.Close()
-	} else if err := CreateYaml("config.yaml", ExternalConfig{}); err != nil {
+	} else if err := yaml.CreateFile("config.yaml", settingsYaml{
+		Logger: settingsYaml_Logger{
+			Level: "info",
+			Types: []string{"console"},
+		},
+		App: settingsYaml_App{
+			FFMPEGLocation: "ffmpeg",
+			YTDLLocation:   "yt-dlp",
+		},
+		Database: settingsYaml_Database{
+			Location: "./data/yU0dRywKd",
+		},
+	}); err != nil {
 		logger.Error(err)
 
 		return err
@@ -58,7 +71,7 @@ func LoadSettings() (*Settings, error) {
 		},
 	}
 
-	if config, err := LoadYaml[ExternalConfig]("config.yaml"); err != nil {
+	if config, err := yaml.LoadFile[settingsYaml]("config.yaml"); err != nil {
 		logger.Error(err)
 
 		return nil, err

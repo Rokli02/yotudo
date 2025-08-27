@@ -1,4 +1,4 @@
-package settings
+package yaml
 
 import (
 	"os"
@@ -8,8 +8,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func LoadYaml[T any](filePath string) (*T, error) {
-	file, err := os.Open(path.Join("./data", filePath))
+const BASE_PATH = "./data"
+
+func LoadFile[T any](filePath string) (*T, error) {
+	file, err := os.Open(path.Join(BASE_PATH, filePath))
 	if err != nil {
 		logger.WarningF("Couldn't read yaml file (%s) due to: %s", filePath, err.Error())
 
@@ -29,9 +31,9 @@ func LoadYaml[T any](filePath string) (*T, error) {
 	return &e, nil
 }
 
-func CreateYaml[T any](filePath string, data T) error {
+func CreateFile[T any](filePath string, data T) error {
 	logger.Debug("CreateYaml was called")
-	createdFile, err := os.Create(path.Join("./data", filePath))
+	createdFile, err := os.Create(path.Join(BASE_PATH, filePath))
 	if err != nil {
 		return err
 	}
