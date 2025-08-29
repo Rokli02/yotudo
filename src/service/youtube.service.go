@@ -10,7 +10,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"yotudo/src"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -20,20 +19,20 @@ import (
 )
 
 type YoutubeService struct {
-	app             *src.App
+	ctx             *context.Context
 	musicRepository *repository.Music
 	fileService     FileService
 	ytDLService     *YoutubeDLService
 }
 
 func NewYoutubeService(
-	app *src.App,
+	ctx *context.Context, //TODO: Ezt letesztelni, mert lehet hogy hibát dob és nem adódik át ténylegesen a kontextus címe
 	musicRepository *repository.Music,
 	fileService FileService,
 	ytDLService *YoutubeDLService,
 ) *YoutubeService {
 	return &YoutubeService{
-		app:             app,
+		ctx:             ctx,
 		musicRepository: musicRepository,
 		fileService:     fileService,
 		ytDLService:     ytDLService,
@@ -56,7 +55,7 @@ func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) erro
 	}
 
 	go func() {
-		ctx, cancel := context.WithCancel(c.app.Ctx)
+		ctx, cancel := context.WithCancel(*c.ctx)
 		defer cancel()
 
 		// Starting download event
@@ -176,7 +175,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 		picturePath := path.Join(settings.Global.App.ImagesLocation, *music.PicFilename)
 		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
 
-		ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*10)
+		ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*10)
 		defer cancelCtx()
 
 		logger.Debug("Creating temporary image file for thumbnail")
@@ -208,7 +207,7 @@ leave_music_picfile:
 
 	c.addMetadatas(&ffmpegArguments, music)
 
-	ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*30)
+	ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*30)
 	defer cancelCtx()
 
 	filename := *music.Filename

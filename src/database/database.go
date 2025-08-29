@@ -37,21 +37,26 @@ func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 	db := newDatabase(dbOption)
 
 	isExists := db.isAlreadyInitialized()
+	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	if !isExists {
 		logger.Info("Initializing Database ...")
 
 		db.init()
-		db.migrateDatabase("0.0.0")
+		db.migrateDatabase("0.0.0", infoRepository)
 	} else {
-		infoRepository := repository.NewInfoRepository(db.Conn)
+		info, err := infoRepository.FindOneByKey("version")
+		if err != nil {
+			logger.Error(err)
 
-		info, _ := infoRepository.FindOneByKey("version")
+			panic(err)
+		}
+
 		if info != nil && info.Value != settings.Global.Database.Version {
 			logger.WarningF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
 			logger.Info("Migrating database to the newest version...")
 
-			db.migrateDatabase(info.ValueToString())
+			db.migrateDatabase(info.ValueToString(), infoRepository)
 		}
 	}
 
@@ -84,7 +89,7 @@ func (db *Database) Close() {
 func (db *Database) isAlreadyInitialized() bool {
 	var rootPage int
 
-	if err := db.Conn.QueryRow("SELECT rootpage from sqlite_master WHERE type = 'type' AND name = 'info';").Scan(&rootPage); err != nil {
+	if err := db.Conn.QueryRow("SELECT rootpage FROM sqlite_master WHERE type = 'table' AND name = 'info';").Scan(&rootPage); err != nil {
 		logger.Warning("In 'isAlreadyInitialized' warning occured:", err)
 
 		return false
@@ -110,7 +115,7 @@ func (db *Database) init() {
 	}
 }
 
-func (db *Database) migrateDatabase(versionText string) {
+func (db *Database) migrateDatabase(versionText string, infoRepository *repository.Info) error {
 	// Convert version string into fixed array
 	version := entity.MigrationVersion{0, 0, 0}
 	version.SetFromText(versionText)
@@ -134,5 +139,9 @@ func (db *Database) migrateDatabase(versionText string) {
 
 	if _, err := db.Conn.Exec(migrationString); err != nil {
 		logger.Error("Error during database migration (Couldn't execute built command):", err)
+
+		return err
 	}
+
+	return infoRepository.UpdateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
 }

@@ -1,10 +1,14 @@
 package settings
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Settings struct {
 	App      AppSettings
 	Database DatabaseSettings
+	Logger   LoggerSettings
 }
 
 func (s *Settings) Merge(other *settingsYaml) error {
@@ -28,7 +32,24 @@ func (s *Settings) Merge(other *settingsYaml) error {
 		s.Database.Location = other.Database.Location
 	}
 
+	if other.Logger.Level != "" {
+		s.Logger.Level = other.Logger.Level
+	}
+
+	if len(other.Logger.Types) != 0 {
+		s.Logger.Types = other.Logger.Types
+	}
+
 	return nil
+}
+
+func (s *Settings) String() string {
+	b, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
 }
 
 type DatabaseSettings struct {
@@ -43,6 +64,11 @@ type AppSettings struct {
 	DownloadLocation string
 	YTDLLocation     string
 	FFMPEGLocation   string
+}
+
+type LoggerSettings struct {
+	Level string
+	Types []string
 }
 
 type settingsYaml struct {
@@ -67,5 +93,3 @@ type settingsYaml_Logger struct {
 	// Logger types that may be used during the app runtime and must be at least one or more of the followings: [console, file, ???database???]
 	Types []string `yaml:"types"`
 }
-
-//TODO: Ellenőrizni, HA nem töltődne be valami oknál fogva a configuráció a 'yaml' fájlból, lehetséges hogy a privát típus miatt történik

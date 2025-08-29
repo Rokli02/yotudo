@@ -1,5 +1,5 @@
 import { Genre, NewGenre, UpdateGenre } from "@src/api/models/Misc";
-import { GetAll, Save, Rename, Delete } from '@controller/GenreController'
+import { GetAll, Save, Rename, Delete } from '@service/GenreService'
 import { DataCache } from './serviceCacher';
 
 const genresCache = new DataCache<Array<Genre>>(undefined, 60);

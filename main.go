@@ -27,7 +27,8 @@ func main() {
 		panic(err)
 	}
 
-	logger.InitializeLogger()
+	_, closeLoggers := logger.InitializeLogger(settings.Global.Logger.Level, settings.Global.Logger.Types)
+	defer closeLoggers()
 
 	db := database.LoadDatabase()
 	app := src.NewApp()
@@ -40,16 +41,14 @@ func main() {
 	contributorRepository := repository.NewContributorRepository(db.Conn)
 	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository)
 
-	app.SetInfoRepository(infoRepository)
-
-	// infoService := service.NewInfoService(infoRepository)
+	infoService := service.NewInfoService(infoRepository)
 	fileService := service.NewFileService()
 	youtubeDLService := service.NewYoutubeDLService(fileService)
 	statusService := service.NewStatusService(statusRepository)
 	genreService := service.NewGenreService(genreRepository)
 	authorService := service.NewAuthorService(authorRepository)
 	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository)
-	youtubeService := service.NewYoutubeService(app, musicRepository, fileService, youtubeDLService)
+	youtubeService := service.NewYoutubeService(&app.Ctx, musicRepository, fileService, youtubeDLService)
 
 	if !fileService.HasExecutable() {
 		logger.Error("Couldn't find ffmpeg executable")
@@ -63,17 +62,23 @@ func main() {
 		panic("Couldn't find youtube helper executable")
 	}
 
+	app.SetInfoService(infoService)
+	windowWidth, windowHeight := infoService.GetWindowSize()
+
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "yotudo",
-		Width:  1280,
-		Height: 768,
+		Title:     "yotudo",
+		MinWidth:  400,
+		MinHeight: 280,
+		Width:     windowWidth,
+		Height:    windowHeight,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.Startup,
 		OnShutdown:       app.Shutdown,
+		OnBeforeClose:    app.BeforeClose,
 		Bind: []any{
 			app,
 			statusService,

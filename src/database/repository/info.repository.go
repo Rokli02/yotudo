@@ -48,7 +48,7 @@ func (r *Info) UpdateOne(info *entity.Info) error {
 }
 
 func (r *Info) FindOneByKey(key string) (*entity.Info, error) {
-	row := r.db.QueryRow("SELECT * FROM info WHERE name = ?;", key)
+	row := r.db.QueryRow("SELECT name, value, value_type FROM info WHERE name = ?;", key)
 	if row == nil {
 		logger.Warning("Selected row from info table was 'nil'")
 
@@ -67,7 +67,7 @@ func (r *Info) FindOneByKey(key string) (*entity.Info, error) {
 func (r *Info) FindManyByKeys(keys ...string) ([]entity.Info, error) {
 	qsm, args := inClause(keys)
 
-	row, err := r.db.Query(fmt.Sprintf("SELECT * FROM info WHERE name IN (%s)", qsm), args...)
+	row, err := r.db.Query(fmt.Sprintf("SELECT name, value, value_type FROM info WHERE name IN (%s)", qsm), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *Info) FindManyByKeys(keys ...string) ([]entity.Info, error) {
 }
 
 func (r *Info) FindManyByPrefix(keyPrefix string) ([]entity.Info, error) {
-	row, err := r.db.Query("SELECT * FROM info WHERE name LIKE ? || '%'", keyPrefix)
+	row, err := r.db.Query("SELECT name, value, value_type FROM info WHERE name LIKE ? || '%'", keyPrefix)
 	if err != nil {
 		return nil, err
 	}

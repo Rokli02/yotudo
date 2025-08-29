@@ -23,7 +23,7 @@
     "paths": {
       "@src/*": ["./src/*"],
       "@wailsjs/*": ["./wailsjs/*"],
-      "@controller/*": ["./wailsjs/go/controller/*"]
+      "@service/*": ["./wailsjs/go/service/*"]
     }
   },
   "include": [

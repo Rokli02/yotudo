@@ -1,5 +1,5 @@
 import { Status } from "../models/Misc";
-import { GetAll } from "@controller/StatusController"
+import { GetAll } from "@service/StatusService"
 
 let statuses: {
     array: Array<Status>,

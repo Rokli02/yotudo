@@ -26,7 +26,7 @@ func createMultipleDirectories(paths []string) error {
 }
 
 func CreateEssentialDirectoriesAndFiles() error {
-	if err := createMultipleDirectories([]string{"./data/tmp", "./data/imgs", "./data/mscs"}); err != nil { //TODO: Ellenőrizni, hogy nem-e rontott el semmit, mert "./data", ki lett véve a listából
+	if err := createMultipleDirectories([]string{"./data/tmp", "./data/imgs", "./data/mscs", "./data/logs"}); err != nil {
 		return err
 	}
 
@@ -63,6 +63,10 @@ func LoadSettings() (*Settings, error) {
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
 			Version:  "1.0.1",
+		},
+		Logger: LoggerSettings{
+			Level: "warning",
+			Types: []string{"console"},
 		},
 	}
 

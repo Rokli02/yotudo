@@ -92,35 +92,35 @@ func (i *Info) ValueToString() string {
 	panic("SHOULD_NOT_REACH")
 }
 
-func (i *Info) GetValue() any {
+func (i *Info) GetValue() (any, error) {
 	switch iVal := i.Value.(type) {
 	case string:
 		switch i.ValueType {
 		case StringValue:
-			return iVal
+			return iVal, nil
 		case BoolValue:
-			return iVal != "0"
+			return iVal != "0", nil
 		case IntValue:
 			res, err := strconv.Atoi(iVal)
 			if err != nil {
 				logger.Warning(err)
 
-				return 0
+				return 0, err
 			}
 
-			return res
+			return res, nil
 		case DoubleValue:
 			res, err := strconv.ParseFloat(iVal, 64)
 			if err != nil {
 				logger.Warning(err)
 
-				return 0.0
+				return 0.0, err
 			}
 
-			return res
+			return res, nil
 		}
 	default:
-		return i.Value
+		return i.Value, nil
 	}
 
 	logger.Error("SHOULD_NOT_REACH end of 'GetValue' function")

@@ -34,7 +34,7 @@ func TestGetByIdInfo(t *testing.T) {
 	if info, err := infoRepository.FindOneByKey(widthKey); err != nil {
 		t.Error(err)
 		return
-	} else if returnedValue := info.GetValue().(int); returnedValue != expectedValue {
+	} else if returnedValue, _ := info.GetValue(); returnedValue != expectedValue {
 		t.Errorf("Expected value to be '%d', but got '%d'", expectedValue, returnedValue)
 		return
 	}
@@ -123,7 +123,7 @@ func TestUpdateOne(t *testing.T) {
 		logger.DebugF("Returned with '%d' elements", len(infos))
 
 		for _, info := range infos {
-			if returnedValue := info.GetValue(); info.Key == heightKey && returnedValue != expectedValue {
+			if returnedValue, _ := info.GetValue(); info.Key == heightKey && returnedValue != expectedValue {
 				t.Errorf("Record '%s' should have been updated to '%d' but was %d", info.Key, expectedValue, returnedValue)
 			}
 		}

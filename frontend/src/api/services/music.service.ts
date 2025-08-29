@@ -1,8 +1,8 @@
 import { model } from "@wailsjs/go/models";
 import { Music, NewMusic, MusicUpdate } from "../models/Music";
 import { Page, Pagination } from "../models/Page";
-import { GetManyByPagination, Save, Update } from '@controller/MusicController';
-import { DownloadByMusicId, MoveToDownloadDir } from '@controller/YtController';
+import { GetManyByPagination, Save, Update } from '@service/MusicService';
+import { DownloadByMusicId, MoveToDownloadDir } from '@service/YoutubeService';
 import { GetAllStatus } from "./status.service";
 import { Status } from "../models/Misc";
 

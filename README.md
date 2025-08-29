@@ -20,14 +20,16 @@ app:
 database:
     # A lokális adatbázis elérési útvonalja
     location: "./data/***"
+logger:
+    level: info
+    types:
+        - console
+        - file
 ```
 
 ## Backend továbbfejlesztés:
 - TODO-k megcsinálása
 - Logok lemezre történő kiírása
-- Log szintek 'config.yaml'-ben történő megadása
-- 'Logger' nevű interface, ami megvalósítja a 'Info', 'InfoF', stb... függvényeket. Ezeket tartalmazó tömböt inicializáljon a 'InitializeLogger' függvény, amiken végigmenve pedig meghívódnak a megfelelő függvények.
-- Eltárolni az app adatokat bezáráskor, megnyitáskor vissza betölteni (pl.: ablak méret, pozíció, stb...)
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása

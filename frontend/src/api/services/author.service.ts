@@ -1,6 +1,6 @@
 import { Author, NewAuthor } from "../models/Author";
 import { Page, Pagination } from "../models/Page";
-import { GetManyByPagination, Save, Delete } from '@controller/AuthorController'
+import { GetManyByPagination, Save, Delete } from '@service/AuthorService'
 
 export async function GetAuthors(page: Page = { page: 0, size: 25 }, excludeIds: number[] = []): Promise<Pagination<Array<Author>>> {
     const response = await GetManyByPagination(page.filter ?? '', { Page: page.page, Size: page.size }, [{ Key: "id", Dir: -1 }]);
