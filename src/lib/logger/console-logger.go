@@ -10,7 +10,7 @@ const cldf = "2006-01-02_15:04:05.0000"
 
 type ConsoleLogger uint8
 
-func NewConsoleLogger() Logger {
+func NewConsoleLogger() ConsoleLogger {
 	return ConsoleLogger(0)
 }
 

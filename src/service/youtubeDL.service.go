@@ -142,6 +142,7 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 	defer cancelCtx()
 
 	// Download to Temp
+	// TODO: Valami itt baszódik el, javítani (átírni cmd.Run()-ra segíthet talán a logolásba, vagy IDK)
 	cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, commandArgs...)
 	if settings.USE_CMD_HIDE_WINDOW {
 		cmd.SysProcAttr = &syscall.SysProcAttr{

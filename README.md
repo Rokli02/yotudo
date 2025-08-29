@@ -29,7 +29,7 @@ logger:
 
 ## Backend továbbfejlesztés:
 - TODO-k megcsinálása
-- Logok lemezre történő kiírása
+- youtubeDLService javítása
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása

@@ -52,7 +52,7 @@ func InitializeLogger(level string, types []string) (chosenLoggers []Logger, clo
 		case Database_Type:
 			panic("NOT_IMPLEMENTED_DATABASE_LOGGER")
 		case File_Type:
-			panic("NOT_IMPLEMENTED_FILE_LOGGER")
+			loggers = append(loggers, NewFileLogger())
 		}
 	}
 	chosenLoggers = loggers
