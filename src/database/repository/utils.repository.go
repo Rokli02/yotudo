@@ -8,7 +8,7 @@ const (
 	DefaultDateFormat = "2006-01-02_15:04:05"
 )
 
-func inClause(ids []int64, extraArgs ...any) (string, []any) {
+func inClause[T any](ids []T, extraArgs ...any) (string, []any) {
 	args := make([]any, len(ids)+len(extraArgs))
 	ph := make([]string, len(ids))
 

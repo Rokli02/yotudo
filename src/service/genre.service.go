@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"yotudo/src/database/errors"
@@ -6,15 +6,15 @@ import (
 	"yotudo/src/model"
 )
 
-type GenreController struct {
+type GenreService struct {
 	genreRepository *repository.Genre
 }
 
-func NewGenreController(genreRepository *repository.Genre) *GenreController {
-	return &GenreController{genreRepository: genreRepository}
+func NewGenreService(genreRepository *repository.Genre) *GenreService {
+	return &GenreService{genreRepository: genreRepository}
 }
 
-func (c *GenreController) GetAll() []model.Genre {
+func (c *GenreService) GetAll() []model.Genre {
 	entities := c.genreRepository.FindAll()
 
 	genres := make([]model.Genre, len(entities))
@@ -25,7 +25,7 @@ func (c *GenreController) GetAll() []model.Genre {
 	return genres
 }
 
-func (c *GenreController) Save(genreName string) (*model.Genre, error) {
+func (c *GenreService) Save(genreName string) (*model.Genre, error) {
 	entity, err := c.genreRepository.SaveOne(genreName)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (c *GenreController) Save(genreName string) (*model.Genre, error) {
 	return &model.Genre{Id: entity.Id, Name: entity.Name}, nil
 }
 
-func (c *GenreController) Rename(id int64, newGenreName string) (*model.Genre, error) {
+func (c *GenreService) Rename(id int64, newGenreName string) (*model.Genre, error) {
 	entity, err := c.genreRepository.Rename(id, newGenreName)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (c *GenreController) Rename(id int64, newGenreName string) (*model.Genre, e
 	return &model.Genre{Id: entity.Id, Name: entity.Name}, nil
 }
 
-func (c *GenreController) Delete(id int64) error {
+func (c *GenreService) Delete(id int64) error {
 	if c.genreRepository.IsAlreadyUsed(id) {
 		return errors.ErrUnableToDelete
 	}

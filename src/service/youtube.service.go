@@ -2,200 +2,270 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 	"syscall"
 	"time"
+	"yotudo/src"
+	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 	"yotudo/src/settings"
-)
 
-var ytRegexp = regexp.MustCompile(`^(https?://)?(www.)?(youtube.com|youtu.be)/(watch\?v=\S{11})`)
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+)
 
 type YoutubeService struct {
-	fileService FileService
+	app             *src.App
+	musicRepository *repository.Music
+	fileService     FileService
+	ytDLService     *YoutubeDLService
 }
 
-func NewYoutubeService(fileService FileService) *YoutubeService {
-	return &YoutubeService{fileService: fileService}
+func NewYoutubeService(
+	app *src.App,
+	musicRepository *repository.Music,
+	fileService FileService,
+	ytDLService *YoutubeDLService,
+) *YoutubeService {
+	return &YoutubeService{
+		app:             app,
+		musicRepository: musicRepository,
+		fileService:     fileService,
+		ytDLService:     ytDLService,
+	}
 }
+
+type eventResult string
 
 const (
-	FILE_EXTENSION  = "webm"
-	IMAGE_EXTENSION = "webp"
+	eventResultStart       eventResult = "start"
+	eventResultDownloading eventResult = "downloading"
+	eventResultCompleted   eventResult = "completed"
+	eventResultFailed      eventResult = "failed"
 )
 
-func (s YoutubeService) PrepareUrl(url string, stripUnnecessaryParameters bool) (string, error) {
-	if !ytRegexp.Match([]byte(url)) {
-		return "", fmt.Errorf("the given url is not a youtube video link")
+func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) error {
+	music, err := c.musicRepository.FindById(musicId)
+	if err != nil {
+		return err
 	}
 
-	if stripUnnecessaryParameters {
-		indexOfQueryStringStart := strings.Index(url, "?")
-		sb := strings.Builder{}
-		sb.WriteString(url[:indexOfQueryStringStart+1])
+	go func() {
+		ctx, cancel := context.WithCancel(c.app.Ctx)
+		defer cancel()
 
-		queryStrings := strings.Split(url[indexOfQueryStringStart+1:], "&")
-		for _, queryString := range queryStrings {
-			if strings.HasPrefix(queryString, "v=") {
-				sb.WriteString(queryString)
+		// Starting download event
+		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 0, eventResultStart, nil))
 
-				break
-			}
+		// Give feedback about download event
+		// If anything goes wrong send failed event result
+		if url, err := c.ytDLService.PrepareUrl(music.Url, true); err != nil {
+			logger.Warning(err)
+
+			runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, -1, eventResultFailed, err))
+			return
+		} else {
+			music.Url = url
 		}
 
-		builtUrl := sb.String()
+		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 10, eventResultDownloading, nil))
+		savedMusic, err := c.ytDLService.DownloadVideo(ctx, music)
+		if err != nil {
+			logger.Warning(err)
 
-		return builtUrl, nil
-	}
+			runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, -1, eventResultFailed, err))
+			return
+		}
 
-	return url, nil
+		// shouldDownloadThumbnail := music.PicFilename != nil && *music.PicFilename != "thumbnail"
+		// TODO: A FileService segítségével lementeni a 'PicFilename'-ban található képet, majd hozzáadni a rekordhoz
+
+		_, err = c.musicRepository.UpdateOne(savedMusic.Id, savedMusic.ToUpdateMusic())
+		if err != nil {
+			logger.Error("CRITICAL ERROR: video got downloaded but couldn't update its record in db:", err)
+
+			return
+		}
+
+		// Mark event as finished
+		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 100, eventResultCompleted, nil))
+	}()
+
+	return nil
 }
 
-func (s YoutubeService) HasExecutable() bool {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelCtx()
+func (c *YoutubeService) createEventData(musicId int64, progress float32, status eventResult, err error) []any {
+	var _err *string
+	if err != nil {
+		tmp := err.Error()
+		_err = &tmp
+	}
 
-	res := make(chan bool)
-	go func() {
-		cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, "--version")
+	return []any{musicId, progress, status, _err}
+}
+
+func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
+	music, err := c.musicRepository.FindById(musicId)
+	if err != nil {
+		return err
+	}
+
+	// Check if music wasn't preprocessed, as it should have
+	if music.Filename == nil {
+		err := fmt.Sprintf("Music didn't get downloaded previously (id=%d)", musicId)
+
+		logger.Warning(err)
+
+		return errors.New(err)
+	}
+
+	// Check for music file
+	musicPath := path.Join(settings.Global.App.MusicsLocation, *music.Filename)
+	if !c.fileService.IsExists(musicPath) {
+		err := fmt.Sprintf("Music was not found in its directory (filename=%s)", *music.Filename)
+
+		logger.Warning(err)
+
+		return errors.New(err)
+	}
+
+	// Check for music with same name in temp directory
+	if c.fileService.IsExists(path.Join(settings.Global.App.TempLocation, *music.Filename)) {
+		err := fmt.Sprintf("For some unknown reason music wasn't moved from temp directory (filename=%s)", *music.Filename)
+
+		logger.Warning(err)
+
+		return errors.New(err)
+	}
+
+	var ffmpegArguments []string = []string{
+		"-i", musicPath,
+	}
+
+	var tempPicturePath string
+	defer func() {
+		if tempPicturePath != "" {
+			if err := os.Remove(tempPicturePath); err != nil {
+				logger.Warning("Couldn't delete TEMP picture:", err)
+			}
+		}
+	}()
+
+	// Check for a thumbnail that might be attached to the music
+	if music.PicFilename != nil {
+		imageWidth, imageHeight, imageExt, err := c.fileService.GetImageConfig(*music.PicFilename)
+		if err != nil {
+			logger.Error(err)
+
+			goto leave_music_picfile
+		}
+
+		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, imageExt); found {
+			tempPicturePath = tempPictureBase + ".jpeg"
+		} else {
+			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", IMAGE_EXTENSION, *music.PicFilename)
+
+			goto leave_music_picfile
+		}
+
+		picturePath := path.Join(settings.Global.App.ImagesLocation, *music.PicFilename)
+		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
+
+		ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*10)
+		defer cancelCtx()
+
+		logger.Debug("Creating temporary image file for thumbnail")
+		cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation,
+			"-i", picturePath,
+			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", imageWidth, imageHeight, THUMBNAIL_SIZE, THUMBNAIL_SIZE, (imageWidth-THUMBNAIL_SIZE)/2, imageHeight-THUMBNAIL_SIZE/2),
+			tempPicturePath,
+		)
 		if settings.USE_CMD_HIDE_WINDOW {
 			cmd.SysProcAttr = &syscall.SysProcAttr{
 				HideWindow:    true,
 				CreationFlags: 0x08000000,
 			}
 		}
-
-		if stdout, err := cmd.Output(); err != nil {
+		if err := cmd.Run(); err != nil {
 			logger.Error(err)
 
-			res <- false
-		} else if len(stdout) == 0 {
-			logger.Warning("Didn't write any result to stdout")
-
-			res <- false
+			goto leave_music_picfile
 		}
 
-		res <- true
-	}()
-
-	select {
-	case <-ctx.Done():
-		logger.Error("Context timed out after 5 seconds")
-
-		return false
-	case v := <-res:
-		return v
+		ffmpegArguments = append(ffmpegArguments,
+			"-i", tempPicturePath,
+			"-map", "0",
+			"-map", "1",
+			"-disposition:v:1", "attached_pic",
+		)
 	}
-}
+leave_music_picfile:
 
-func (s YoutubeService) DownloadVideo(ctxArg context.Context, music *model.Music) (*model.Music, error) {
-	baseFilename := s.fileService.CreateFilename(music)
-	filename := fmt.Sprintf("%s.%s", baseFilename, FILE_EXTENSION)
-	tempFilePath := path.Join(settings.Global.App.TempLocation, filename)
-	var picFilename, tempPicFilePath string
+	c.addMetadatas(&ffmpegArguments, music)
 
-	var hasThumbnail bool
-	if music.PicFilename != nil && *music.PicFilename == "thumbnail" {
-		hasThumbnail = true
-		picFilename = fmt.Sprintf("%s.%s", baseFilename, IMAGE_EXTENSION)
-		tempPicFilePath = path.Join(settings.Global.App.TempLocation, picFilename)
-
-		music.PicFilename = &picFilename
-	}
-
-	music.Filename = &filename
-	music.Status = 1
-
-	logger.DebugF("DownloadVideo hasThumbnail=(%t)", hasThumbnail)
-
-	// Build command
-	commandArgs := []string{
-		"--ffmpeg-location", settings.Global.App.FFMPEGLocation,
-		"--no-playlist",
-		"-R", "3",
-		"--windows-filenames",
-		"-f", "bestaudio",
-		"--audio-quality", "0",
-	}
-
-	if hasThumbnail {
-		commandArgs = append(commandArgs, "--write-thumbnail")
-	}
-
-	logger.Debug("Temp File Path:", tempFilePath)
-
-	commandArgs = append(commandArgs, "-o", path.Join(settings.Global.App.TempLocation, filename))
-
-	if hasThumbnail {
-		commandArgs = append(commandArgs, "-o", "thumbnail:"+path.Join(settings.Global.App.TempLocation, baseFilename))
-	}
-
-	commandArgs = append(commandArgs, music.Url)
-	logger.Debug("Command was built, now executing it")
-
-	ctx, cancelCtx := context.WithTimeout(ctxArg, time.Second*60)
+	ctx, cancelCtx := context.WithTimeout(c.app.Ctx, time.Second*30)
 	defer cancelCtx()
 
-	// Download to Temp
-	cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, commandArgs...)
+	filename := *music.Filename
+	if _filename, found := strings.CutSuffix(filename, FILE_EXTENSION); found {
+		filename = _filename + "mp3"
+	}
+
+	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))
+
+	cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, ffmpegArguments...)
 	if settings.USE_CMD_HIDE_WINDOW {
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			HideWindow:    true,
 			CreationFlags: 0x08000000,
 		}
 	}
-	if err := cmd.Start(); err != nil {
-		logger.Error("YoutubeService.DownloadVideo [Couldn't start command]:", err)
-		return music, err
+
+	if err := cmd.Run(); err != nil {
+		logger.Error(err)
+
+		return err
 	}
 
-	// Logging the messages of YT download process
-	if stdout, err := cmd.StdoutPipe(); err != nil {
-		var buff []byte = make([]byte, 256)
-		var read int
+	return nil
+}
 
-		for err == nil {
-			read, err = stdout.Read(buff)
+func (c *YoutubeService) addMetadatas(arguments *[]string, music *model.Music) {
+	*arguments = append(*arguments,
+		"-y",
+		"-id3v2_version", "3",
+		"-metadata", "title="+music.Name,
+		"-metadata", "genre="+music.Genre.Name,
+		"-metadata", "album_artist="+music.Author.Name,
+	)
 
-			if read > 0 {
-				logger.Debug("YT_CMD:", string(buff[:read]))
-			}
+	if music.Album != nil {
+		*arguments = append(*arguments, "-metadata", "album="+*music.Album)
+	}
+
+	if music.Published != nil {
+		*arguments = append(*arguments, "-metadata", fmt.Sprintf("date=%d", *music.Published))
+	}
+
+	contributorMap := map[int64]model.Author{
+		music.Author.Id: music.Author,
+	}
+
+	if len(music.Contributors) != 0 {
+		for _, contributor := range music.Contributors {
+			contributorMap[contributor.Id] = contributor
 		}
-	} else {
-		logger.Warning("Something during video download:", err)
 
-		return music, err
+	}
+	contributors := make([]string, 0, len(contributorMap))
+	for _, value := range contributorMap {
+		contributors = append(contributors, value.Name)
 	}
 
-	if err := cmd.Wait(); err != nil {
-		logger.Error("YoutubeService.DownloadVideo [Something happend during command execution]:", err)
-
-		return music, err
-	}
-
-	// Move file to music dir
-	if err := s.fileService.MoveTo(tempFilePath, settings.Global.App.MusicsLocation); err != nil {
-		logger.Warning("YoutubeService.DownloadVideo [Couldn't move music to its directory]", err)
-
-		return music, nil
-	}
-
-	// Move thumbnail (if downloaded) to imgs dir
-	if hasThumbnail {
-		if err := s.fileService.MoveTo(tempPicFilePath, settings.Global.App.ImagesLocation); err != nil {
-			logger.Warning("YoutubeService.DownloadVideo [Couldn't move thumbnail to its directory]", err)
-
-			return music, nil
-		}
-	}
-
-	// Mark music as downloaded
-	music.Status = 2
-
-	return music, nil
+	*arguments = append(*arguments, "-metadata", "artist="+strings.Join(contributors, ";"))
 }

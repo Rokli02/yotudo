@@ -80,7 +80,7 @@ func TestSaveManyAuthorsFailUniqueNameRestraint(t *testing.T) {
 }
 
 func TestIsReferencingToMusic(t *testing.T) {
-	db := getInMemoryDB()
+	db := getInMemoryDB(true)
 	defer db.Close()
 	repo := repository.NewAuthorRepository(db.Conn)
 	contributorRepository := repository.NewContributorRepository(db.Conn)

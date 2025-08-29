@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"yotudo/src/database/errors"
@@ -7,15 +7,15 @@ import (
 	"yotudo/src/model"
 )
 
-type AuthorController struct {
+type AuthorService struct {
 	authorRepository *repository.Author
 }
 
-func NewAuthorController(authorRepository *repository.Author) *AuthorController {
-	return &AuthorController{authorRepository: authorRepository}
+func NewAuthorService(authorRepository *repository.Author) *AuthorService {
+	return &AuthorService{authorRepository: authorRepository}
 }
 
-func (c *AuthorController) GetManyByPagination(filter string, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Author] {
+func (c *AuthorService) GetManyByPagination(filter string, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Author] {
 	authors, totalCount := c.authorRepository.FindByPage(filter, page, sort)
 
 	return &model.Pagination[[]model.Author]{
@@ -24,11 +24,11 @@ func (c *AuthorController) GetManyByPagination(filter string, page *model.Page, 
 	}
 }
 
-func (c *AuthorController) Save(newAuthorName string) (*model.Author, error) {
+func (c *AuthorService) Save(newAuthorName string) (*model.Author, error) {
 	return c.authorRepository.SaveOne(newAuthorName)
 }
 
-func (c *AuthorController) Delete(id int64) (bool, error) {
+func (c *AuthorService) Delete(id int64) (bool, error) {
 	if c.authorRepository.IsReferencingToMusic(id) {
 		logger.Warning("Unable to delete Author, because it was used in a music, or contributor records")
 

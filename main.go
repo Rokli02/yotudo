@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"yotudo/src"
-	"yotudo/src/controller"
 	"yotudo/src/database"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
@@ -20,38 +19,37 @@ import (
 var assets embed.FS
 
 func main() {
-	logger.InitializeLogger()
-
 	if err := settings.CreateEssentialDirectoriesAndFiles(); err != nil {
-		logger.Error(err)
-
 		panic(err)
 	}
 
 	if _, err := settings.LoadSettings(); err != nil {
-		logger.Error(err)
-
 		panic(err)
 	}
 
+	logger.InitializeLogger()
+
 	db := database.LoadDatabase()
 	app := src.NewApp()
-	app.AddDatabaseConnection(db)
+	app.SetDatabaseConnection(db)
 
+	infoRepository := repository.NewInfoRepository(db.Conn)
 	statusRepository := repository.NewStatusRepository(db.Conn)
 	genreRepository := repository.NewGenreRepository(db.Conn)
 	authorRepository := repository.NewAuthorRepository(db.Conn)
 	contributorRepository := repository.NewContributorRepository(db.Conn)
 	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository)
 
-	fileService := service.NewFileService()
-	ytService := service.NewYoutubeService(fileService)
+	app.SetInfoRepository(infoRepository)
 
-	statusController := controller.NewStatusController(statusRepository)
-	genreController := controller.NewGenreController(genreRepository)
-	authorController := controller.NewAuthorController(authorRepository)
-	musicController := controller.NewMusicController(musicRepository, authorRepository, contributorRepository)
-	ytController := controller.NewYtController(app, musicRepository, fileService, ytService)
+	// infoService := service.NewInfoService(infoRepository)
+	fileService := service.NewFileService()
+	youtubeDLService := service.NewYoutubeDLService(fileService)
+	statusService := service.NewStatusService(statusRepository)
+	genreService := service.NewGenreService(genreRepository)
+	authorService := service.NewAuthorService(authorRepository)
+	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository)
+	youtubeService := service.NewYoutubeService(app, musicRepository, fileService, youtubeDLService)
 
 	if !fileService.HasExecutable() {
 		logger.Error("Couldn't find ffmpeg executable")
@@ -59,7 +57,7 @@ func main() {
 		panic("Couldn't find ffmpeg executable")
 	}
 
-	if !ytService.HasExecutable() {
+	if !youtubeDLService.HasExecutable() {
 		logger.Error("Couldn't find youtube helper executable")
 
 		panic("Couldn't find youtube helper executable")
@@ -78,11 +76,11 @@ func main() {
 		OnShutdown:       app.Shutdown,
 		Bind: []any{
 			app,
-			statusController,
-			genreController,
-			authorController,
-			musicController,
-			ytController,
+			statusService,
+			genreService,
+			authorService,
+			musicService,
+			youtubeService,
 		},
 		Linux: &linux.Options{},
 	})

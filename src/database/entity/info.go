@@ -1,12 +1,13 @@
 package entity
 
 import (
+	"fmt"
 	"strconv"
 	"yotudo/src/lib/logger"
+	"yotudo/src/settings"
 )
 
 type Info struct {
-	Id        int64
 	Key       string
 	Value     any
 	ValueType InfoType
@@ -24,7 +25,7 @@ const (
 )
 
 func (Info) Template() string {
-	return `
+	return fmt.Sprintf(`
 	CREATE TABLE info (
 		id INTEGER PRIMARY KEY,
 		name TEXT NOT NULL UNIQUE,
@@ -33,18 +34,62 @@ func (Info) Template() string {
 	);
 
 	CREATE INDEX info_name_index ON info(name);
-	`
+	INSERT INTO info(name, value, value_type) VALUES('version', '%s', %d);
+	`, settings.Global.Database.Version, StringValue)
 }
 
-func (i Info) Migration(currentVersion [3]int) []Migration {
+func (i Info) Migration(currentVersion MigrationVersion) []Migration {
 	migrations := []Migration{
 		{
-			Version:   [3]int{0, 1, 0},
-			Migration: i.Template(),
+			Version: MigrationVersion{1, 0, 0},
+			Migration: `
+				ALTER TABLE info RENAME TO info_old;
+
+				CREATE TABLE info (
+					name TEXT PRIMARY KEY,
+					value TEXT NOT NULL,
+					value_type TINYINT DEFAULT 0
+				);
+
+				INSERT INTO info(name, value, value_type) SELECT name, value, value_type FROM info_old;
+
+				DROP TABLE info_old;`,
+		},
+		{
+			Version: MigrationVersion{1, 0, 1},
+			Migration: fmt.Sprintf(`
+				INSERT INTO info(name, value, value_type) VALUES('window_width', '1280', %d), ('window_height', '768', %d);
+			`, IntValue, IntValue),
 		},
 	}
 
-	return migrationsOfVersion(migrations, currentVersion)
+	return MigrationsByVersion(migrations, currentVersion)
+}
+
+func (i *Info) ValueToString() string {
+	switch iVal := i.Value.(type) {
+	case string:
+		return iVal
+	default:
+		switch i.ValueType {
+		case StringValue:
+			return iVal.(string)
+		case BoolValue:
+			if iVal.(bool) {
+				return "1"
+			}
+
+			return "0"
+		case IntValue:
+			return fmt.Sprintf("%d", iVal.(int))
+		case DoubleValue:
+			return fmt.Sprintf("%f", iVal.(float64))
+		}
+	}
+
+	logger.Error("SHOULD_NOT_REACH end of 'ValueToString' function")
+
+	panic("SHOULD_NOT_REACH")
 }
 
 func (i *Info) GetValue() any {
@@ -78,7 +123,7 @@ func (i *Info) GetValue() any {
 		return i.Value
 	}
 
-	logger.Error("Couldn't parse INFO value", i.Key, i.Value)
+	logger.Error("SHOULD_NOT_REACH end of 'GetValue' function")
 
-	return nil
+	panic("SHOULD_NOT_REACH")
 }

@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"fmt"
@@ -8,25 +8,25 @@ import (
 	"yotudo/src/model"
 )
 
-type MusicController struct {
+type MusicService struct {
 	musicRepository       *repository.Music
 	authorRepository      *repository.Author
 	contributorRepository *repository.Contributor
 }
 
-func NewMusicController(
+func NewMusicService(
 	musicRepository *repository.Music,
 	authorRepository *repository.Author,
 	contributorRepository *repository.Contributor,
-) *MusicController {
-	return &MusicController{
+) *MusicService {
+	return &MusicService{
 		musicRepository:       musicRepository,
 		authorRepository:      authorRepository,
 		contributorRepository: contributorRepository,
 	}
 }
 
-func (c *MusicController) GetManyByPagination(filter string, statusId int, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Music] {
+func (c *MusicService) GetManyByPagination(filter string, statusId int, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Music] {
 	musics, totalCount := c.musicRepository.FindByPageAndStatus(statusId, filter, page, sort)
 
 	return &model.Pagination[[]model.Music]{
@@ -35,7 +35,7 @@ func (c *MusicController) GetManyByPagination(filter string, statusId int, page 
 	}
 }
 
-func (c *MusicController) Save(newMusic *model.NewMusic) (*model.Music, error) {
+func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 	if err := c.processMusicAuthor(newMusic); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *MusicController) Save(newMusic *model.NewMusic) (*model.Music, error) {
 	return c.musicRepository.FindById(insertedId)
 }
 
-func (c *MusicController) Update(updateMusic *model.UpdateMusic) (*model.Music, error) {
+func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, error) {
 	if err := c.processMusicAuthor(updateMusic); err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *MusicController) Update(updateMusic *model.UpdateMusic) (*model.Music, 
 	return c.musicRepository.UpdateOne(updateMusic.Id, updateMusic)
 }
 
-func (c *MusicController) Delete(id int64) error {
+func (c *MusicService) Delete(id int64) error {
 	if deleted, err := c.musicRepository.DeleteOne(id); err != nil || !deleted {
 		return errors.ErrUnableToDelete
 	}
@@ -72,7 +72,7 @@ func (c *MusicController) Delete(id int64) error {
 	return nil
 }
 
-func (c *MusicController) processMusicAuthor(music model.OptionalAuthorGetter) error {
+func (c *MusicService) processMusicAuthor(music model.OptionalAuthorGetter) error {
 	author := music.GetOptionalAuthor()
 
 	if author.Id == nil {
@@ -93,7 +93,7 @@ func (c *MusicController) processMusicAuthor(music model.OptionalAuthorGetter) e
 	return nil
 }
 
-func (c *MusicController) processMusicContributors(music model.OptionalContributorsAccessor) error {
+func (c *MusicService) processMusicContributors(music model.OptionalContributorsAccessor) error {
 	contributors := music.GetOptionalContributors()
 
 	if len(contributors) != 0 {

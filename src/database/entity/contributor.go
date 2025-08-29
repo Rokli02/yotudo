@@ -7,15 +7,10 @@ type Contributor struct {
 
 var _ Entity = Contributor{}
 
-func (c Contributor) Migration(currentVersion [3]int) []Migration {
-	migrations := []Migration{
-		{
-			Version:   [3]int{0, 1, 0},
-			Migration: c.Template(),
-		},
-	}
+func (c Contributor) Migration(currentVersion MigrationVersion) []Migration {
+	migrations := []Migration{}
 
-	return migrationsOfVersion(migrations, currentVersion)
+	return MigrationsByVersion(migrations, currentVersion)
 }
 
 func (c Contributor) Template() string {

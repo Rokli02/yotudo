@@ -1,11 +1,13 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"os/exec"
 	pathModule "path"
 	"regexp"
 	"strings"
@@ -150,5 +152,8 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 }
 
 func (s FileService) HasExecutable() bool {
-	return false
+	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*4)
+	defer cancelCtx()
+
+	return exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, "-version").Run() == nil
 }

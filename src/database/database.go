@@ -2,8 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"os"
-	"strconv"
 	"strings"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/repository"
@@ -31,8 +29,6 @@ func (db *Database) databaseTables() []entity.Entity {
 }
 
 func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
-	isExists := isDatabaseExists(settings.Global.Database.Location)
-
 	dbOption := DefaultDatabaseOptions(settings.Global.Database)
 	for _, optsFunc := range optsFuncs {
 		optsFunc(dbOption)
@@ -40,16 +36,22 @@ func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 
 	db := newDatabase(dbOption)
 
-	infoRepository := repository.NewInfoRepository(db.Conn)
+	isExists := db.isAlreadyInitialized()
 
 	if !isExists {
-		db.init(infoRepository)
+		logger.Info("Initializing Database ...")
+
+		db.init()
+		db.migrateDatabase("0.0.0")
 	} else {
+		infoRepository := repository.NewInfoRepository(db.Conn)
+
 		info, _ := infoRepository.FindOneByKey("version")
 		if info != nil && info.Value != settings.Global.Database.Version {
-			logger.ErrorF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
+			logger.WarningF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
+			logger.Info("Migrating database to the newest version...")
 
-			db.migrateDatabase(info.Value.(string))
+			db.migrateDatabase(info.ValueToString())
 		}
 	}
 
@@ -79,11 +81,22 @@ func (db *Database) Close() {
 	db.Conn.Close()
 }
 
-func (db *Database) init(infoRepository *repository.Info) {
-	logger.Info("Initializing Database ...")
+func (db *Database) isAlreadyInitialized() bool {
+	var rootPage int
 
+	if err := db.Conn.QueryRow("SELECT rootpage from sqlite_master WHERE type = 'type' AND name = 'info';").Scan(&rootPage); err != nil {
+		logger.Warning("In 'isAlreadyInitialized' warning occured:", err)
+
+		return false
+	} else if rootPage == 0 {
+		return false
+	}
+
+	return true
+}
+
+func (db *Database) init() {
 	databaseTableList := db.databaseTables()
-
 	sb := strings.Builder{}
 
 	for _, table := range databaseTableList {
@@ -95,34 +108,12 @@ func (db *Database) init(infoRepository *repository.Info) {
 		logger.Error(err)
 		panic(-1)
 	}
-
-	logger.Info("Preloading Database with mandatory datas")
-
-	infoRepository.CreateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
-}
-
-func isDatabaseExists(path string) bool {
-	file, err := os.Open(path)
-	if err != nil {
-		return false
-	}
-	defer file.Close()
-
-	return true
 }
 
 func (db *Database) migrateDatabase(versionText string) {
 	// Convert version string into fixed array
-	versionTexts := strings.Split(versionText, ".")
-	version := [3]int{0, 0, 0}
-
-	for i := 0; i < len(versionTexts) || i < 3; i++ {
-		if v, err := strconv.Atoi(versionTexts[i]); err == nil {
-			version[i] = v
-		} else {
-			logger.Error("Error during database migration (Couldn't get version number):", err)
-		}
-	}
+	version := entity.MigrationVersion{0, 0, 0}
+	version.SetFromText(versionText)
 
 	databaseTableList := db.databaseTables()
 	sb := strings.Builder{}
@@ -139,7 +130,9 @@ func (db *Database) migrateDatabase(versionText string) {
 		}
 	}
 
-	if _, err := db.Conn.Exec(sb.String()); err != nil {
+	migrationString := sb.String()
+
+	if _, err := db.Conn.Exec(migrationString); err != nil {
 		logger.Error("Error during database migration (Couldn't execute built command):", err)
 	}
 }

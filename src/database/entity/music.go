@@ -19,15 +19,10 @@ type Music struct {
 
 var _ Entity = Music{}
 
-func (m Music) Migration(currentVersion [3]int) []Migration {
-	migrations := []Migration{
-		{
-			Version:   [3]int{0, 1, 0},
-			Migration: m.Template(),
-		},
-	}
+func (m Music) Migration(currentVersion MigrationVersion) []Migration {
+	migrations := []Migration{}
 
-	return migrationsOfVersion(migrations, currentVersion)
+	return MigrationsByVersion(migrations, currentVersion)
 }
 
 func (m Music) Template() string {

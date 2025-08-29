@@ -8,15 +8,10 @@ type Status struct {
 
 var _ Entity = Status{}
 
-func (s Status) Migration(currentVersion [3]int) []Migration {
-	migrations := []Migration{
-		{
-			Version:   [3]int{0, 1, 0},
-			Migration: s.Template(),
-		},
-	}
+func (s Status) Migration(currentVersion MigrationVersion) []Migration {
+	migrations := []Migration{}
 
-	return migrationsOfVersion(migrations, currentVersion)
+	return MigrationsByVersion(migrations, currentVersion)
 }
 
 func (s Status) Template() string {

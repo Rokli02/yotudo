@@ -9,9 +9,20 @@ import (
 const isDebugMode = true
 const dateFormat = "2006-01-02_15:04:05.0000"
 
-func InitializeLogger() error {
+type Logger interface {
+	Info(a ...any)
+	InfoF(format string, a ...any)
+	Debug(a ...any)
+	DebugF(format string, a ...any)
+	WarningF(format string, a ...any)
+	Warning(a ...any)
+	ErrorF(format string, a ...any)
+	Error(a ...any)
+}
 
-	return nil
+func InitializeLogger() ([]Logger, error) {
+
+	return nil, nil
 }
 
 func Info(a ...any) {

@@ -7,15 +7,10 @@ type Genre struct {
 
 var _ Entity = Genre{}
 
-func (g Genre) Migration(currentVersion [3]int) []Migration {
-	migrations := []Migration{
-		{
-			Version:   [3]int{0, 1, 0},
-			Migration: g.Template(),
-		},
-	}
+func (g Genre) Migration(currentVersion MigrationVersion) []Migration {
+	migrations := []Migration{}
 
-	return migrationsOfVersion(migrations, currentVersion)
+	return MigrationsByVersion(migrations, currentVersion)
 }
 
 func (g Genre) Template() string {

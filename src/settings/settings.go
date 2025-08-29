@@ -2,7 +2,6 @@ package settings
 
 import (
 	"os"
-	"yotudo/src/lib/logger"
 	"yotudo/src/lib/yaml"
 )
 
@@ -28,8 +27,6 @@ func createMultipleDirectories(paths []string) error {
 
 func CreateEssentialDirectoriesAndFiles() error {
 	if err := createMultipleDirectories([]string{"./data/tmp", "./data/imgs", "./data/mscs"}); err != nil { //TODO: Ellenőrizni, hogy nem-e rontott el semmit, mert "./data", ki lett véve a listából
-		logger.Error(err)
-
 		return err
 	}
 
@@ -48,8 +45,6 @@ func CreateEssentialDirectoriesAndFiles() error {
 			Location: "./data/yU0dRywKd",
 		},
 	}); err != nil {
-		logger.Error(err)
-
 		return err
 	}
 
@@ -67,17 +62,13 @@ func LoadSettings() (*Settings, error) {
 		},
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
-			Version:  "0.1.0",
+			Version:  "1.0.1",
 		},
 	}
 
 	if config, err := yaml.LoadFile[settingsYaml]("config.yaml"); err != nil {
-		logger.Error(err)
-
 		return nil, err
 	} else if err := Global.Merge(config); err != nil {
-		logger.Error(err)
-
 		return nil, err
 	}
 

@@ -1,19 +1,19 @@
-package controller
+package service
 
 import (
 	"yotudo/src/database/repository"
 	"yotudo/src/model"
 )
 
-type StatusController struct {
+type StatusService struct {
 	statusRepository *repository.Status
 }
 
-func NewStatusController(statusRepository *repository.Status) *StatusController {
-	return &StatusController{statusRepository: statusRepository}
+func NewStatusService(statusRepository *repository.Status) *StatusService {
+	return &StatusService{statusRepository: statusRepository}
 }
 
-func (c *StatusController) GetAll() []model.Status {
+func (c *StatusService) GetAll() []model.Status {
 	entities := c.statusRepository.FindAll()
 
 	result := make([]model.Status, len(entities))

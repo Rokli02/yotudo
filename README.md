@@ -27,8 +27,7 @@ database:
 - Logok lemezre történő kiírása
 - Log szintek 'config.yaml'-ben történő megadása
 - 'Logger' nevű interface, ami megvalósítja a 'Info', 'InfoF', stb... függvényeket. Ezeket tartalmazó tömböt inicializáljon a 'InitializeLogger' függvény, amiken végigmenve pedig meghívódnak a megfelelő függvények.
-- Ellenőrizni a segéd parancsok meglétét, a "--version", vagy "--help" paraméterük meghívásával
-- "Controllers" struktúrák és társaik átnevezése "Service"-re (mert lényegében azok)
+- Eltárolni az app adatokat bezáráskor, megnyitáskor vissza betölteni (pl.: ablak méret, pozíció, stb...)
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
