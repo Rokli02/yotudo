@@ -81,9 +81,6 @@ func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) erro
 			return
 		}
 
-		// shouldDownloadThumbnail := music.PicFilename != nil && *music.PicFilename != "thumbnail"
-		// TODO: A FileService segítségével lementeni a 'PicFilename'-ban található képet, majd hozzáadni a rekordhoz
-
 		_, err = c.musicRepository.UpdateOne(savedMusic.Id, savedMusic.ToUpdateMusic())
 		if err != nil {
 			logger.Error("CRITICAL ERROR: video got downloaded but couldn't update its record in db:", err)

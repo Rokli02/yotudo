@@ -7,7 +7,7 @@ import (
 
 var Global Settings
 
-const USE_CMD_HIDE_WINDOW = true
+const USE_CMD_HIDE_WINDOW bool = true
 
 func createMultipleDirectories(paths []string) error {
 	for _, path := range paths {

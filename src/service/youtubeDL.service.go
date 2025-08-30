@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -115,12 +116,15 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 
 	// Build command
 	commandArgs := []string{
-		"--ffmpeg-location", settings.Global.App.FFMPEGLocation,
 		"--no-playlist",
 		"-R", "3",
 		"--windows-filenames",
 		"-f", "bestaudio",
 		"--audio-quality", "0",
+	}
+
+	if settings.Global.App.FFMPEGLocation != "ffmpeg" {
+		commandArgs = append(commandArgs, "--ffmpeg-location", settings.Global.App.FFMPEGLocation)
 	}
 
 	if hasThumbnail {
@@ -142,7 +146,6 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 	defer cancelCtx()
 
 	// Download to Temp
-	// TODO: Valami itt baszódik el, javítani (átírni cmd.Run()-ra segíthet talán a logolásba, vagy IDK)
 	cmd := exec.CommandContext(ctx, settings.Global.App.YTDLLocation, commandArgs...)
 	if settings.USE_CMD_HIDE_WINDOW {
 		cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -150,32 +153,12 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 			CreationFlags: 0x08000000,
 		}
 	}
-	if err := cmd.Start(); err != nil {
-		logger.Error("YoutubeService.DownloadVideo [Couldn't start command]:", err)
-		return music, err
-	}
 
-	// Logging the messages of YT download process
-	if stdout, err := cmd.StdoutPipe(); err != nil {
-		var buff []byte = make([]byte, 256)
-		var read int
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
-		for err == nil {
-			read, err = stdout.Read(buff)
-
-			if read > 0 {
-				logger.Debug("YT_CMD:", string(buff[:read]))
-			}
-		}
-	} else {
-		logger.Warning("Something during video download:", err)
-
-		return music, err
-	}
-
-	if err := cmd.Wait(); err != nil {
-		logger.Error("YoutubeService.DownloadVideo [Something happend during command execution]:", err)
-
+	if err := cmd.Run(); err != nil {
+		logger.Error("YoutubeService.DownloadVideo [Something happend during command execution]:", err.Error()+": ", strings.ReplaceAll(stderr.String(), "\n", " | "))
 		return music, err
 	}
 

@@ -11,7 +11,6 @@ export const Title = styled('h2')({
 export const Divider = styled('hr')<{ dir?: 'horizontal' | 'vertical', length?: string | number }>(({ dir, length = '100%' }) => {
     const resultObj: CSSObject = {
         display: 'inline-flex',
-        marginInline: '4px',
         background: '#fff6',
         border: 'none',
         borderRadius: '3px',
@@ -21,9 +20,11 @@ export const Divider = styled('hr')<{ dir?: 'horizontal' | 'vertical', length?: 
     if (dir === 'horizontal') {
         resultObj.width = length;
         resultObj.height = '2px';
+        resultObj.marginInline = 'auto';
     } else {
         resultObj.width = '2px';
         resultObj.height = length;
+        resultObj.marginBlock = 'auto';
     }
 
     return resultObj

@@ -1,5 +1,7 @@
 package entity
 
+import "encoding/json"
+
 type Music struct {
 	Id          int64
 	Name        string
@@ -41,4 +43,9 @@ func (m Music) Template() string {
 		FOREIGN KEY(author_id)  REFERENCES author(id),
 		FOREIGN KEY(genre_id)   REFERENCES genre(id)
 	);`
+}
+
+func (m *Music) String() string {
+	jb, _ := json.Marshal(m)
+	return string(jb)
 }

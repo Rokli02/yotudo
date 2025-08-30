@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"yotudo/src/database/builders"
+	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -147,6 +148,22 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 	return music, nil
 }
 
+func (m *Music) FindById_Entity(musicId int64) (*entity.Music, error) {
+	entity := &entity.Music{}
+
+	if err := m.db.QueryRow(
+		"SELECT id, author_id, name, published, album, genre_id, url, filename, pic_filename, status, updated_at FROM music WHERE id=? LIMIT 1", musicId,
+	).Scan(
+		&entity.Id, &entity.AuthorId, &entity.Name, &entity.Published, &entity.Album, &entity.GenreId, &entity.Url, &entity.Filename, &entity.PicFilename, &entity.Status, &entity.UpdatedAt,
+	); err != nil {
+		return nil, errors.ErrNotFound
+	}
+
+	logger.Debug("Found Entity:", entity.String())
+
+	return entity, nil
+}
+
 func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 	var published *int = nil
 	var album *string = nil
@@ -196,32 +213,7 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 Updates Music and its contributor references too.
 */
 func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music, returnError error) {
-	updateOneResponse = nil
-	returnError = nil
-
-	if music == nil {
-		returnError = errors.ErrNotReceivedInputs
-
-		return
-	}
-
-	row := m.db.QueryRow(
-		"SELECT id FROM music WHERE id=? LIMIT 1",
-		musicId,
-	)
-
-	var idFromDB int64
-
-	if err := row.Scan(&idFromDB); err != nil {
-		logger.Warning("Music.UpdateOne", err)
-		returnError = errors.ErrNotFound
-
-		return
-	} else if idFromDB == 0 {
-		returnError = errors.ErrNotFound
-
-		return
-	}
+	logger.Debug("Updating music:", music.String())
 
 	// If a value in 'contributorState' is 'false' must be deleted, if 'true' must be added, otherwise do nothing
 	contributorState := map[int64]bool{}

@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type Music struct {
 	Id           int64
 	Name         string
@@ -112,4 +114,8 @@ func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicF
 	}
 
 	return
+}
+func (m *UpdateMusic) String() string {
+	jb, _ := json.Marshal(m)
+	return string(jb)
 }

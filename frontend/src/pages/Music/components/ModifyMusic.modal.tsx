@@ -1,9 +1,8 @@
-import { FC, useEffect } from 'react'
-import { TopRightButton } from '@src/components/common'
+import { FC } from 'react'
+import { TopRightButton, Divider } from '@src/components/common'
 import { Close } from '@mui/icons-material'
 import {
     Form,
-    FormCheckbox,
     FormInput,
     FormAutocomplete,
     FormMultiselectAutocomplete,
@@ -54,9 +53,31 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                     <FormInput name='name' value={music['name']} />
                 </FormControl>
                 <FormControl>
+                    <FormAutocomplete
+                        debounceTime={600}
+                        fetchOnce
+                        name='author'
+                        label='Szerző'
+                        getOptions={getAuthorOptions}
+                        value={{ label: music['author'].name, ...music['author'] }}
+                    />
+                </FormControl>
+                <FormControl>
                     <InputLabel>URL</InputLabel>
                     <FormInput name='url' type='url' value={music['url']}/>
                 </FormControl>
+                <FormControl>
+                    <FormMultiselectAutocomplete
+                        debounceTime={600}
+                        fetchOnce
+                        name='contributor'
+                        label='Közreműködők'
+                        getOptions={getContributorOptions}
+                        renderChipContent={(v) => v.label}
+                        selectedOptions={music['contributor']?.map((v) => ({ label: v.name, ...v }))}
+                    />
+                </FormControl>
+                <Divider dir='horizontal' length='84%' sx={{ backgroundColor: 'var(--primary-color)' }}/>
                 <FormControl>
                     <InputLabel>Album</InputLabel>
                     <FormInput name='album' type='text' value={music['album']}/>
@@ -69,34 +90,13 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                     <FormAutocomplete
                         debounceTime={600}
                         fetchOnce
-                        name='author'
-                        label='Szerző'
-                        getOptions={getAuthorOptions}
-                        value={{ label: music['author'].name, ...music['author'] }}
-                    />
-                </FormControl>
-                <FormControl>
-                    <FormAutocomplete
-                        debounceTime={600}
-                        fetchOnce
                         name='genre'
                         label='Műfaj'
                         getOptions={getGenreOptions}
                         value={{ label: music['genre'].name, ...music['genre'] }}
                     />
                 </FormControl>
-                <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.picName == 'thumbnail'} />
-                <FormControl>
-                    <FormMultiselectAutocomplete
-                        debounceTime={600}
-                        fetchOnce
-                        name='contributor'
-                        label='Közreműködők'
-                        getOptions={getContributorOptions}
-                        renderChipContent={(v) => v.label}
-                        selectedOptions={music['contributor']?.map((v) => ({ label: v.name, ...v }))}
-                    />
-                </FormControl>
+                {/* <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.picName == 'thumbnail'} /> */}
             </DialogContent>
             <DialogActions>
                 <Button type='submit' color='success'>Módosítás</Button>

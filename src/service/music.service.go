@@ -44,6 +44,10 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 		return nil, err
 	}
 
+	if newMusic.PicFilename != "" && newMusic.PicFilename != "thumbnail" {
+		// TODO: Átmozgatni / Letölteni a képet az URI alapján az 'imgs' mappába
+	}
+
 	insertedId, err := c.musicRepository.SaveOne(newMusic)
 	if err != nil {
 		return nil, err
@@ -53,12 +57,35 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 }
 
 func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, error) {
+	if updateMusic == nil {
+		return nil, errors.ErrNotReceivedInputs
+	}
+
+	musicEntity, err := c.musicRepository.FindById_Entity(updateMusic.Id)
+	if err != nil {
+		logger.Warning(err)
+
+		return nil, err
+	}
+
 	if err := c.processMusicAuthor(updateMusic); err != nil {
 		return nil, err
 	}
 
 	if err := c.processMusicContributors(updateMusic); err != nil {
 		return nil, err
+	}
+
+	if musicEntity.Filename != nil {
+		updateMusic.Filename = *musicEntity.Filename
+	}
+
+	if updateMusic.PicFilename == "" {
+		if musicEntity.PicFilename != nil {
+			updateMusic.PicFilename = *musicEntity.PicFilename
+		}
+	} else if musicEntity.PicFilename == nil || updateMusic.PicFilename != *musicEntity.PicFilename {
+		// TODO: Átmozgatni / Letölteni a képet az URI alapján az 'imgs' mappába
 	}
 
 	return c.musicRepository.UpdateOne(updateMusic.Id, updateMusic)
