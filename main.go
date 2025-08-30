@@ -5,6 +5,7 @@ import (
 	"yotudo/src"
 	"yotudo/src/database"
 	"yotudo/src/database/repository"
+	"yotudo/src/handler"
 	"yotudo/src/lib/logger"
 	"yotudo/src/service"
 	"yotudo/src/settings"
@@ -65,6 +66,8 @@ func main() {
 	app.SetInfoService(infoService)
 	windowWidth, windowHeight := infoService.GetWindowSize()
 
+	assetsHandler := handler.NewAssetsHandler()
+
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:     "yotudo",
@@ -73,7 +76,8 @@ func main() {
 		Width:     windowWidth,
 		Height:    windowHeight,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets:  assets,
+			Handler: assetsHandler,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.Startup,

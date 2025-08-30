@@ -29,8 +29,9 @@ logger:
 
 ## Backend továbbfejlesztés:
 - TODO-k megcsinálása
-- youtubeDLService javítása
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
+- styled(...) komponensek elhagyása -> 'sx' prop használata helyette
+- formok konroláltá alakítása
 - Ha a letöltés mappába mozgatjuk át a zenét, a státuszt állítsa át ("Folyamatban" típusra)

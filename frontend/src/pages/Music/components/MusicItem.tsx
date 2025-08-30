@@ -45,6 +45,10 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
             onMouseUp={onMouseLeave}
             onMouseLeave={onMouseLeave}
         >
+            { music.picName
+                ? <ThumbnailBackground src={`image/${music.picName}`}/>
+                : undefined
+            }
             <CursorElement />
             <ItemHeader.Container>
                 <ItemHeader.TopRow>
@@ -233,4 +237,20 @@ const ItemFooter = {
         },
     }),
 };
+const ThumbnailBackground = styled('img')({
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    height: '100%',
+    width: '100%',
+    aspectRatio: 1,
+    opacity: .23,
+    backgroundBlendMode: 'darken',
+    'object-fit': 'cover',
+    'mask-image': `radial-gradient(
+        circle at center,
+        rgba(255,255,255,1) 0%,
+        rgba(255,255,255,0) 67%
+    )`,
+})
 //#endregion Components

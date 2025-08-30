@@ -26,7 +26,7 @@ type YoutubeService struct {
 }
 
 func NewYoutubeService(
-	ctx *context.Context, //TODO: Ezt letesztelni, mert lehet hogy hibát dob és nem adódik át ténylegesen a kontextus címe
+	ctx *context.Context,
 	musicRepository *repository.Music,
 	fileService FileService,
 	ytDLService *YoutubeDLService,
