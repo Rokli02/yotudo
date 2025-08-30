@@ -243,7 +243,7 @@ const ThumbnailBackground = styled('img')({
     top: 0,
     height: '100%',
     width: '100%',
-    aspectRatio: 1,
+    pointerEvents: 'none',
     opacity: .23,
     backgroundBlendMode: 'darken',
     'object-fit': 'cover',
