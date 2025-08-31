@@ -6,6 +6,9 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	pathModule "path"
@@ -89,14 +92,79 @@ func (s FileService) IsExists(path string) bool {
 	return false
 }
 
-func (s FileService) DownloadImageToTemp(imageUri string) {
-	if file, err := os.Open(imageUri); err == nil {
-		defer file.Close()
-		// Image found on the PC locally
-	} else {
-		// Image must be found on the web
-
+/*
+Saves the given 'imageUri' into a file in the local temp folder and returns its name.
+*/
+func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
+	imageUrl, err := url.Parse(imageUri)
+	if err != nil {
+		return "", err
 	}
+
+	response, err := http.Get(imageUri)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	fileExtension := "jpg"
+	contentType := response.Header.Get("Content-Type")
+	if contentType != "" {
+		if extractedExtension, found := strings.CutSuffix(contentType, "image/"); found {
+			fileExtension = extractedExtension
+		}
+	}
+
+	purgedFilename := s.PurgeFileName(imageUrl.Path)
+	if purgedFilenameExt := pathModule.Ext(purgedFilename); purgedFilenameExt != "" {
+		if tmpPurgedFilename, found := strings.CutSuffix(purgedFilename, purgedFilenameExt); found {
+			purgedFilename = tmpPurgedFilename
+		}
+	}
+
+	filename := fmt.Sprintf("%s.%s", purgedFilename, fileExtension)
+
+	createdImageFile, err := os.Create(pathModule.Join(settings.Global.App.TempLocation, filename))
+	if err != nil {
+		return "", err
+	}
+	defer createdImageFile.Close()
+
+	_, err = io.Copy(createdImageFile, response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}
+
+/*
+Copies the given 'imagePath' into the local temp folder and returns its name.
+*/
+func (s FileService) CopyImageFromFS(imagePath string) (string, error) {
+	filename := pathModule.Base(imagePath)
+	if f, err := os.Open(pathModule.Join(settings.Global.App.TempLocation, filename)); err == nil {
+		// Már megtalálható a fájl az ideiglenes mappába, térjünk vissza a nevével
+		f.Close()
+
+		return filename, nil
+	}
+
+	ogFile, err := os.Open(imagePath)
+	if err != nil {
+		return "", err
+	}
+	defer ogFile.Close()
+
+	if f, err := os.Create(pathModule.Join(settings.Global.App.TempLocation, filename)); err != nil {
+		return "", err
+	} else {
+		defer f.Close()
+
+		io.Copy(f, ogFile)
+	}
+
+	return filename, nil
 }
 
 func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) {
@@ -141,8 +209,8 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 	}
 
 	// Calculate new size based on the ratio
-	var newWidth int
-	var newHeight int
+	var newWidth int = width
+	var newHeight int = height
 	if ratio < 1 {
 		newWidth = max(int(float32(width)*ratio), THUMBNAIL_SIZE)
 		newHeight = max(int(float32(height)*ratio), THUMBNAIL_SIZE)

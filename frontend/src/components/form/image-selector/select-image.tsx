@@ -9,7 +9,7 @@ export type SelectorType = 'none' | 'thumbnail' | 'web' | 'local'
 
 export interface SelectImageProps {
     value?: "" | "thumbnail";
-    onChange: (v?: string | null, type?: SelectorType) => void;
+    onChange: (type: SelectorType, v?: string | null) => void;
     onError?: (e: string) => void;
     restoreValue: () => void;
 }
@@ -37,7 +37,7 @@ export const SelectImage: FC<SelectImageProps> = ({ value, onChange, restoreValu
                     color="secondary"
                     onClick={() => {
                         DialogService.OpenFileDialog()
-                            .then((selectedFilename) => onChange(selectedFilename, 'local'))
+                            .then((selectedFilename) => onChange('local', selectedFilename))
                             .catch(() => {})
                     }}
                 >Kiválasztás</Button>
@@ -48,15 +48,15 @@ export const SelectImage: FC<SelectImageProps> = ({ value, onChange, restoreValu
     const onSelectType: SelectProps['onChange'] = (chosenValue: SelectorType) => {
         switch (chosenValue) {
             case 'none':
-                onChange(undefined, 'none');
+                onChange('none', undefined);
 
                 break;
             case 'thumbnail':
-                onChange(chosenValue, 'thumbnail');
+                onChange('thumbnail', chosenValue);
 
                 break;
             default:
-                onChange(null);
+                onChange('none', null);
         }
 
         setOption(SelectOptions[chosenValue])
@@ -124,10 +124,10 @@ const ContentStyle = {
     },
 } as const satisfies Record<string, SxProps<Theme>>
 
-const SelectImageWeb: FC<{ onChange: (v?: string | undefined, type?: SelectorType) => void }> = ({ onChange }) => {
+const SelectImageWeb: FC<{ onChange: (type: SelectorType, v?: string | undefined) => void }> = ({ onChange }) => {
     const [state, setState] = useState<string>('');
 
-    const confirm = () => onChange(state, 'web')
+    const confirm = () => onChange('web', state)
 
     return <>
         <FormControl sx={ContentStyle.WebFormControl} variant="standard">

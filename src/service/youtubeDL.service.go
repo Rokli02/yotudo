@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"os/exec"
 	"path"
 	"regexp"
@@ -26,8 +27,10 @@ func NewYoutubeDLService(fileService FileService) *YoutubeDLService {
 }
 
 const (
-	FILE_EXTENSION  = "webm"
-	IMAGE_EXTENSION = "webp"
+	FILE_EXTENSION        = "webm"
+	FINAL_IMAGE_EXTENSION = "jpeg"
+	FINAL_MUSIC_EXTENSION = "mp3"
+	YT_THUMBNAIL_URL      = "https://i.ytimg.com/vi/%s/0.jpg"
 )
 
 func (s YoutubeDLService) PrepareUrl(url string, stripUnnecessaryParameters bool) (string, error) {
@@ -98,21 +101,9 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 	baseFilename := s.fileService.CreateFilename(music)
 	filename := fmt.Sprintf("%s.%s", baseFilename, FILE_EXTENSION)
 	tempFilePath := path.Join(settings.Global.App.TempLocation, filename)
-	var picFilename, tempPicFilePath string
-
-	var hasThumbnail bool
-	if music.PicFilename != nil && *music.PicFilename == "thumbnail" {
-		hasThumbnail = true
-		picFilename = fmt.Sprintf("%s.%s", baseFilename, IMAGE_EXTENSION)
-		tempPicFilePath = path.Join(settings.Global.App.TempLocation, picFilename)
-
-		music.PicFilename = &picFilename
-	}
 
 	music.Filename = &filename
 	music.Status = 1
-
-	logger.DebugF("DownloadVideo hasThumbnail=(%t)", hasThumbnail)
 
 	// Build command
 	commandArgs := []string{
@@ -120,27 +111,9 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 		"-R", "3",
 		"--windows-filenames",
 		"-f", "bestaudio",
-		"--audio-quality", "0",
+		"-o", path.Join(settings.Global.App.TempLocation, filename),
+		music.Url,
 	}
-
-	if settings.Global.App.FFMPEGLocation != "ffmpeg" {
-		commandArgs = append(commandArgs, "--ffmpeg-location", settings.Global.App.FFMPEGLocation)
-	}
-
-	if hasThumbnail {
-		commandArgs = append(commandArgs, "--write-thumbnail")
-	}
-
-	logger.Debug("Temp File Path:", tempFilePath)
-
-	commandArgs = append(commandArgs, "-o", path.Join(settings.Global.App.TempLocation, filename))
-
-	if hasThumbnail {
-		commandArgs = append(commandArgs, "-o", "thumbnail:"+path.Join(settings.Global.App.TempLocation, baseFilename))
-	}
-
-	commandArgs = append(commandArgs, music.Url)
-	logger.Debug("Command was built, now executing it")
 
 	ctx, cancelCtx := context.WithTimeout(ctxArg, time.Second*60)
 	defer cancelCtx()
@@ -169,17 +142,18 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 		return music, err
 	}
 
-	// Move thumbnail (if downloaded) to imgs dir
-	if hasThumbnail {
-		if err := s.fileService.MoveTo(tempPicFilePath, settings.Global.App.ImagesLocation); err != nil {
-			logger.Warning("YoutubeService.DownloadVideo [Couldn't move thumbnail to its directory]", err)
-
-			music.PicFilename = nil
-		}
-	}
-
 	// Mark music as downloaded
 	music.Status = 2
 
 	return music, nil
+}
+
+func (s YoutubeDLService) GetVideoThumbnailUrl(rawUrl string) (string, error) {
+	videoUrl, err := url.Parse(rawUrl)
+	if err != nil {
+		return "", err
+	}
+
+	vId := videoUrl.Query().Get("v")
+	return fmt.Sprintf(YT_THUMBNAIL_URL, vId), nil
 }

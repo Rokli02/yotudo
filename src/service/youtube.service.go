@@ -161,10 +161,13 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 			goto leave_music_picfile
 		}
 
+		imageSize := min(THUMBNAIL_SIZE, imageWidth, imageHeight)
+		offsetX, offsetY := (imageWidth-imageSize)/2, (imageHeight-imageSize)/2
+
 		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, imageExt); found {
-			tempPicturePath = tempPictureBase + ".jpeg"
+			tempPicturePath = fmt.Sprintf("%s.%s", tempPictureBase, FINAL_IMAGE_EXTENSION)
 		} else {
-			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", IMAGE_EXTENSION, *music.PicFilename)
+			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", imageExt, *music.PicFilename)
 
 			goto leave_music_picfile
 		}
@@ -175,10 +178,9 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 		ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*10)
 		defer cancelCtx()
 
-		logger.Debug("Creating temporary image file for thumbnail")
 		cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation,
 			"-i", picturePath,
-			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", imageWidth, imageHeight, THUMBNAIL_SIZE, THUMBNAIL_SIZE, (imageWidth-THUMBNAIL_SIZE)/2, imageHeight-THUMBNAIL_SIZE/2),
+			"-vf", fmt.Sprintf("scale=%d:%d,crop=%d:%d:%d:%d", imageWidth, imageHeight, imageSize, imageSize, offsetX, offsetY),
 			tempPicturePath,
 		)
 		if settings.USE_CMD_HIDE_WINDOW {
@@ -209,7 +211,7 @@ leave_music_picfile:
 
 	filename := *music.Filename
 	if _filename, found := strings.CutSuffix(filename, FILE_EXTENSION); found {
-		filename = _filename + "mp3"
+		filename = _filename + FINAL_MUSIC_EXTENSION
 	}
 
 	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))

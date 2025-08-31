@@ -2,27 +2,37 @@ package service
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"strings"
 	"yotudo/src/database/errors"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
+	"yotudo/src/settings"
 )
 
 type MusicService struct {
 	musicRepository       *repository.Music
 	authorRepository      *repository.Author
 	contributorRepository *repository.Contributor
+	youtubeDLService      *YoutubeDLService
+	fileService           FileService
 }
 
 func NewMusicService(
 	musicRepository *repository.Music,
 	authorRepository *repository.Author,
 	contributorRepository *repository.Contributor,
+	youtubeDLService *YoutubeDLService,
+	fileService FileService,
 ) *MusicService {
 	return &MusicService{
 		musicRepository:       musicRepository,
 		authorRepository:      authorRepository,
 		contributorRepository: contributorRepository,
+		youtubeDLService:      youtubeDLService,
+		fileService:           fileService,
 	}
 }
 
@@ -52,8 +62,39 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 		return nil, err
 	}
 
-	if newMusic.PicFilename != "" && newMusic.PicFilename != "thumbnail" {
-		// TODO: Átmozgatni / Letölteni a képet az URI alapján az 'imgs' mappába
+	switch newMusic.PicType {
+	case "none":
+		newMusic.PicFilename = ""
+	case "thumbnail":
+		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(newMusic.Url)
+		if err != nil {
+			logger.Error(err)
+		} else {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				newMusic.PicFilename = tmpFilename
+			}
+		}
+	case "web":
+		if newMusic.PicFilename != "" {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(newMusic.PicFilename)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				newMusic.PicFilename = tmpFilename
+			}
+		}
+	case "local":
+		if newMusic.PicFilename != "" {
+			tmpFilename, err := c.fileService.CopyImageFromFS(newMusic.PicFilename)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				newMusic.PicFilename = tmpFilename
+			}
+		}
 	}
 
 	insertedId, err := c.musicRepository.SaveOne(newMusic)
@@ -61,7 +102,19 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 		return nil, err
 	}
 
-	return c.musicRepository.FindById(insertedId)
+	savedMusic, err := c.musicRepository.FindById(insertedId)
+	if err != nil {
+		return nil, err
+	}
+
+	if savedMusic.PicFilename != nil {
+		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, *savedMusic.PicFilename), settings.Global.App.ImagesLocation)
+		if err != nil {
+			logger.Error(err)
+		}
+	}
+
+	return savedMusic, nil
 }
 
 func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, error) {
@@ -92,11 +145,67 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		if musicEntity.PicFilename != nil {
 			updateMusic.PicFilename = *musicEntity.PicFilename
 		}
-	} else if musicEntity.PicFilename == nil || updateMusic.PicFilename != *musicEntity.PicFilename {
-		// TODO: Átmozgatni / Letölteni a képet az URI alapján az 'imgs' mappába
 	}
 
-	return c.musicRepository.UpdateOne(updateMusic.Id, updateMusic)
+	oldPicFilename := musicEntity.PicFilename
+	switch updateMusic.PicType {
+	case "none":
+		updateMusic.PicFilename = ""
+	case "thumbnail":
+		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(updateMusic.Url)
+		if err != nil {
+			logger.Error(err)
+		} else {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				updateMusic.PicFilename = tmpFilename
+			}
+		}
+	case "web":
+		if updateMusic.PicFilename != "" {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(updateMusic.PicFilename)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				updateMusic.PicFilename = tmpFilename
+			}
+		}
+	case "local":
+		if musicEntity.PicFilename != nil && strings.HasSuffix(updateMusic.PicFilename, *musicEntity.PicFilename) {
+			updateMusic.PicFilename = *musicEntity.PicFilename
+
+			break
+		}
+
+		if updateMusic.PicFilename != "" {
+			tmpFilename, err := c.fileService.CopyImageFromFS(updateMusic.PicFilename)
+			if err != nil {
+				logger.Error(err)
+			} else {
+				updateMusic.PicFilename = tmpFilename
+			}
+		}
+	}
+
+	updatedMusic, err := c.musicRepository.UpdateOne(updateMusic.Id, updateMusic)
+	if err != nil {
+		return nil, err
+	}
+
+	if oldPicFilename != nil && (updatedMusic.PicFilename == nil || *oldPicFilename != *updatedMusic.PicFilename) {
+		os.Remove(path.Join(settings.Global.App.ImagesLocation, *oldPicFilename))
+	}
+
+	if updatedMusic.PicFilename != nil && (oldPicFilename == nil || *oldPicFilename != *updatedMusic.PicFilename) {
+		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, *updatedMusic.PicFilename), settings.Global.App.ImagesLocation)
+		if err != nil {
+			logger.Error(err)
+		}
+	}
+
+	return updatedMusic, nil
 }
 
 func (c *MusicService) Delete(id int64) error {

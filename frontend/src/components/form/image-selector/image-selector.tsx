@@ -5,7 +5,7 @@ import { SelectImage, SelectorType } from "./select-image";
 
 export interface ImageSelectorProps extends Omit<ComponentProps<typeof Box>, 'onChange'> {
     value?: string;
-    onChange: (v?: string | null, type?: SelectorType) => void;
+    onChange: (type?: SelectorType, v?: string | null) => void;
     restoreValue: () => void;
 }
 
@@ -18,7 +18,7 @@ export const ImageSelector: FC<ImageSelectorProps> = ({ value, onChange, restore
             case "thumbnail":
                 return <SelectImage value={value} onChange={onChange} restoreValue={restoreValue} />
             default:
-                return <SelectedFilename value={value} onRemove={onChange}/>
+                return <SelectedFilename value={value} onRemove={() => onChange('none', undefined)}/>
         }
     }, [value, onChange])
 

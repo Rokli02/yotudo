@@ -48,7 +48,7 @@ func main() {
 	statusService := service.NewStatusService(statusRepository)
 	genreService := service.NewGenreService(genreRepository)
 	authorService := service.NewAuthorService(authorRepository)
-	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository)
+	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository, youtubeDLService, fileService)
 	youtubeService := service.NewYoutubeService(&app.Ctx, musicRepository, fileService, youtubeDLService)
 	dialogService := service.NewDialogService(&app.Ctx)
 

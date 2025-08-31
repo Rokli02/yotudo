@@ -14,7 +14,7 @@ export const FormImageSelector: FC<FormImageSelector> = ({ name, defaultValue, o
     const [_value, setValue] = useState<unknown>(defaultValue)
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
 
-    const _onChange: ComponentProps<typeof ImageSelector>['onChange'] = (v, type) => {
+    const _onChange: ComponentProps<typeof ImageSelector>['onChange'] = (type, v) => {
         setValue(v);
         onValueChange(name, v);
         onValueChange(`${name}_chosenType`, type);
