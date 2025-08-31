@@ -1,12 +1,11 @@
 import { DialogActions, DialogContent } from '@mui/material'
 import { FC } from 'react'
-import { TopRightButton } from '@src/components/common'
+import { Divider, TopRightButton } from '@src/components/common'
 import { Button, FormControl, InputLabel } from '@src/components/form'
 import { Close } from '@mui/icons-material'
 import {
     Form,
     FormInput,
-    FormCheckbox,
     FormAutocomplete,
     FormMultiselectAutocomplete,
 } from '@src/contexts/form'
@@ -22,6 +21,7 @@ import {
     Title,
     transformFormObjectToNewMusic,
 } from './musicForm.utils'
+import { FormImageSelector } from '@src/contexts/form/FormImageSelector'
 
 export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open, onClose }) => {
     const { addMusic } = useMusicContext();
@@ -44,9 +44,27 @@ export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open
                         <FormInput name='name' />
                     </FormControl>
                     <FormControl>
+                        <FormAutocomplete
+                            debounceTime={600}
+                            name='author'
+                            label='Szerző'
+                            getOptions={getAuthorOptions}
+                        />
+                    </FormControl>
+                    <FormControl>
                         <InputLabel>URL</InputLabel>
                         <FormInput name='url' type='url'/>
                     </FormControl>
+                    <FormControl>
+                        <FormMultiselectAutocomplete
+                            debounceTime={600}
+                            name='contributor'
+                            label='Közreműködők'
+                            getOptions={getContributorOptions}
+                            renderChipContent={(v) => v.label}
+                        />
+                    </FormControl>
+                    <Divider dir='horizontal' length='570px' sx={{ backgroundColor: 'var(--primary-color)' }}/>
                     <FormControl>
                         <InputLabel>Album</InputLabel>
                         <FormInput name='album' type='text'/>
@@ -56,14 +74,18 @@ export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open
                         <FormInput name='published' type='number'/>
                     </FormControl>
                     <FormControl>
-                        <FormAutocomplete debounceTime={600} name='author' label='Szerző' getOptions={getAuthorOptions}/>
+                        <FormAutocomplete
+                            debounceTime={600}
+                            fetchOnce
+                            name='genre'
+                            label='Műfaj'
+                            getOptions={getGenreOptions}
+                        />
                     </FormControl>
                     <FormControl>
-                        <FormAutocomplete debounceTime={600} fetchOnce name='genre' label='Műfaj' getOptions={getGenreOptions}/>
-                    </FormControl>
-                    <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' />
-                    <FormControl>
-                        <FormMultiselectAutocomplete debounceTime={600} name='contributor' label='Közreműködők' getOptions={getContributorOptions} renderChipContent={(v) => v.label}/>
+                        <FormImageSelector
+                            name='picName'
+                        />
                     </FormControl>
                 </DialogContent>
                 <DialogActions>

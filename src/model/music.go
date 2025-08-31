@@ -72,6 +72,7 @@ type NewMusic struct {
 	Contributors []OptionalAuthor
 	GenreId      int64
 	PicFilename  string
+	PicType      string
 }
 
 func (m *NewMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Author }
@@ -90,6 +91,7 @@ type UpdateMusic struct {
 	GenreId      int64
 	Filename     string
 	PicFilename  string
+	PicType      string
 }
 
 func (m *UpdateMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Author }

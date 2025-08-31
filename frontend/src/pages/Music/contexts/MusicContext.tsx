@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { createContext, FC, ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, FC, ReactElement, useEffect, useState } from "react";
 import { Music, MusicService, NewMusic, Page, Pagination, MusicUpdate, StatusService, Status } from "@src/api";
 import { PageSetter, usePage } from "@src/hooks/usePage";
 import { EventsOn } from "@wailsjs/runtime/runtime";
@@ -73,7 +73,24 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
 
                 return;
             case 2:
-                await MusicService.MoveMusicTo(music.id);
+                setMusics((pre) => ({
+                    count: pre.count,
+                    data: pre.data.map((_music) => {
+                        if (_music.id !== music.id || _music.status.id == status[1].id) return _music;
+
+                        return { ..._music, status: status[1] };
+                    }),   
+                }));
+                MusicService.MoveMusicTo(music.id).finally(() => {
+                    setMusics((pre) => ({
+                        count: pre.count,
+                        data: pre.data.map((_music) => {
+                            if (_music.id !== music.id || _music.status.id == status[2].id) return _music;
+
+                            return { ..._music, status: status[2] };
+                        }),   
+                    }));
+                });
 
                 return;
         }
@@ -123,14 +140,26 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
                     console.log(`Download progress for id=${musicId} is ${progress}%`)
                     break;
                 case 'completed':
-                    setMusics((pre) => ({
-                        count: pre.count,
-                        data: pre.data.map((music) => {
-                            if (music.id !== musicId || music.status.id == status[2].id) return music;
+                    MusicService.GetMusicById(musicId).then((m) => {
+                        setMusics((pre) => ({
+                            count: pre.count,
+                            data: pre.data.map((music) => {
+                                if (music.id !== musicId || music.status.id == status[2].id) return music;
+    
+                                return m;
+                            }),   
+                        }));
+                    })
 
-                            return { ...music, status: status[2] };
-                        }),   
-                    }));
+                    // TODO: Ez a kod visszaállítása, amint a thumbnail letöltés meg lett mókolva
+                    // setMusics((pre) => ({
+                    //     count: pre.count,
+                    //     data: pre.data.map((music) => {
+                    //         if (music.id !== musicId || music.status.id == status[2].id) return music;
+
+                    //         return { ...music, status: status[2] };
+                    //     }),   
+                    // }));
 
                     break;
                 case 'failed':

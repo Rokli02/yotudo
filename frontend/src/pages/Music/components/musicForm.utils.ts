@@ -44,6 +44,12 @@ export const musicConstraints: FormConstraints = {
 
         if (!value || typeof value !== 'object' || !value['id'])
             return errors.push('*Kötelezően választani kell egy műfajt')
+    },
+    picName: (_value, errors) => {
+        const value = _value as string | undefined | null
+
+        if (value === null)
+            return errors.push('Erősítsd meg a választásod, csak utána tudsz menteni!')
     }
 }
 

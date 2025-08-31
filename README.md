@@ -28,10 +28,17 @@ logger:
 ```
 
 ## Backend továbbfejlesztés:
-- TODO-k megcsinálása
+- Thumbnail automatikus letöltése előre meghatározott URL alapján, nem pedig a letöltő általi beszerzés -> így lehetőség van már az első mentéskor kép megjelenítésére
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
 - styled(...) komponensek elhagyása -> 'sx' prop használata helyette
 - formok konroláltá alakítása
 - Ha a letöltés mappába mozgatjuk át a zenét, a státuszt állítsa át ("Folyamatban" típusra)
+- picFileSelector componens:
+    - Ha VAN kiválasztott kép, akkor mutasson egy default kép ikon-t és a kép nevét, valamint egy 'X'-et, amivel ki tudjuk szedni
+    - Ha NINCS, akkor legyen egy switch komponens ami tartalmazza a következő elemeket és az alapján változzon a komponens működése:
+        - none: Ennyi, nincs semmi
+        - thumbnail: Továbbra sincs semmi, gyakorlatilag úgy veszi, hogy az eddigi checkbox ki lett pipálva
+        - web: Input mező, ami egy URL-t vár egy képről
+        - local: Gomb, ami egy file selector-t nyit meg 

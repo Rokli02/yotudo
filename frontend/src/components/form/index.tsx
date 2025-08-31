@@ -165,4 +165,6 @@ export const Checkbox = styled(MuiCheckbox)({
 
 export { Searchbar } from './searcbar';
 export { Select } from './select';
+export { ImageSelector } from './image-selector/image-selector';
 export type { Option } from './select';
+export type { ImageSelectorProps } from './image-selector/image-selector';

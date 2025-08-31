@@ -137,6 +137,7 @@ export namespace model {
 	    Contributors: OptionalAuthor[];
 	    GenreId: number;
 	    PicFilename: string;
+	    PicType: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new NewMusic(source);
@@ -152,6 +153,7 @@ export namespace model {
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.GenreId = source["GenreId"];
 	        this.PicFilename = source["PicFilename"];
+	        this.PicType = source["PicType"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -293,6 +295,7 @@ export namespace model {
 	    GenreId: number;
 	    Filename: string;
 	    PicFilename: string;
+	    PicType: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateMusic(source);
@@ -311,6 +314,7 @@ export namespace model {
 	        this.GenreId = source["GenreId"];
 	        this.Filename = source["Filename"];
 	        this.PicFilename = source["PicFilename"];
+	        this.PicType = source["PicType"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -166,7 +166,7 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 	if err := s.fileService.MoveTo(tempFilePath, settings.Global.App.MusicsLocation); err != nil {
 		logger.Warning("YoutubeService.DownloadVideo [Couldn't move music to its directory]", err)
 
-		return music, nil
+		return music, err
 	}
 
 	// Move thumbnail (if downloaded) to imgs dir
@@ -174,7 +174,7 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 		if err := s.fileService.MoveTo(tempPicFilePath, settings.Global.App.ImagesLocation); err != nil {
 			logger.Warning("YoutubeService.DownloadVideo [Couldn't move thumbnail to its directory]", err)
 
-			return music, nil
+			music.PicFilename = nil
 		}
 	}
 

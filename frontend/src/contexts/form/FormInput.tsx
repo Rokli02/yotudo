@@ -26,7 +26,7 @@ export const FormInput: FC<Omit<InputProps, 'defaultValue'>> = ({ onChange, name
         registerInput(name, setValue, onClear, value);
 
         return () => {
-            unregisterInput;
+            unregisterInput(name);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])

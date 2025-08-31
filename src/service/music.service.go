@@ -35,6 +35,14 @@ func (c *MusicService) GetManyByPagination(filter string, statusId int, page *mo
 	}
 }
 
+func (c *MusicService) GetById(id int64) (*model.Music, error) {
+	if id < 0 {
+		return nil, fmt.Errorf("valid id must be given")
+	}
+
+	return c.musicRepository.FindById(id)
+}
+
 func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 	if err := c.processMusicAuthor(newMusic); err != nil {
 		return nil, err

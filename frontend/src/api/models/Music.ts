@@ -24,8 +24,8 @@ export interface NewMusic {
     genre: AutocompleteOptions;
     author: AutocompleteOptions;
     contributor: AutocompleteOptions[];
-    useThumbnail: boolean;
-    picUri: string;
+    picName?: string;
+    picName_chosenType?: string;
 }
 
 export interface MusicUpdate extends NewMusic, ID {

@@ -20,6 +20,7 @@ import {
     Title,
     transformFormObjectToNewMusic,
 } from './musicForm.utils'
+import { FormImageSelector } from '@src/contexts/form/FormImageSelector'
 
 interface ModifyMusicModalProps {
     open: boolean,
@@ -55,7 +56,6 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 <FormControl>
                     <FormAutocomplete
                         debounceTime={600}
-                        fetchOnce
                         name='author'
                         label='Szerző'
                         getOptions={getAuthorOptions}
@@ -69,7 +69,6 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 <FormControl>
                     <FormMultiselectAutocomplete
                         debounceTime={600}
-                        fetchOnce
                         name='contributor'
                         label='Közreműködők'
                         getOptions={getContributorOptions}
@@ -77,7 +76,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                         selectedOptions={music['contributor']?.map((v) => ({ label: v.name, ...v }))}
                     />
                 </FormControl>
-                <Divider dir='horizontal' length='84%' sx={{ backgroundColor: 'var(--primary-color)' }}/>
+                <Divider dir='horizontal' length='570px' sx={{ backgroundColor: 'var(--primary-color)' }}/>
                 <FormControl>
                     <InputLabel>Album</InputLabel>
                     <FormInput name='album' type='text' value={music['album']}/>
@@ -96,7 +95,12 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                         value={{ label: music['genre'].name, ...music['genre'] }}
                     />
                 </FormControl>
-                {/* <FormCheckbox label='Videó indexkép borítóképnek' name='useThumbnail' value={music?.picName == 'thumbnail'} /> */}
+                <FormControl>
+                    <FormImageSelector
+                        name='picName'
+                        defaultValue={music['picName']}
+                    />
+                </FormControl>
             </DialogContent>
             <DialogActions>
                 <Button type='submit' color='success'>Módosítás</Button>

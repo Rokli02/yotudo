@@ -50,6 +50,7 @@ func main() {
 	authorService := service.NewAuthorService(authorRepository)
 	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository)
 	youtubeService := service.NewYoutubeService(&app.Ctx, musicRepository, fileService, youtubeDLService)
+	dialogService := service.NewDialogService(&app.Ctx)
 
 	if !fileService.HasExecutable() {
 		logger.Error("Couldn't find ffmpeg executable")
@@ -90,6 +91,7 @@ func main() {
 			authorService,
 			musicService,
 			youtubeService,
+			dialogService,
 		},
 		Linux: &linux.Options{},
 	})

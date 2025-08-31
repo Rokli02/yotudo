@@ -1,7 +1,7 @@
 import { model } from "@wailsjs/go/models";
 import { Music, NewMusic, MusicUpdate } from "../models/Music";
 import { Page, Pagination } from "../models/Page";
-import { GetManyByPagination, Save, Update } from '@service/MusicService';
+import { GetManyByPagination, GetById, Save, Update } from '@service/MusicService';
 import { DownloadByMusicId, MoveToDownloadDir } from '@service/YoutubeService';
 import { GetAllStatus } from "./status.service";
 import { Status } from "../models/Misc";
@@ -16,19 +16,27 @@ export async function GetMusics(page: Page = { page: 0, size: 25 }, statusId: nu
     }
 }
 
+export async function GetMusicById(id: number): Promise<Music> {
+    const result = await GetById(id);
+    const statusMap = await GetAllStatus();
+
+    return convertGoMusicToTsMusic(result, statusMap)
+}
+
 export async function SaveMusic(newMusic: NewMusic): Promise<Music | null> {
     const response = await Save(new model.NewMusic({
         Name: newMusic.name,
         Author: { Id: newMusic.author.id, Name: newMusic.author.label },
+        Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
+        Url: newMusic.url,
         Album: newMusic.album,
         GenreId: newMusic.genre.id,
-        Url: newMusic.url,
         Published: newMusic.published,
-        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': undefined,
-        Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
+        PicFilename: newMusic.picName,
+        PicType: newMusic.picName_chosenType,
     } as model.NewMusic));
 
-    const statusMap = await GetAllStatus(true);
+    const statusMap = await GetAllStatus();
 
     return convertGoMusicToTsMusic(response, statusMap)
 }
@@ -38,16 +46,17 @@ export async function UpdateMusic(newMusic: MusicUpdate): Promise<Music | null> 
         Id: newMusic.id,
         Name: newMusic.name,
         Author: { Id: newMusic.author.id, Name: newMusic.author.label },
+        Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
+        Url: newMusic.url,
         Album: newMusic.album,
         GenreId: newMusic.genre.id,
-        Url: newMusic.url,
         Published: newMusic.published,
-        Contributors: newMusic.contributor.map((c) => ({ Id: c.id, Name: c.label })),
         Status: newMusic.status.id,
-        PicFilename: newMusic.picUri ? newMusic.picUri : newMusic.useThumbnail ? 'thumbnail': undefined,
+        PicFilename: newMusic.picName,
+        PicType: newMusic.picName_chosenType,
     }))
 
-    const statusMap = await GetAllStatus(true);
+    const statusMap = await GetAllStatus();
 
     return convertGoMusicToTsMusic(response, statusMap)
 }
@@ -70,7 +79,7 @@ export async function DownloadMusic(id: number, eventName: string): Promise<void
     return DownloadByMusicId(id, eventName);
 }
 
-function convertGoMusicToTsMusic(music: model.Music, statusMap: Record<number, Status>): Music {
+function convertGoMusicToTsMusic(music: model.Music, status: Status[]): Music {
     return {
         id: music.Id,
         name: music.Name,
@@ -80,7 +89,7 @@ function convertGoMusicToTsMusic(music: model.Music, statusMap: Record<number, S
         },
         album: music.Album,
         url: music.Url,
-        status: statusMap[music.Status],
+        status: status[music.Status],
         published: music.Published,
         author: {
             id: music.Author.Id,
