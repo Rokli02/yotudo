@@ -179,6 +179,8 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 			break
 		}
 
+		logger.Debug("updateMusic.PicFilename doesn't refer to itself")
+
 		if updateMusic.PicFilename != "" {
 			tmpFilename, err := c.fileService.CopyImageFromFS(updateMusic.PicFilename)
 			if err != nil {

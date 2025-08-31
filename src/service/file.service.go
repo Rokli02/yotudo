@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 	"yotudo/src/settings"
 
@@ -122,7 +123,7 @@ func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 		}
 	}
 
-	filename := fmt.Sprintf("%s.%s", purgedFilename, fileExtension)
+	filename := fmt.Sprintf("%s[%x].%s", purgedFilename, time.Now().UnixMilli(), fileExtension)
 
 	createdImageFile, err := os.Create(pathModule.Join(settings.Global.App.TempLocation, filename))
 	if err != nil {
@@ -142,13 +143,17 @@ func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 Copies the given 'imagePath' into the local temp folder and returns its name.
 */
 func (s FileService) CopyImageFromFS(imagePath string) (string, error) {
-	filename := pathModule.Base(imagePath)
-	if f, err := os.Open(pathModule.Join(settings.Global.App.TempLocation, filename)); err == nil {
-		// Már megtalálható a fájl az ideiglenes mappába, térjünk vissza a nevével
-		f.Close()
-
-		return filename, nil
+	var filename string = imagePath
+	if lastSlashIndex := strings.LastIndexAny(imagePath, "\\/"); lastSlashIndex != -1 {
+		filename = imagePath[lastSlashIndex+1:]
 	}
+
+	imageExt := pathModule.Ext(filename)
+	if base, found := strings.CutSuffix(filename, imageExt); found {
+		filename = fmt.Sprintf("%s[%x]%s", base, time.Now().UnixMilli(), imageExt)
+	}
+
+	logger.DebugF("ImagePath='%s', extracted filename='%s'", imagePath, filename)
 
 	ogFile, err := os.Open(imagePath)
 	if err != nil {
