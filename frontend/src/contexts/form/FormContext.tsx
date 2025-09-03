@@ -9,6 +9,7 @@ export const FormContext = createContext<IFormContext | null>(null);
 export const Form: FC<IForm> = ({
     children,
     onSubmit,
+    onChange,
     transformFlatObjectTo = (v: object) => v,
     FormComponent = DefaultForm,
     clearOnSubmit = true,
@@ -29,6 +30,17 @@ export const Form: FC<IForm> = ({
 
     const onValueChange: IFormContext['onValueChange'] = (name: string, value: unknown) => {
         inputs.current[name]['value'] = value;
+
+        if (onChange) {
+            onChange(Object
+                .entries(inputs.current)
+                .reduce((obj, [key, input]) => {
+                    obj[key] = input.value
+                    
+                    return obj;
+                }, {} as Record<string, any>)
+            )
+        }
     }
 
     const _onSubmit = async (event: FormEvent) => {

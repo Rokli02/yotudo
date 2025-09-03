@@ -174,6 +174,7 @@ const ItemContent = {
     Contributors: styled('div')({
         display: 'flex',
         flexDirection: 'row',
+        flexWrap: 'wrap',
         marginLeft: '8px',
         gap: '4px 6px',
         color: ItemColors.accentFontColor,
@@ -183,6 +184,9 @@ const ItemContent = {
         padding: '2px 6px',
         backgroundColor: '#0002',
         borderRadius: '6px',
+        overflowX: 'hidden',
+        textOverflow: 'ellipsis',
+        textWrap: 'nowrap',
     }),
 };
 const ItemFooter = {

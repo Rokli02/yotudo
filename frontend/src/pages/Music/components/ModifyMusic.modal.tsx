@@ -55,7 +55,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 </FormControl>
                 <FormControl>
                     <FormAutocomplete
-                        debounceTime={600}
+                        debounceTime={450}
                         name='author'
                         label='Szerző'
                         getOptions={getAuthorOptions}
@@ -68,7 +68,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 </FormControl>
                 <FormControl>
                     <FormMultiselectAutocomplete
-                        debounceTime={600}
+                        debounceTime={450}
                         name='contributor'
                         label='Közreműködők'
                         getOptions={getContributorOptions}
@@ -87,7 +87,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 </FormControl>
                 <FormControl>
                     <FormAutocomplete
-                        debounceTime={600}
+                        debounceTime={450}
                         fetchOnce
                         name='genre'
                         label='Műfaj'

@@ -4,6 +4,7 @@ import { DetailedHTMLProps, Dispatch, FC, ReactElement, SetStateAction } from "r
 export interface IForm {
     children: ReactElement | ReactElement[],
     onSubmit: (value: any) => Promise<boolean>,
+    onChange?: <T = any>(value: T) => void,
     transformFlatObjectTo?: (value: any) => any,
     FormComponent?: FC<DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>>,
     clearOnSubmit?: boolean,

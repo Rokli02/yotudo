@@ -42,13 +42,13 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
 
         switch (reason) {
             case 'createOption':
-                const sqValue = (value as string).trim().toLowerCase();
-                const foundOption = _options.find((o) => o.label.toLowerCase().search(sqValue) !== -1);
+                const trimedValue = (value as string).trim();
+                const foundOption = _options.find((o) => o.label.toLowerCase().search(trimedValue.toLowerCase()) !== -1);
                 value = foundOption
                     ? foundOption
                     : onlyPreloadedOptions
                     ? null
-                    : { name: value, label: value as string };
+                    : { name: trimedValue, label: trimedValue } satisfies AutocompleteOptions;
             case 'clear':
             case 'selectOption':
                 setSelected(value as AutocompleteOptions | null);
