@@ -1,8 +1,9 @@
-import { styled } from '@mui/material/styles'
+import { SxProps, Theme } from '@mui/material/styles'
 import { FC } from 'react'
 import { useMusicContext } from '../contexts'
 import { MusicItem } from './MusicItem';
 import {useSearchParams } from 'react-router-dom';
+import { Box } from '@mui/material';
 
 export const MusicItemsComponent: FC = () => {
     const { musics, performAction } = useMusicContext();
@@ -13,7 +14,7 @@ export const MusicItemsComponent: FC = () => {
     }
 
     return (
-        <Content>
+        <Box sx={ContentStyle}>
             { musics.data.map((music, index) => 
                 <MusicItem
                     key={`${index}_${music.id}`}
@@ -30,15 +31,15 @@ export const MusicItemsComponent: FC = () => {
                     }}
                 />)
             }
-        </Content>
+        </Box>
     )
 }
 
-const Content = styled('div')({
+const ContentStyle: SxProps<Theme> = {
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: '.5rem .75rem',
     justifyContent: 'center',
     alignItems: 'flex-start',
-})
+};

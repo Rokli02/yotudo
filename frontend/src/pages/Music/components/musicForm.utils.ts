@@ -1,10 +1,8 @@
-import { CSSObject, styled } from "@mui/material/styles";
+import { SxProps, Theme } from "@mui/material/styles";
 import { AuthorService, GenreService, NewMusic } from "@src/api";
 import { AutocompleteOptions, FormConstraints } from "@src/contexts/form";
 import { AutocompleteProps } from "@src/contexts/form/FormAutocomplete";
 import { MultiselectAutocompleteProps } from "@src/contexts/form/FormMultiselectAutocomplete";
-import { Dialog, DialogTitle } from "@mui/material";
-import { CustomCSS } from "@src/components/common/interface";
 
 export const musicConstraints: FormConstraints = {
     name: (_value, errors) => {
@@ -118,7 +116,7 @@ export const getContributorOptions: MultiselectAutocompleteProps['getOptions'] =
     })
 }
 
-export const CustomDialag = styled(Dialog)({
+export const CustomDialagStyle: SxProps<Theme> = {
     '& .MuiDialog-container': {
         marginBlock: '4% 6%',
         alignItems: 'flex-start',
@@ -143,10 +141,10 @@ export const CustomDialag = styled(Dialog)({
         flexDirection: 'column',
         rowGap: '1rem',
     },
-} as CustomCSS)
+};
 
-export const Title = styled(DialogTitle)({
+export const TitleStyle: SxProps<Theme> = {
     fontSize: '1.25rem',
     marginInline: 'auto',
     width: 'max-content',
-})
+};

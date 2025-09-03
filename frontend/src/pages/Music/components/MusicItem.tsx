@@ -1,9 +1,9 @@
 import { memo, MouseEvent, useRef } from 'react';
 import { Music } from '@src/api';
-import { styled } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 import { Divider, StatusActionIcon } from '@src/components/common';
 import { useActionAfterHold } from '@src/hooks/useHoldLoader';
-import { CustomCSS } from '@src/components/common/interface';
+import { Box, Typography } from '@mui/material';
 
 const ItemColors = {
     container: 'var(--primary-color)',
@@ -41,44 +41,46 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
     }
 
     return (
-        <Container
+        <Box
+            sx={ContainerStyle}
+            component='article'
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseLeave}
         >
             { music.picName
-                ? <ThumbnailBackground src={`image/${music.picName}`}/>
+                ? <Box component={'img'} sx={ThumbnailBackgroundStyle} src={`image/${music.picName}`}/>
                 : undefined
             }
             <CursorElement />
-            <ItemHeader.Container>
-                <ItemHeader.TopRow>
-                    <ItemHeader.Name>{music.name}</ItemHeader.Name>
-                    { !music.published ? undefined : <ItemHeader.Published>{ music.published }</ItemHeader.Published>}
-                </ItemHeader.TopRow>
-                { !music.album ? undefined : <ItemHeader.Album>{music.album}</ItemHeader.Album>}
-            </ItemHeader.Container>
+            <Box component={'header'} sx={ItemHeader.ContainerStyle}>
+                <Box sx={ItemHeader.TopRowStyle}>
+                    <Typography component={'h2'} sx={ItemHeader.NameStyle}>{music.name}</Typography>
+                    { !music.published ? undefined : <Typography component={'span'} sx={ItemHeader.PublishedStyle}>{ music.published }</Typography>}
+                </Box>
+                { !music.album ? undefined : <Typography component={'h3'} sx={ItemHeader.AlbumStyle}>{music.album}</Typography>}
+            </Box>
             <Divider dir='horizontal'/>
-            <ItemContent.Container>
-                <ItemContent.Author>
+            <Box sx={ItemContent.ContainerStyle}>
+                <Box sx={ItemContent.AuthorStyle}>
                     { music.author.name }
-                </ItemContent.Author>
+                </Box>
                 {
                     !music.contributor || music.contributor.length === 0 ? 
                         undefined : (
-                        <ItemContent.Contributors>
+                        <Box sx={ItemContent.ContributorsStyle}>
                             {
-                                music.contributor.map((c, i) => <ItemContent.ContributorItem key={`${i}_${c.id}`}> { c.name } </ItemContent.ContributorItem>)
+                                music.contributor.map((c, i) => <Box key={`${i}_${c.id}`} sx={ItemContent.ContributorItemStyle}> { c.name } </Box>)
                             }
-                        </ItemContent.Contributors>
+                        </Box>
                     )
                 }
-            </ItemContent.Container>
+            </Box>
             <Divider dir='horizontal'/>
-            <ItemFooter.Container>
-                <ItemFooter.Genre> { music.genre.name } </ItemFooter.Genre>
-                <ItemFooter.Status title={music.status.name} onMouseDown={onChildMouseDown} onClick={(e) => {
+            <Box sx={ItemFooter.ContainerStyle}>
+                <Box component={'span'} sx={ItemFooter.GenreStyle}> { music.genre.name } </Box>
+                <Box component={'span'} sx={ItemFooter.StatusStyle} title={music.status.name} onMouseDown={onChildMouseDown} onClick={(e) => {
                     if (loadingState.current || !onAction) return;
 
                     const target = e.currentTarget
@@ -90,14 +92,14 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
                     })
                 }} data-status={music.status.id}>
                     <Status/>
-                </ItemFooter.Status>
-            </ItemFooter.Container>
-        </Container>
+                </Box>
+            </Box>
+        </Box>
     )
 })
 
 //#region Components
-const Container = styled('article')({
+const ContainerStyle: SxProps<Theme> = {
     position: 'relative',
     cursor: 'default',
     userSelect: 'none',
@@ -117,34 +119,34 @@ const Container = styled('article')({
         transition: `background-color ${HOLD_TIME_IN_MS}ms linear 500ms`,
         backgroundColor: ItemColors.containerHeldDown,
     },
-} as CustomCSS);
+};
 const ItemHeader = {
-    Container: styled('header')({
+    ContainerStyle: {
         height: 'min-content',
         marginBottom: '8px',
         pointerEvents: 'none',
-    }),
-    TopRow: styled('div')({
+    },
+    TopRowStyle:{
         display: 'flex',
         flexDirection: 'row',
         flexWrap: 'nowrap',
         justifyContent: 'space-between',
-    }),
-    Name: styled('h2')({
+    },
+    NameStyle: {
         fontSize: '1.3rem',
         fontWeight: 500,
         color: ItemColors.primaryFontColor,
         paddingBottom: 'auto',
         marginBottom: '2px',
-    }),
-    Published: styled('span')({
+    },
+    PublishedStyle: {
         fontSize: '1.25rem',
         fontWeight: 500,
         color: ItemColors.secondaryFontColor,
         paddingBottom: 'auto',
         marginBottom: '2px',
-    }),
-    Album: styled('h3')({
+    },
+    AlbumStyle: {
         position: 'relative',
         fontSize: '1.25rem',
         width: 'fit-content',
@@ -153,33 +155,32 @@ const ItemHeader = {
         marginLeft: '20px',
         marginBottom: '2px',
         color: ItemColors.secondaryFontColor,
-    }),
-};
+    },
+} satisfies Record<string, SxProps<Theme>>;
 const ItemContent = {
-    Container: styled('div')({
-        // overflowY: 'hidden',
+    ContainerStyle: {
         flexGrow: 1,
         fontSize: '1.2rem',
         fontWeight: 400,
         color: ItemColors.primaryFontColor,
         paddingLeft: '20px',
-    }),
-    Author: styled('div')({
+    },
+    AuthorStyle: {
         width: 'fit-content',
         marginBlock: '6px 6px',
         padding: '2px 6px',
         backgroundColor: '#0002',
         borderRadius: '6px',
-    }),
-    Contributors: styled('div')({
+    },
+    ContributorsStyle: {
         display: 'flex',
         flexDirection: 'row',
         flexWrap: 'wrap',
         marginLeft: '8px',
         gap: '4px 6px',
         color: ItemColors.accentFontColor,
-    }),
-    ContributorItem: styled('div')({
+    },
+    ContributorItemStyle: {
         width: 'fit-content',
         padding: '2px 6px',
         backgroundColor: '#0002',
@@ -187,22 +188,22 @@ const ItemContent = {
         overflowX: 'hidden',
         textOverflow: 'ellipsis',
         textWrap: 'nowrap',
-    }),
-};
+    },
+} satisfies Record<string, SxProps<Theme>>;
 const ItemFooter = {
-    Container: styled('div')({
+    ContainerStyle: {
         display: 'flex',
         justifyContent: 'space-between',
         flexWrap: 'nowrap',
         paddingBottom: '2px',
         paddingInline: '4px',
-    }),
-    Genre: styled('span')({
+    },
+    GenreStyle: {
         fontSize: '1.10rem',
         fontWeight: 400,
         color: ItemColors.secondaryFontColor,
-    }),
-    Status: styled('span')({
+    },
+    StatusStyle: {
         padding: '4px',
         borderRadius: '8px',
         display: 'flex',
@@ -241,9 +242,9 @@ const ItemFooter = {
                 animationDuration: '750ms',
             },
         },
-    }),
-};
-const ThumbnailBackground = styled('img')({
+    },
+} satisfies Record<string, SxProps<Theme>>;
+const ThumbnailBackgroundStyle: SxProps<Theme> = {
     position: 'absolute',
     left: 0,
     top: 0,
@@ -258,5 +259,5 @@ const ThumbnailBackground = styled('img')({
         rgba(255,255,255,1) 0%,
         rgba(255,255,255,0) 67%
     )`,
-})
+};
 //#endregion Components

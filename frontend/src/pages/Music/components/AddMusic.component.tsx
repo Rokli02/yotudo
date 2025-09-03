@@ -1,4 +1,4 @@
-import { styled } from '@mui/material/styles'
+import { SxProps, Theme } from '@mui/material/styles'
 import { Button as MuiButton } from '@mui/material'
 import { FC, useState } from 'react'
 import { PlaylistAdd } from '@mui/icons-material'
@@ -9,13 +9,21 @@ export const AddMusicComponent: FC = () => {
 
     return (
         <>
-            <OpenModel variant='contained' type='button' color='error' onClick={() => setIsModalOpen(true)}><PlaylistAdd /></OpenModel>
+            <MuiButton
+                sx={AddMusicButtonStyle}
+                variant='contained'
+                type='button'
+                color='error'
+                onClick={() => setIsModalOpen(true)}
+            >
+                <PlaylistAdd />
+            </MuiButton>
             { !isModalOpen ? undefined : <AddMusicModal open={isModalOpen} onClose={() => setIsModalOpen(false)}/> }
         </>
     )
 }
 
-const OpenModel = styled(MuiButton)({
+const AddMusicButtonStyle: SxProps<Theme> = {
     position: 'fixed',
     right: 'min(4%, 40px)',
     bottom: '32px',
@@ -23,4 +31,4 @@ const OpenModel = styled(MuiButton)({
     padding: '12px',
     borderRadius: '50%',
     boxShadow: '3px 3px 9px #0004'
-})
+};

@@ -1,4 +1,4 @@
-import { DialogActions, DialogContent } from '@mui/material'
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { FC } from 'react'
 import { Divider, TopRightButton } from '@src/components/common'
 import { Button, FormControl, InputLabel } from '@src/components/form'
@@ -13,12 +13,12 @@ import { IForm } from '@src/contexts/form/interface'
 import { NewMusic } from '@src/api'
 import { useMusicContext } from '../contexts'
 import {
-    CustomDialag,
+    CustomDialagStyle,
     getAuthorOptions,
     getContributorOptions,
     getGenreOptions,
     musicConstraints,
-    Title,
+    TitleStyle,
     transformFormObjectToNewMusic,
 } from './musicForm.utils'
 import { FormImageSelector } from '@src/contexts/form/FormImageSelector'
@@ -30,9 +30,9 @@ export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open
     }
 
     return (
-        <CustomDialag open={open} onClose={onClose}>
+        <Dialog sx={CustomDialagStyle} open={open} onClose={onClose}>
             <TopRightButton Icon={Close} onClick={onClose} />
-            <Title>Új zene hozzáadás</Title>
+            <DialogTitle sx={TitleStyle}>Új zene hozzáadás</DialogTitle>
             <Form
                 onSubmit={onSubmit}
                 transformFlatObjectTo={transformFormObjectToNewMusic}
@@ -92,6 +92,6 @@ export const AddMusicModal: FC<{ open: boolean, onClose: () => void }> = ({ open
                     <Button type='submit' color='success'>Mentése</Button>
                 </DialogActions>
             </Form>
-        </CustomDialag>
+        </Dialog>
     )
 }

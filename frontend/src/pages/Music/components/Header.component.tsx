@@ -1,12 +1,13 @@
 import { FC, useEffect, useMemo, useState } from 'react'
 import { useMusicContext } from '../contexts';
-import { styled } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 import { FormControl, InputLabel, Pagination, Searchbar } from '@src/components/form';
 import { SearchbarProps } from '@src/components/form/searcbar';
 import { Select } from '@src/components/form';
 import { Option } from '@src/components/form/select';
 import { StatusIcon } from '@src/components/common';
 import { StatusService, Status } from '@src/api';
+import { Box } from '@mui/material';
 
 export const HeaderComponent: FC = () => {
     const { musics: { count }, page, setPage } = useMusicContext();
@@ -41,8 +42,8 @@ export const HeaderComponent: FC = () => {
     }, [])
 
     return (
-        <Header>
-            <Row>
+        <Box sx={HeaderStyle}>
+            <Box sx={RowStyle}>
                 <div />
                 <Searchbar
                     onDebounce={onDebounce}
@@ -53,8 +54,8 @@ export const HeaderComponent: FC = () => {
                     <InputLabel>Filter</InputLabel>
                     <Select label="Filter" fullWidth options={statusOptions} value={currentStatus.value} onChange={onStatusSelect}/>
                 </FormControl>
-            </Row>
-            <PaginationContainer>
+            </Box>
+            <Box sx={PaginationContainerStyle}>
                 {
                     numOfPages === 1 ?
                         undefined :
@@ -66,8 +67,8 @@ export const HeaderComponent: FC = () => {
                             }}
                         />
                 }
-            </PaginationContainer>
-        </Header>
+            </Box>
+        </Box>
     )
 }
 
@@ -90,7 +91,7 @@ function convertStatusToOption(status: Status): Option<number> {
     }
 }
 
-const Header = styled('div')({
+const HeaderStyle: SxProps<Theme> = {
     display: 'flex',
     flexDirection: 'column',
     flexWrap: 'wrap',
@@ -104,16 +105,16 @@ const Header = styled('div')({
         justifyContent: 'start',
         columnGap: 10,
     },
-})
+};
 
-const PaginationContainer = styled('div')({
+const PaginationContainerStyle: SxProps<Theme> = {
     height: 36,
     display: 'grid',
     alignItems: 'center',
     justifyContent: 'center',
-})
+};
 
-const Row = styled('div')({
+const RowStyle: SxProps<Theme> = {
     width: '100%',
     display: 'grid',
     justifyContent: 'space-between',
@@ -138,4 +139,4 @@ const Row = styled('div')({
             display: 'none',
         }
     },
-})
+};

@@ -9,15 +9,15 @@ import {
 } from '@src/contexts/form'
 import { IForm } from '@src/contexts/form/interface'
 import { Button, FormControl, InputLabel } from '@src/components/form'
-import { DialogActions, DialogContent } from '@mui/material'
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { Music, MusicUpdate, NewMusic } from '@src/api'
 import {
-    CustomDialag,
+    CustomDialagStyle,
     getAuthorOptions,
     getContributorOptions,
     getGenreOptions,
     musicConstraints,
-    Title,
+    TitleStyle,
     transformFormObjectToNewMusic,
 } from './musicForm.utils'
 import { FormImageSelector } from '@src/contexts/form/FormImageSelector'
@@ -40,9 +40,9 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
         return response;
     }
 
-    return ( <CustomDialag open={open} onClose={onClose}>
+    return ( <Dialog sx={CustomDialagStyle} open={open} onClose={onClose}>
         <TopRightButton Icon={Close} onClick={onClose} />
-        <Title>Zene módosítás</Title>
+        <DialogTitle sx={TitleStyle}>Zene módosítás</DialogTitle>
         <Form
             onSubmit={_onSubmit}
             transformFlatObjectTo={transformFormObjectToNewMusic}
@@ -106,6 +106,6 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 <Button type='submit' color='success'>Módosítás</Button>
             </DialogActions>
         </Form>
-    </CustomDialag>
+    </Dialog>
     )
 }
