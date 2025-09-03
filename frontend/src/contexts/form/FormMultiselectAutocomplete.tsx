@@ -4,6 +4,7 @@ import { useForm } from '.'
 import { AutocompleteOptions } from './interface';
 import { styled } from '@mui/material/styles';
 import { Chip } from '../../components/common';
+import { useTextFetchGuard } from '@src/hooks/useTextFetchGuard';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface MultiselectAutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options' | 'onChange' | 'value'> {
@@ -37,6 +38,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     const [_selectedOptions, setSelectedOptions] = useState<AutocompleteOptions[]>(selectedOptions);
     const [_options, setOptions] = useState<AutocompleteOptions[]>([...options]);
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
+    const fetchGuard = useTextFetchGuard()
 
     const onTyping = (event: ChangeEvent<HTMLInputElement>) => {
         setInputValue(event.target.value);
@@ -97,6 +99,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
         setInputValue('');
         setSelectedOptions(selectedOptions)
         onValueChange(name, selectedOptions);
+        fetchGuard.makeItWorthFetching();
     }
 
     const onChipClose = (value: AutocompleteOptions, index: number) => () => {
@@ -124,6 +127,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
 
       if (fetchOnce) {
         const filteredOptions: number[] = selectedOptions.map((so) => so.id as number).filter((id) => id !== undefined);
+
         getOptions(
             inputValue,
             filteredOptions,
@@ -139,16 +143,23 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     useEffect(() => {
         if ((!options || options.length === 0) && !fetchOnce) {
             const abortController = new AbortController();
-            const timeoutId = setTimeout(async () => {
-                const filteredOptions: number[] = _selectedOptions.map((so) => so.id as number).filter((id) => id !== undefined)
 
-                const fetchedOptions = await getOptions(
-                    inputValue,
-                    filteredOptions,
-                    abortController,
-                );
-                setOptions(fetchedOptions);
-            }, debounceTime)
+            let timeoutId: NodeJS.Timeout
+            if (fetchGuard.worthFetching(inputValue)) {
+                timeoutId = setTimeout(async () => {
+                    const filteredOptions: number[] = _selectedOptions.map((so) => so.id as number).filter((id) => id !== undefined)
+    
+                    const fetchedOptions = await getOptions(
+                        inputValue,
+                        filteredOptions,
+                        abortController,
+                    );
+
+                    if (!fetchedOptions.length) fetchGuard.worthFetching(inputValue, false)
+
+                    setOptions(fetchedOptions);
+                }, debounceTime)
+            }
             
             return () => {
                 clearTimeout(timeoutId)

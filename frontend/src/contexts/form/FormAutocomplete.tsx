@@ -2,6 +2,7 @@ import { ChangeEvent, ComponentProps, FC, useEffect, useState } from 'react'
 import { Autocomplete, TextField } from '../../components/form'
 import { useForm } from '.'
 import { AutocompleteOptions } from './interface';
+import { useTextFetchGuard } from '@src/hooks/useTextFetchGuard';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface AutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options'> {
@@ -32,6 +33,7 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     const [selected, setSelected] = useState<AutocompleteOptions | null>(value)
     const [_options, setOptions] = useState<AutocompleteOptions[]>([...options])
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
+    const fetchGuard = useTextFetchGuard()
 
     const onTyping = (event: ChangeEvent<HTMLInputElement>) => {
         setTextFieldValue(event.target.value);
@@ -61,6 +63,7 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     const onClear = () => {
         setTextFieldValue(value?.label ?? '');
         setSelected(value);
+        fetchGuard.makeItWorthFetching();
     }
 
     useEffect(() => {
@@ -79,9 +82,18 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     useEffect(() => {
         if (!fetchOnce && (!options || options.length === 0)) {
             const abortController = new AbortController();
-            const timeoutId = setTimeout(async () => {
-                setOptions(await getOptions(textFieldValue, abortController))
-            }, debounceTime);
+            let timeoutId: NodeJS.Timeout;
+
+            if (fetchGuard.worthFetching(textFieldValue)) {
+                timeoutId = setTimeout(async () => {
+                    console.log('fetched Options from BE')
+                    const fetchedOptions = await getOptions(textFieldValue, abortController);
+    
+                    if (!fetchedOptions.length) fetchGuard.worthFetching(textFieldValue, false);
+    
+                    setOptions(fetchedOptions)
+                }, debounceTime);
+            }
 
             return () => {
                 clearTimeout(timeoutId)
