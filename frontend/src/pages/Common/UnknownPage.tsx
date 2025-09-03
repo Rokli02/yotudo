@@ -1,19 +1,19 @@
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack } from '@mui/icons-material';
-import { Button as MuiButton } from '@mui/material';
-import { CSSObject, styled } from '@mui/material/styles';
+import { Box, Button as MuiButton } from '@mui/material';
+import { CSSObject, SxProps, Theme } from '@mui/material/styles';
 
 export const UnknownPage: FC = () => {
     const navigate = useNavigate();
 
     return (
-        <Container>
+        <Box sx={ContainerStyle}>
             <div className='back-container'>
-                <Button onClick={() => navigate(-1)}>
+                <MuiButton sx={ButtonStyle} onClick={() => navigate(-1)}>
                     <ArrowBack />
                     <span>Vissza</span>
-                </Button>
+                </MuiButton>
             </div>
             <div className='content'>
                 <h1>Ilyen oldal nincs, de azért</h1>
@@ -21,13 +21,13 @@ export const UnknownPage: FC = () => {
                     <img alt='Noice' src={`/imgs/noice.png`}/>
                 </div>
             </div>
-        </Container>
+        </Box>
     )
 }
 
 export default UnknownPage;
 
-const Container = styled('div')({
+const ContainerStyle: SxProps<Theme> = {
     width: '100vw',
     position: 'relative',
     display: 'flex',
@@ -74,9 +74,9 @@ const Container = styled('div')({
             } as CSSObject,
         } as CSSObject,
     } as CSSObject,
-})
+};
 
-const Button = styled(MuiButton)({
+const ButtonStyle = {
     width: '100%',
     fontSize: 20,
     columnGap: 10,
@@ -93,4 +93,4 @@ const Button = styled(MuiButton)({
             height: 20,
         } as CSSObject,
     } as CSSObject,
-})
+};

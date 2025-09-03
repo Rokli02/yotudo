@@ -1,10 +1,11 @@
-import { FC, FormEvent, FormEventHandler, useEffect, useState } from 'react'
-import { Container, TopLeftIdText } from './styled.components'
+import { FC, FormEvent, useEffect, useState } from 'react'
+import { Container } from './styled.components'
 import { Title, TopRightButton } from '@src/components/common'
 import { Close } from '@mui/icons-material'
 import { useGenreContext } from '../contexts'
 import { Button, Form, FormControl, Input, InputLabel } from '@src/components/form'
 import { Genre, GenreService } from '@src/api'
+import { SxProps, Theme, Typography } from '@mui/material'
 
 export const RenameGenreComponent: FC = () => {
     const { selectedGenre, setSelectedGenre, renameGenre, deleteGenre} = useGenreContext();
@@ -54,7 +55,7 @@ const RenameGenre: FC<{
 
     return (
         <Container>
-            <TopLeftIdText>id: {selectedGenre.id}</TopLeftIdText>
+            <Typography component={'label'} sx={TopLeftIdTextStyle}>id: {selectedGenre.id}</Typography>
             <TopRightButton Icon={Close} onClick={onClose}/>
             <Title>Műfaj átnevezés</Title>
             <Form onSubmit={onSubmit}>
@@ -70,4 +71,12 @@ const RenameGenre: FC<{
             </Form>
         </Container>
     )
+}
+
+const TopLeftIdTextStyle: SxProps<Theme> = { // label
+    position: 'absolute',
+    top: '.5rem',
+    left: '1rem',
+    color: '#fff8',
+    fontSize: '.8rem',
 }

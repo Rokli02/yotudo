@@ -1,15 +1,16 @@
-import { styled } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 import { FC } from 'react';
 import StatusesComponent from './components/Statuses.component';
 import { GenresComponent } from './components/Genres.component';
 import { AddGenreComponent } from './components/AddGenre.component';
 import { GenreProvider } from './contexts';
 import { RenameGenreComponent } from './components/RenameGenre.component';
+import { Box } from '@mui/material';
 
 export const MiscPage: FC = () => {
   
   return (
-    <Container>
+    <Box sx={ContainerStyle}>
       <h1>Státuszok és műfajok</h1>
       <StatusesComponent />
       <GenreProvider>
@@ -17,13 +18,13 @@ export const MiscPage: FC = () => {
         <AddGenreComponent />
         <RenameGenreComponent />
       </GenreProvider>
-    </Container>
+    </Box>
   )
 };
 
 export default MiscPage;
 
-const Container = styled('div')({
+const ContainerStyle: SxProps<Theme> = {
   position: 'relative',
   flexWrap: 'wrap',
   display: 'flex',
@@ -34,4 +35,4 @@ const Container = styled('div')({
     width: '100%',
     textAlign: 'center',
   },
-});
+};

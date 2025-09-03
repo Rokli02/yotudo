@@ -1,5 +1,5 @@
-import { ContainerProps, CircularProgress as MuiCircularProgress, Container as MuiContainer } from "@mui/material";
-import { styled, CSSObject } from "@mui/material/styles"
+import { CircularProgress as MuiCircularProgress, Container as MuiContainer } from "@mui/material";
+import { CSSObject, SxProps, Theme } from "@mui/material/styles"
 import { CSSProperties, FC, useEffect, useMemo, useState } from "react";
 
 type Size = 'large' | 'medium' | 'small'
@@ -39,20 +39,20 @@ export const LoadingPage: FC<ILoadingPage> = ({ size = 'large' }) => {
     
 
     return (
-        <Container>
+        <MuiContainer sx={ContainerStyle}>
             <div>
                 <h1 className={`${size}_size`}>
                     Loading
                     <div className="dots">{dots}</div>
                 </h1>
-                <CircularProgress variant="indeterminate" style={SizeTable[size]} />
+                <MuiCircularProgress sx={CircularProgressStyle} variant="indeterminate" style={SizeTable[size]} />
             </div>
-        </Container>
+        </MuiContainer>
     )
 }
 
 
-export const Container = styled(MuiContainer)<ContainerProps>({
+export const ContainerStyle: SxProps<Theme> = {
     display: 'grid',
     justifyItems: 'center',
     alignContent: 'center',
@@ -75,8 +75,8 @@ export const Container = styled(MuiContainer)<ContainerProps>({
             fontSize: '1.3rem',
         } as CSSObject,
     } as CSSObject,
-});
+};
 
-export const CircularProgress = styled(MuiCircularProgress)({
+const CircularProgressStyle: SxProps<Theme> = {
     color: 'inherit',
-})
+};
