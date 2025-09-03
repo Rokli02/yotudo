@@ -1,28 +1,28 @@
 import { FC } from 'react';
-import { styled } from '@mui/material/styles';
 import AuthorItemsComponent from './components/AuthorItems.component';
 import { AuthorProvider } from './contexts/AuthorContext';
 import AddAuthorComponent from './components/AddAuthor.component';
 import { HeaderComponent } from './components/Header.component';
+import { Box } from '@mui/material';
 
 export const AuthorPage: FC = () => {
     return (
-        <PageContainer>
+        <Box sx={ContainerStyle}>
             <AuthorProvider>
             <h1>Szerzők</h1>
                 <HeaderComponent />
                 <AuthorItemsComponent />
                 <AddAuthorComponent />
             </AuthorProvider>
-        </PageContainer>
+        </Box>
     )
 }
 
 export default AuthorPage;
 
-const PageContainer = styled('div')({
+const ContainerStyle = {
     position: 'relative',
     textAlign: 'center',
     padding: '1rem 1rem',    
-})
+}
 

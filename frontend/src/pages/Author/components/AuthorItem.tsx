@@ -1,33 +1,55 @@
-import { FC } from 'react'
-import { Author } from '@src/api'
-import { CSSObject, styled } from '@mui/material/styles'
-import DeleteIcon from '@mui/icons-material/Delete'
-import { IconButton } from '@mui/material'
-import { CustomCSS } from '@src/components/common/interface'
+import { FC } from 'react';
+import { Author } from '@src/api';
+import { SxProps, Theme } from '@mui/material/styles';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, IconButton } from '@mui/material';
+import { useActionAfterHold } from '@src/hooks/useHoldLoader';
 
 export interface AuthorItemProps {
     author: Author
     onDelete: (authorId: number) => Promise<boolean>;
 };
 
+const HOLD_TIME_MS = 850;
+
 export const AuthorItem: FC<AuthorItemProps> = ({ author, onDelete }) => {
-  return (
-    <Item>
-        <div className='main_content'>
-            <span className='name_field'>{ author.name }</span>
-        </div>
-        <div className='delete_btn'>
-            <IconButton onClick={() => onDelete(author.id)}>
-                <DeleteIcon />
-            </IconButton>
-        </div>
-    </Item>
-  )
+    const {
+        onMouseDown,
+        onMouseUp,
+        onMouseLeave,
+        onMouseMove,
+        onChildMouseDown,
+        CursorElement,
+    } = useActionAfterHold({
+        onActionAfterHold() {/*TODO: Open 'ModifyAuthorDialog' */},
+        holdTime: HOLD_TIME_MS,
+        size: 26,
+    })
+
+    return (
+        <Box sx={ItemStyle}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseLeave}
+            onMouseMove={onMouseMove}
+        >
+            <CursorElement />
+            <div className='main_content'>
+                <span className='name_field'>{ author.name }</span>
+            </div>
+            <div className='delete_btn'>
+                <IconButton onClick={() => onDelete(author.id)} onMouseDown={(onChildMouseDown)}>
+                    <DeleteIcon />
+                </IconButton>
+            </div>
+        </Box>
+    )
 }
 
-const Item = styled('div')({
+const ItemStyle: SxProps<Theme> = {
     position: 'relative',
     minHeight: 'fit-content',
+    cursor: 'default',
     width: '100%',
     maxWidth: '750px',
     padding: '4px 18px',
@@ -41,6 +63,9 @@ const Item = styled('div')({
     borderRadius: '8px',
     boxShadow: '3px 3px 9px #0004',
     backgroundColor: 'var(--primary-color)',
+    '&:has([data-helddown])': {
+        cursor: 'none',
+    },
     '& .MuiSlider-root': {
         marginLeft: '8px',
         minWidth: '200px',
@@ -77,6 +102,6 @@ const Item = styled('div')({
             },
         },
     },
-} as CustomCSS)
+};
 
 export default AuthorItem

@@ -1,13 +1,12 @@
-import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
-import { styled, CSSObject } from '@mui/material/styles'
-import { FC } from 'react'
-import { TopRightButton } from '@src/components/common'
-import { Button, FormControl, InputLabel } from '@src/components/form'
-import { Form, FormConstraints, FormInput } from '@src/contexts/form'
-import { Close } from '@mui/icons-material'
-import { useAuthorContext } from '../contexts'
-import { NewAuthor } from '@src/api'
-import { FormSlider } from '@src/contexts/form/FormSlider'
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { FC } from 'react';
+import { TopRightButton } from '@src/components/common';
+import { Button, FormControl, InputLabel } from '@src/components/form';
+import { Form, FormConstraints, FormInput } from '@src/contexts/form';
+import { Close } from '@mui/icons-material';
+import { useAuthorContext } from '../contexts';
+import { NewAuthor } from '@src/api';
+import { DialogStyle, DialogTitleStyle } from './common.component';
 
 const addAuthorConstraints: FormConstraints = {
     name: (_value, errors) => {
@@ -25,11 +24,11 @@ export const AddAuthorModal: FC<{ open: boolean, onClose: () => void }> = ({ ope
     }
     
     return (
-        <CustomDialag open={open} fullWidth onClose={onClose}>
+        <Dialog sx={DialogStyle} open={open} fullWidth onClose={onClose}>
             <TopRightButton Icon={Close} onClick={onClose} />
-            <Title>
+            <DialogTitle sx={DialogTitleStyle}>
                 Új zenész felvétel
-            </Title>
+            </DialogTitle>
             <Form onSubmit={onSubmit} constraints={addAuthorConstraints}>
                 <DialogContent className='form_items'>
                     <FormControl>
@@ -41,39 +40,8 @@ export const AddAuthorModal: FC<{ open: boolean, onClose: () => void }> = ({ ope
                     <Button type='submit' color='success'>Mentés</Button>
                 </DialogActions>
             </Form>
-        </CustomDialag>
+        </Dialog>
     )
 }
 
 export default AddAuthorModal
-
-const CustomDialag = styled(Dialog)({
-    '& .MuiDialog-container': {
-        '& .MuiPaper-root': {
-            maxWidth: '650px',
-            width: '100%',
-            backgroundColor: 'var(--background-color)',
-            color: 'var(--font-color)',
-            '& .MuiDialogContent-root': {
-                width: '100%',
-                '& > .MuiFormLabel-root': {
-                    marginLeft: '6ch',
-                } as CSSObject,
-                '& > .MuiFormControl-root > .MuiSlider-root': {
-                    marginLeft: '21px',
-                } as CSSObject,
-            } as CSSObject,
-        } as CSSObject,
-    } as CSSObject,
-    '& .form_items': {
-        display: 'flex',
-        flexDirection: 'column',
-        rowGap: '1rem',
-    } as CSSObject,
-})
-
-const Title = styled(DialogTitle)({
-    fontSize: '1.25rem',
-    marginInline: 'auto',
-    width: 'max-content',
-})

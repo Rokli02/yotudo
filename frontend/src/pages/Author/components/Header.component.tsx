@@ -1,9 +1,9 @@
 import { FC, useMemo } from 'react'
-import { styled } from '@mui/material/styles';
 import { Searchbar } from '@src/components/form';
 import { SearchbarProps } from '@src/components/form/searcbar';
 import { useAuthorContext } from '../contexts';
 import { Pagination } from '@src/components/form';
+import { Box } from '@mui/material';
 
 export const HeaderComponent: FC = () => {
     const { authors: { count }, page, setPage } = useAuthorContext();
@@ -23,13 +23,13 @@ export const HeaderComponent: FC = () => {
     }
 
     return (
-        <Header>
+        <Box sx={HeaderStyle}>
             <Searchbar
                 onDebounce={onDebounce}
                 debounceTime={300}
                 style={{ minWidth: '400px', maxWidth: '700px' }}
             />
-            <PaginationContainer>
+            <Box sx={PaginationContainerStyle}>
                 {
                     numOfPages === 1 ?
                         undefined :
@@ -41,22 +41,22 @@ export const HeaderComponent: FC = () => {
                             }}
                         />
                 }
-            </PaginationContainer>
+            </Box>
 
-        </Header>
+        </Box>
     )
 }
 
-const Header = styled('div')({
+const HeaderStyle = {
     display: 'grid',
     justifyContent: 'center',
     rowGap: '1rem',
     paddingTop: '1rem',
-})
+};
 
-const PaginationContainer = styled('div')({
+const PaginationContainerStyle = {
     display: 'grid',
     alignItems: 'center',
     justifyContent: 'center',
     height: 36,
-})
+};

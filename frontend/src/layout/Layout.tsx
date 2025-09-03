@@ -1,11 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { RouteObject } from 'react-router-dom';
 import NavbarLayout from './Navbar/NavbarLayout';
-import { LoadingPage, UnknownPage } from '@src/pages/Common';
+import { UnknownPage } from '@src/pages/Common';
 import { Status, StatusService } from '@src/api';
 import MusicPage from '@src/pages/Music/MusicPage';
-const MiscPageLazy = lazy(() => import('@src/pages/Misc/MiscPage'))
-const AuthorPageLazy = lazy(() => import('@src/pages/Author/AuthorPage'))
+import MiscPage from'@src/pages/Misc/MiscPage';
+import AuthorPage from'@src/pages/Author/AuthorPage';
 
 export const routes: Array<RouteObject> = [
     {
@@ -18,15 +18,11 @@ export const routes: Array<RouteObject> = [
             },
             {
               path: "misc",
-              element: (<Suspense fallback={<LoadingPage />}>
-                  <MiscPageLazy />
-              </Suspense>)
+              element: <MiscPage />
             },
             {
               path: "author",
-              element: (<Suspense fallback={<LoadingPage />}>
-                  <AuthorPageLazy />
-              </Suspense>)
+              element: <AuthorPage />
             }
         ],
     },

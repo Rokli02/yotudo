@@ -1,7 +1,7 @@
-import { FC } from 'react'
-import AuthorItem from './AuthorItem'
-import { useAuthorContext } from '../contexts'
-import { styled } from '@mui/material/styles'
+import { FC } from 'react';
+import AuthorItem from './AuthorItem';
+import { useAuthorContext } from '../contexts';
+import { Box } from '@mui/material';
 
 export const AuthorItemsComponent: FC = () => {
     const { authors, deleteAuthor } = useAuthorContext()
@@ -11,15 +11,15 @@ export const AuthorItemsComponent: FC = () => {
     }
 
     return (
-        <Container>
+        <Box sx={ContainerStyle}>
             {authors.data.map((author, index) => <AuthorItem key={`${index}_${author.id}`} author={author} onDelete={deleteAuthor} />)}
-        </Container>
+        </Box>
     )
 }
 
 export default AuthorItemsComponent
 
-const Container = styled('div')({
+const ContainerStyle = {
     position: 'relative',
     maxWidth: '1200px',
     width: '75%',
@@ -35,4 +35,4 @@ const Container = styled('div')({
     '@media screen and (max-width: 710px)': {
         width: '100%',
     },
-})
+};
