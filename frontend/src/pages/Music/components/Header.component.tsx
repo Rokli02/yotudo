@@ -46,7 +46,7 @@ export const HeaderComponent: FC = () => {
                 <div />
                 <Searchbar
                     onDebounce={onDebounce}
-                    debounceTime={400}
+                    debounceTime={300}
                     className='searchbar'
                 />
                 <FormControl className='select_status'>

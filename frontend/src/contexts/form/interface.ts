@@ -12,7 +12,7 @@ export interface IForm {
 
 export interface IFormContext {
     onValueChange: (name: string, value: unknown) => void;
-    registerInput: (name: string, setValue: Dispatch<SetStateAction<unknown>>, onClear: () => void, initValue?: unknown) => void;
+    registerInput: (name: string, setValue: Dispatch<SetStateAction<any>>, onClear: () => void, initValue?: unknown) => void;
     unregisterInput: (name: string) => void;
     getErrors: (name: string) => ReactElement;
 }
@@ -20,7 +20,7 @@ export interface IFormContext {
 export interface FormConstraints extends Record<string, (value: unknown, errors: string[], values: Record<string, any>) => void> {}
 
 export interface AutocompleteOptions {
-    id: number;
+    id?: number;
     label: string;
     [k: string]: unknown;
 }

@@ -24,7 +24,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     value: valueProp = '',
     label,
     onChange,
-    debounceTime = 750,
+    debounceTime = 300,
     freeSolo = true,
     options = [],
     selectedOptions = [],
@@ -79,7 +79,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     }
 
     useEffect(() => {
-      registerInput(name, setSelectedOptions as React.Dispatch<React.SetStateAction<unknown>>, onClear, selectedOptions);
+      registerInput(name, setSelectedOptions, onClear, selectedOptions);
 
       if (fetchOnce) {
         getOptions(_value, selectedOptions.map((so) => so['id'] as number)).then((values) => setOptions(values))

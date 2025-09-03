@@ -1,60 +1,73 @@
-import { ChangeEvent, Dispatch, FC, useEffect, useState } from 'react'
+import { ChangeEvent, ComponentProps, FC, useEffect, useState } from 'react'
 import { Autocomplete, TextField } from '../../components/form'
 import { useForm } from '.'
 import { AutocompleteOptions } from './interface';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface AutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options'> {
-    name: string;
-    value?: AutocompleteOptions;
-    label?: string;
-    debounceTime?: number;
+    readonly name: string;
+    readonly value?: AutocompleteOptions;
+    readonly label?: string;
+    readonly debounceTime?: number;
     readonly options?: AutocompleteOptions[];
-    getOptions: (search: string, abortController?: AbortController) => Promise<AutocompleteOptions[]>;
-    fetchOnce?: boolean;
+    readonly getOptions: (search: string, abortController?: AbortController) => Promise<AutocompleteOptions[]>;
+    readonly fetchOnce?: boolean;
+    readonly onlyPreloadedOptions?: boolean;
 }
-//FIXME: Az 'onClear' nem nullázza le a mezőt!
+
 export const FormAutocomplete: FC<AutocompleteProps> = ({
     name,
     value = null,
     label,
-    onChange,
-    debounceTime = 750,
+    onChange: onChangeArg,
+    debounceTime = 300,
     freeSolo = true,
     options = [],
     fetchOnce = false,
+    onlyPreloadedOptions = false,
     getOptions,
     ...props
 }) => {
-    const [_value, setValue] = useState<string>(value?.label ?? '')
+    const [textFieldValue, setTextFieldValue] = useState<string>(value?.label ?? '')
     const [selected, setSelected] = useState<AutocompleteOptions | null>(value)
     const [_options, setOptions] = useState<AutocompleteOptions[]>([...options])
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
 
     const onTyping = (event: ChangeEvent<HTMLInputElement>) => {
-        setValue(event.target.value);
+        setTextFieldValue(event.target.value);
     }
 
-    const _onChange: AutocompleteProps['onChange'] = (event, value, reason, details) => {
-        if (typeof value !== 'object' || !value || !(value as Record<string, unknown>)['id']) {
-            return
-        }
+    const onChange: AutocompleteProps['onChange'] = (event, value, reason, details) => {
+        event.preventDefault();
 
-        setSelected(value as AutocompleteOptions);
-        onValueChange(name, value);
-        onChange?.(event, value, reason, details);
+        switch (reason) {
+            case 'createOption':
+                const sqValue = (value as string).trim().toLowerCase();
+                const foundOption = _options.find((o) => o.label.toLowerCase().search(sqValue) !== -1);
+                value = foundOption
+                    ? foundOption
+                    : onlyPreloadedOptions
+                    ? null
+                    : { name: value, label: value as string };
+            case 'clear':
+            case 'selectOption':
+                setSelected(value as AutocompleteOptions | null);
+                onValueChange(name, value);
+                onChangeArg?.(event, value, reason, details);
+            break;
+        }
     }
 
     const onClear = () => {
-        setValue('');
+        setTextFieldValue(value?.label ?? '');
         setSelected(value);
     }
 
     useEffect(() => {
-      registerInput(name, setSelected as Dispatch<React.SetStateAction<unknown>>, onClear, value);
+      registerInput(name, setSelected, onClear, value);
 
       if (fetchOnce) {
-        getOptions(_value).then((values) => setOptions(values))
+        getOptions(textFieldValue).then((values) => setOptions(values))
       }
 
       return () => {
@@ -64,32 +77,43 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     }, [])
     
     useEffect(() => {
-        if ((!options || options.length === 0) && !fetchOnce) {
+        if (!fetchOnce && (!options || options.length === 0)) {
             const abortController = new AbortController();
             const timeoutId = setTimeout(async () => {
-                setOptions(await getOptions(_value, abortController))
-            }, debounceTime)
-            
+                setOptions(await getOptions(textFieldValue, abortController))
+            }, debounceTime);
+
             return () => {
                 clearTimeout(timeoutId)
                 abortController.abort();
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [_value, debounceTime])
+    }, [textFieldValue, debounceTime])
 
     return (
         <>
             <Autocomplete
                 {...props}
-                renderInput={(params) => (<TextField variant='standard' name={name} {...params} label={label} onChange={onTyping} value={_value}/>)}
+                renderInput={(params) => (
+                    <TextField
+                        variant='standard'
+                        name={name}
+                        {...params}
+                        label={label}
+                        onChange={onTyping}
+                        value={textFieldValue}
+                    />)
+                }
                 freeSolo={freeSolo}
                 value={selected}
                 options={_options}
-                slotProps={{ listbox: { sx: { maxHeight: '250px' } } }}
-                onChange={_onChange}
+                slotProps={slotProps}
+                onChange={onChange}
             />
             { getErrors(name) }
         </>
     )
 }
+
+const slotProps: ComponentProps<typeof Autocomplete>['slotProps'] = { listbox: { sx: { maxHeight: '250px' } } }

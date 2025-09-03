@@ -36,7 +36,7 @@ export const musicConstraints: FormConstraints = {
     author: (_value, errors) => {
         const value = _value as AutocompleteOptions;
 
-        if (!value || typeof value !== 'object' || !value['id'])
+        if (!value || typeof value !== 'object' || !value.label.trim())
             return errors.push('*Kötelezően választani kell egy szerzőt')
     },
     genre: (_value, errors) => {

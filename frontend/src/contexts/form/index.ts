@@ -7,5 +7,11 @@ export { FormCheckbox } from './FormCheckbox';
 export { FormAutocomplete } from './FormAutocomplete';
 export { FormMultiselectAutocomplete } from './FormMultiselectAutocomplete';
 export { FormSlider } from './FormSlider';
-export const useForm = () => useContext(FormContext)
+export const useForm = () => {
+    const ctx = useContext(FormContext)
+
+    if (!ctx) throw new Error('Must be used inside "Form"')
+
+    return ctx
+}
 export type { FormConstraints, AutocompleteOptions } from './interface'

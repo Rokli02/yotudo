@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { CSSObject, styled } from '@mui/material/styles';
 import { FC, MouseEvent, useRef } from 'react'
 
@@ -61,9 +60,16 @@ export const useActionAfterHold: UseHoldLoader = ({
         }
     }
 
+    const onChildMouseDown = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     return {
+        onChildMouseDown,
         onMouseDown,
         onMouseLeave,
+        onMouseUp: onMouseLeave,
         onMouseMove,
         CursorElement: () => (
             <UserPressPoint ref={holdDiv} duration={`${holdTime}ms`} size={size}>
@@ -149,8 +155,10 @@ const UserPressPoint = styled('div', { shouldForwardProp })<{ duration: string, 
 
 type UseHoldLoader = (props: HoldLoaderProps) => {
     CursorElement: FC;
+    onChildMouseDown: (e: MouseEvent) => void;
     onMouseDown: (e: MouseEvent<HTMLDivElement>) => void,
     onMouseLeave: () => void,
+    onMouseUp: () => void,
     onMouseMove: (e: MouseEvent<HTMLDivElement>) => void,
 }
 

@@ -15,7 +15,7 @@ const ItemColors = {
     accentFontColor: '#a6a6a6',
 }
 
-const HOLD_TIME_IN_MS = 1500;
+const HOLD_TIME_IN_MS = 850;
 
 interface MusicItemProps {
     music: Music;
@@ -28,9 +28,11 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
     const Status = StatusActionIcon[music.status.id];
     const {
         CursorElement,
+        onChildMouseDown,
         onMouseDown,
         onMouseLeave,
-        onMouseMove
+        onMouseMove,
+        onMouseUp,
     } = useActionAfterHold({ onActionAfterHold: onActionAfterHold, holdTime: HOLD_TIME_IN_MS, size: 30 })
 
     const loading = (target: EventTarget & HTMLSpanElement, isLoading: boolean) => {
@@ -42,7 +44,7 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
         <Container
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
-            onMouseUp={onMouseLeave}
+            onMouseUp={onMouseUp}
             onMouseLeave={onMouseLeave}
         >
             { music.picName
@@ -76,7 +78,7 @@ export const MusicItem = memo(({ music, onAction, onActionAfterHold = () => { co
             <Divider dir='horizontal'/>
             <ItemFooter.Container>
                 <ItemFooter.Genre> { music.genre.name } </ItemFooter.Genre>
-                <ItemFooter.Status title={music.status.name} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation() }} onClick={(e) => {
+                <ItemFooter.Status title={music.status.name} onMouseDown={onChildMouseDown} onClick={(e) => {
                     if (loadingState.current || !onAction) return;
 
                     const target = e.currentTarget

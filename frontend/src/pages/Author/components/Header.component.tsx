@@ -26,7 +26,7 @@ export const HeaderComponent: FC = () => {
         <Header>
             <Searchbar
                 onDebounce={onDebounce}
-                debounceTime={400}
+                debounceTime={300}
                 style={{ minWidth: '400px', maxWidth: '700px' }}
             />
             <PaginationContainer>

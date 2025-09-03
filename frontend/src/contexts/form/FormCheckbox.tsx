@@ -26,7 +26,7 @@ export const FormCheckbox: FC<FormCheckboxProps> = ({ label, name, onChange, val
     }
 
     useEffect(() => {
-        registerInput(name, setValue as Dispatch<React.SetStateAction<unknown>>, onClear, value);
+        registerInput(name, setValue, onClear, value);
 
         return () => {
             unregisterInput(name);

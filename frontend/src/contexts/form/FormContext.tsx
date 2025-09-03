@@ -4,7 +4,7 @@ import { Form as DefaultForm } from "../../components/form";
 import useError from "../../hooks/useErrors";
 import { IForm, IFormContext } from "./interface";
 
-export const FormContext = createContext<IFormContext>(null as unknown as IFormContext);
+export const FormContext = createContext<IFormContext | null>(null);
 
 export const Form: FC<IForm> = ({
     children,
