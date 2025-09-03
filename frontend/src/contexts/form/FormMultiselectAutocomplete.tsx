@@ -2,9 +2,9 @@ import { ChangeEvent, ComponentProps, FC, ReactNode, useEffect, useState } from 
 import { Autocomplete, TextField } from '../../components/form'
 import { useForm } from '.'
 import { AutocompleteOptions } from './interface';
-import { styled } from '@mui/material/styles';
 import { Chip } from '../../components/common';
 import { useTextFetchGuard } from '@src/hooks/useTextFetchGuard';
+import { Box } from '@mui/material';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface MultiselectAutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options' | 'onChange' | 'value'> {
@@ -189,13 +189,13 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                 onChange={_onChange}
                 onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}
             />
-            <ChipContainer>
+            <Box sx={ChipContainerStyle}>
                 { _selectedOptions.map((so, index, arr) => (
                     <Chip key={`${index}_${so.id}`} onClose={onChipClose(so, index)}>
                         { renderChipContent(so, index, arr) }
                     </Chip>
                 )) }
-            </ChipContainer>
+            </Box>
             { getErrors(name) }
         </>
     )
@@ -203,7 +203,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
 
 const slotProps: ComponentProps<typeof Autocomplete>['slotProps'] = { listbox: { sx: { maxHeight: '250px' } }}
 
-const ChipContainer = styled('div')({
+const ChipContainerStyle = {
     position: 'relative',
     display: 'flex',
     flexWrap: 'wrap',
@@ -211,4 +211,4 @@ const ChipContainer = styled('div')({
     gap: '.5rem .75rem',
     marginTop: '4px',
     marginInline: '8px',
-});
+};

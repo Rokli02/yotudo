@@ -1,5 +1,5 @@
-import { CSSObject, styled } from '@mui/material/styles';
-import { FC, MouseEvent, useRef } from 'react'
+import { Box } from '@mui/material';
+import { ComponentProps, FC, forwardRef, memo, MouseEvent, useRef } from 'react'
 
 const MAX_MOVEMENT_LIMIT = 10;
 const LOADER_SIZE = 35;
@@ -79,79 +79,78 @@ export const useActionAfterHold: UseHoldLoader = ({
     }
 }
 
-const shouldForwardProp = (prop: string) => {
-    switch (prop) {
-        case 'duration':
-        case 'size':
-            return false
-        default:
-            return true
-    }
-}
-const UserPressPoint = styled('div', { shouldForwardProp })<{ duration: string, size: number }>(({ duration, size }) => ({
-    position: 'absolute',
-    display: 'none',
-    width: size,
-    height: size,
-    zIndex: 99,
-    userSelect: 'none',
-    pointerEvents: 'none',
-    '&[data-helddown]': {
-        display: 'initial',
-        '@keyframes l18': {
-            '0%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 50% 0, 50% 0, 50% 0, 50% 0%, 50% 0%)',
-                borderColor: 'red',
-            },
-            '12.5%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%)',
-            },
-            '25%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 50%, 100% 50%, 100% 50%, 100% 50%)',
-            },
-            '37.5%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 100% 100%, 100% 100%, 100% 100%)',
-            },
-            '50%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 50% 100%, 50% 100%, 50% 100%)',
-            },
-            '62.5%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 100%, 0% 100%)',
-                borderColor: 'orange',
-            },
-            '75%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 50%, 0% 50%)',
-            },
-            '87.5%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 0% 0%)',
-                borderColor: 'yellowgreen',
-            },
-            '100%': {
-                clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%)',
-                borderColor: 'green',
-            },
-        },
-        '.loader': {
-            width: size,
-            aspectRatio: 1,
-            border: `${size / 5}px solid #ddd5`,
-            // borderRadius: '50%',
-            position: 'relative',
-            ':before': {
-                content: '""',
+const UserPressPoint = forwardRef<{}, ComponentProps<typeof Box> & { duration: string, size: number }>(({ sx, duration, size, ...props }, ref) => {
+    return <Box
+        ref={ref}
+        sx={{
+            ...{
                 position: 'absolute',
-                inset: `-${size / 5}px`,
-                // borderRadius: '50%',
-                border: `${size / 5}px solid #514b82`,
-                animationName: 'l18',
-                animationDuration: duration,
-                animationTimingFunction: 'linear',
-                animationTimeline: 'initial',
-
-            } as CSSObject,
-        },
-    } as CSSObject,
-}))
+                display: 'none',
+                width: size,
+                height: size,
+                zIndex: 99,
+                userSelect: 'none',
+                pointerEvents: 'none',
+                '&[data-helddown]': {
+                    display: 'initial',
+                    '@keyframes l18': {
+                        '0%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 50% 0, 50% 0, 50% 0, 50% 0%, 50% 0%)',
+                            borderColor: 'red',
+                        },
+                        '12.5%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%)',
+                        },
+                        '25%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 50%, 100% 50%, 100% 50%, 100% 50%)',
+                        },
+                        '37.5%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 100% 100%, 100% 100%, 100% 100%)',
+                        },
+                        '50%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 50% 100%, 50% 100%, 50% 100%)',
+                        },
+                        '62.5%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 100%, 0% 100%)',
+                            borderColor: 'orange',
+                        },
+                        '75%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 50%, 0% 50%)',
+                        },
+                        '87.5%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 0% 0%)',
+                            borderColor: 'yellowgreen',
+                        },
+                        '100%': {
+                            clipPath: 'polygon(50% 50%, 50% 0, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%)',
+                            borderColor: 'green',
+                        },
+                    },
+                    '.loader': {
+                        width: size,
+                        aspectRatio: 1,
+                        border: `${size / 5}px solid #ddd5`,
+                        // borderRadius: '50%',
+                        position: 'relative',
+                        ':before': {
+                            content: '""',
+                            position: 'absolute',
+                            inset: `-${size / 5}px`,
+                            // borderRadius: '50%',
+                            border: `${size / 5}px solid #514b82`,
+                            animationName: 'l18',
+                            animationDuration: duration,
+                            animationTimingFunction: 'linear',
+                            animationTimeline: 'initial',
+                        },
+                    },
+                },
+            },
+            ...sx,
+        }}
+        {...props}
+    />
+});
 
 type UseHoldLoader = (props: HoldLoaderProps) => {
     CursorElement: FC;

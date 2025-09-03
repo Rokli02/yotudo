@@ -1,17 +1,25 @@
 import { SvgIconComponent } from "@mui/icons-material";
-import { styled, CSSObject } from "@mui/material/styles";
-import { CSSProperties, memo } from "react";
+import { Box } from "@mui/material";
+import { ComponentProps, CSSProperties, FC, memo } from "react";
 
-export const Title = styled('h2')({
-    fontSize: '1.25rem',
-    marginInline: 'auto',
-    width: 'max-content',
+export const Title: FC<ComponentProps<typeof Box>> = memo(({ sx, ...props }) => {
+    return <Box
+        sx={{
+            ...{
+                fontSize: '1.25rem',
+                marginInline: 'auto',
+                width: 'max-content',
+            },
+            ...sx,
+        }}  
+        {...props}
+    />
 })
 
-export const Divider = styled('hr')<{ dir?: 'horizontal' | 'vertical', length?: string | number }>(({ dir, length = '100%' }) => {
-    const resultObj: CSSObject = {
+export const Divider: FC<ComponentProps<typeof Box> & { dir?: 'horizontal' | 'vertical', length?: string | number }> = memo(({ dir, length = '100%', sx, ...props }) => {
+    const resultObj: CSSProperties = {
         display: 'inline-flex',
-        background: '#fff6',
+        backgroundColor: '#fff6',
         border: 'none',
         borderRadius: '3px',
         padding: '-6px -12px'
@@ -27,10 +35,17 @@ export const Divider = styled('hr')<{ dir?: 'horizontal' | 'vertical', length?: 
         resultObj.marginBlock = 'auto';
     }
 
-    return resultObj
+    return <Box
+        component={'hr'}
+        sx={{
+            ...resultObj,
+            ...sx,
+        }}
+        {...props}
+    />
 })
 
-const TRCBWrapper = styled('div')({
+const TRCBWrapperStyle = {
     cursor: 'pointer',
     position: 'absolute',
     display: 'flex',
@@ -43,20 +58,20 @@ const TRCBWrapper = styled('div')({
     borderRadius: '50%',
     ':hover': {
         backgroundColor: '#3333'
-    } as CSSObject,
+    },
     ':active': {
         backgroundColor: '#1113'
-    } as CSSObject,
-})
+    },
+};
 
 export const TopRightButton = memo(({ style = {}, Icon, onClick }: { style?: CSSProperties, Icon: SvgIconComponent, onClick: () => void }) => {
     return (
-        <TRCBWrapper onClick={onClick} style={style}>
+        <Box sx={TRCBWrapperStyle} onClick={onClick} style={style}>
             <Icon style={{
                 width: '85%',
                 height: '85%',
             }}/>
-        </TRCBWrapper>
+        </Box>
     )
 })
 

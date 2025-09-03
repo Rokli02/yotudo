@@ -1,5 +1,5 @@
 import { CircularProgress as MuiCircularProgress, Container as MuiContainer } from "@mui/material";
-import { CSSObject, SxProps, Theme } from "@mui/material/styles"
+import { SxProps, Theme } from "@mui/material/styles"
 import { CSSProperties, FC, useEffect, useMemo, useState } from "react";
 
 type Size = 'large' | 'medium' | 'small'
@@ -64,17 +64,17 @@ export const ContainerStyle: SxProps<Theme> = {
             display: 'inline-flex',
             width: '30px',
             textAlign: 'start',
-        } as CSSObject,
+        },
         '&.large_size': {
             fontSize: '2rem',
-        } as CSSObject,
+        },
         '&.medium_size': {
             fontSize: '1.7rem',
-        } as CSSObject,
+        },
         '&.small_size': {
             fontSize: '1.3rem',
-        } as CSSObject,
-    } as CSSObject,
+        },
+    },
 };
 
 const CircularProgressStyle: SxProps<Theme> = {

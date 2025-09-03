@@ -1,7 +1,7 @@
 import { CSSProperties, FC, useEffect, useState } from 'react'
-import { CSSObject, styled } from '@mui/material/styles';
 import { Search } from '@mui/icons-material';
 import { Input } from '.'
+import { Box } from '@mui/material';
 
 export interface SearchbarProps {
     className?: string;
@@ -29,7 +29,7 @@ export const Searchbar: FC<SearchbarProps> = ({ debounceTime = 500, onDebounce, 
     
 
     return (
-        <SearchbarContainer className={className} style={style}>
+        <Box sx={SearchbarContainerStyle} className={className} style={style}>
             <Input
                 name='search'
                 className='SearchBar_Input'
@@ -42,15 +42,15 @@ export const Searchbar: FC<SearchbarProps> = ({ debounceTime = 500, onDebounce, 
                 onChange={(event) => setSearch(event.target.value)}
                 value={search}
                 renderSuffix={
-                    ({ focused }) => <SearchSuffixContainer className={ focused ? 'focused' : undefined }><Search /></SearchSuffixContainer>
+                    ({ focused }) => <Box sx={SearchSuffixContainerStyle} className={ focused ? 'focused' : undefined }><Search /></Box>
                 }
                 { ...props }
             />
-        </SearchbarContainer>
+        </Box>
     )
 }
 
-const SearchSuffixContainer = styled('div')({
+const SearchSuffixContainerStyle = {
     width: '24px',
     height: '24px',
     position: 'relative',
@@ -73,10 +73,10 @@ const SearchSuffixContainer = styled('div')({
         opacity: 0,
         marginInline: 0,
         width: 0,
-    } as CSSObject,
-})
+    },
+};
 
-const SearchbarContainer = styled('div')({
+const SearchbarContainerStyle = {
     position: 'relative',
     '& .SearchBar_Input': {
         '&.MuiInputBase-root': {
@@ -84,5 +84,5 @@ const SearchbarContainer = styled('div')({
         },
         lineHeight: 48,
         height: 48,
-    } as CSSObject,
-});
+    },
+};

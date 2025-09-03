@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BaseSelectProps, MenuItem as MuiMenuItem, Select as MuiSelect } from "@mui/material";
-import { styled, CSSObject } from "@mui/material/styles";
 import { FC, memo, ReactNode, useMemo } from "react";
 
 type MuiSelectProps = Parameters<typeof MuiSelect>[0];
@@ -27,19 +25,19 @@ export const Select: FC<SelectProps> = memo(({ options, onChange, ...props }) =>
     }
 
     const _options = useMemo(() => {
-        return options.map((option, i) => <StyledOption key={`${i}_${option.value}`} value={option.value as string}>{option.label}</StyledOption>)
+        return options.map((option, i) => <MuiMenuItem sx={SelectItemStyle} key={`${i}_${option.value}`} value={option.value as string}>{option.label}</MuiMenuItem>)
     }, [options])
 
     return (
-        <StyledSelect onChange={_onChange} MenuProps={menuProps} variant="outlined" {...props}>
+        <MuiSelect sx={SelectStyle} onChange={_onChange} MenuProps={menuProps} variant="outlined" {...props}>
             { _options }
-        </StyledSelect>
+        </MuiSelect>
     )
 })
 
 const menuProps: BaseSelectProps['MenuProps'] = { slotProps: { paper: { sx: { backgroundColor: 'var(--background-color)', color: 'var(--font-color)' } } } }
 
-const StyledSelect = styled(MuiSelect)({
+const SelectStyle = {
     '&.MuiInputBase-root': {
         color: 'var(--font-color)',
         '.MuiSvgIcon-root': {
@@ -52,13 +50,13 @@ const StyledSelect = styled(MuiSelect)({
         ':after': {
             borderColor: 'var(--primary-color)',
         },
-    } as CSSObject,
-});
+    },
+};
 
-const StyledOption = styled(MuiMenuItem)({
+const SelectItemStyle = {
     '&.MuiButtonBase-root': {
         ':hover': {
             backgroundColor: '#c8c8e00c',
         }
     },
-});
+};

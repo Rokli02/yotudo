@@ -1,4 +1,4 @@
-import { styled, CSSObject } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import {
     FormControl as MuiFormControl,
     Button as MuiButton,
@@ -41,14 +41,14 @@ export const Input = styled(MuiInput)({
         width: '100%',
         '&::before': {
             borderBottomColor: '#fff9',
-        } as CSSObject,
+        },
         '&::after': {
             borderBottomColor: 'crimson',
-        } as CSSObject,
+        },
         '& input': {
             color: 'var(--font-color)'
-        } as CSSObject,
-    } as CSSObject,
+        },
+    },
 })
 
 export const InputLabel = styled(MuiInputLabel)({
@@ -56,8 +56,8 @@ export const InputLabel = styled(MuiInputLabel)({
         color: '#fffa',
         '&.Mui-focused': {
             color: 'inherit',
-        } as CSSObject,
-    } as CSSObject,
+        },
+    },
 })
 
 export const Button = styled(MuiButton)({
@@ -127,7 +127,7 @@ export const TextField = styled(MuiTextField)({
                 },
             },
         },
-    } as CSSObject,
+    },
 })
 
 export const Pagination = styled(MuiPagination)({

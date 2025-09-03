@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack } from '@mui/icons-material';
 import { Box, Button as MuiButton } from '@mui/material';
-import { CSSObject, SxProps, Theme } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 
 export const UnknownPage: FC = () => {
     const navigate = useNavigate();
@@ -38,7 +38,7 @@ const ContainerStyle: SxProps<Theme> = {
     '& .back-container': {
         minWidth: 'fit-content',
         width: 'min(200px, 90%)',
-    } as CSSObject,
+    },
     '& .content': {
         display: 'flex',
         justifyContent: 'center',
@@ -52,12 +52,12 @@ const ContainerStyle: SxProps<Theme> = {
             '@media screen and (max-width: 1000px)': {
                 fontSize: '1.8rem',
                 letterSpacing: 1,
-            } as CSSObject,
+            },
             '@media screen and (max-width: 500px)': {
                 fontSize: '1.3rem',
                 letterSpacing: 'initial',
-            } as CSSObject,
-        } as CSSObject,
+            },
+        },
         '& div.img-wrapper': {
             width: '90%',
             maxWidth: '500px',
@@ -71,9 +71,9 @@ const ContainerStyle: SxProps<Theme> = {
                 width: '50%',
                 aspectRatio: .84,
                 position: 'relative',
-            } as CSSObject,
-        } as CSSObject,
-    } as CSSObject,
+            },
+        },
+    },
 };
 
 const ButtonStyle = {
@@ -85,12 +85,12 @@ const ButtonStyle = {
     '@media screen and (max-width: 1000px)': {
         fontSize: 16,
         columnGap: 6,
-    } as CSSObject,
+    },
     '& svg': {
         height: 24,
         aspectRatio: 1,
         '@media screen and (max-width: 1000px)': {
             height: 20,
-        } as CSSObject,
-    } as CSSObject,
+        },
+    },
 };
