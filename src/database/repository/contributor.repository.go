@@ -17,6 +17,7 @@ func NewContributorRepository(db *sql.DB) *Contributor {
 	return &Contributor{db: db}
 }
 
+// TODO: Bevezetni a metódusok első paramétereként a Connection típusú változót
 func (c *Contributor) FindByMusicId(musicId int64) []entity.Author {
 	rows, err := c.db.Query(`
 		SELECT contributor.author_id, author.name FROM contributor 

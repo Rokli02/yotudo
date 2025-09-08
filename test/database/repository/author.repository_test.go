@@ -84,7 +84,8 @@ func TestIsReferencingToMusic(t *testing.T) {
 	defer db.Close()
 	repo := repository.NewAuthorRepository(db.Conn)
 	contributorRepository := repository.NewContributorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository)
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository, imageRepository)
 
 	savedAuthors, err := repo.SaveMany([]string{"TestR", "Másodpilóta", "Harmadlegény", "Ismeretlen Kukac"})
 	if err != nil {

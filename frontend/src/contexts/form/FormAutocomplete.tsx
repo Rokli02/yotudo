@@ -3,6 +3,7 @@ import { Autocomplete, TextField } from '../../components/form'
 import { useForm } from '.'
 import { AutocompleteOptions } from './interface';
 import { useTextFetchGuard } from '@src/hooks/useTextFetchGuard';
+import { useLoading } from '@src/hooks/useLoading';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface AutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options'> {
@@ -34,6 +35,7 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     const [_options, setOptions] = useState<AutocompleteOptions[]>([...options])
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
     const fetchGuard = useTextFetchGuard()
+    const loadingState = useLoading()
 
     const onTyping = (event: ChangeEvent<HTMLInputElement>) => {
         setTextFieldValue(event.target.value);
@@ -53,9 +55,11 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
                     : { name: trimedValue, label: trimedValue } satisfies AutocompleteOptions;
             case 'clear':
             case 'selectOption':
-                setSelected(value as AutocompleteOptions | null);
-                onValueChange(name, value);
-                onChangeArg?.(event, value, reason, details);
+                if (!loadingState.value) {
+                    setSelected(value as AutocompleteOptions | null);
+                    onValueChange(name, value);
+                    onChangeArg?.(event, value, reason, details);
+                }
             break;
         }
     }
@@ -80,24 +84,27 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
     }, [])
     
     useEffect(() => {
-        if (!fetchOnce && (!options || options.length === 0)) {
+        if (!fetchOnce && !options?.length) {
             const abortController = new AbortController();
             let timeoutId: NodeJS.Timeout;
 
             if (fetchGuard.worthFetching(textFieldValue)) {
+                loadingState.startLoading();
+
                 timeoutId = setTimeout(async () => {
-                    console.log('fetched Options from BE')
                     const fetchedOptions = await getOptions(textFieldValue, abortController);
     
                     if (!fetchedOptions.length) fetchGuard.worthFetching(textFieldValue, false);
     
                     setOptions(fetchedOptions)
+                    loadingState.stopLoading();
                 }, debounceTime);
             }
 
             return () => {
                 clearTimeout(timeoutId)
                 abortController.abort();
+                loadingState.stopLoading();
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -5,6 +5,7 @@ import { AutocompleteOptions } from './interface';
 import { Chip } from '../../components/common';
 import { useTextFetchGuard } from '@src/hooks/useTextFetchGuard';
 import { Box } from '@mui/material';
+import { useLoading } from '@src/hooks/useLoading';
 
 type MuiAutocompleteProps = Parameters<typeof Autocomplete>[0]
 export interface MultiselectAutocompleteProps extends Omit<MuiAutocompleteProps, 'defaultValue' | 'renderInput' | 'options' | 'onChange' | 'value'> {
@@ -39,6 +40,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     const [_options, setOptions] = useState<AutocompleteOptions[]>([...options]);
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
     const fetchGuard = useTextFetchGuard()
+    const loadingState = useLoading()
 
     const onTyping = (event: ChangeEvent<HTMLInputElement>) => {
         setInputValue(event.target.value);
@@ -64,6 +66,8 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                 })
             break;
             case 'createOption':
+                if (!loadingState.value) break;
+
                 const trimedValue = (value as string).trim();
                 const foundOption = _options.find((o) => o.label.toLowerCase().search(trimedValue.toLowerCase()) !== -1);
 
@@ -141,11 +145,13 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     }, [])
     
     useEffect(() => {
-        if ((!options || options.length === 0) && !fetchOnce) {
+        if (!fetchOnce && !options?.length) {
             const abortController = new AbortController();
 
             let timeoutId: NodeJS.Timeout
             if (fetchGuard.worthFetching(inputValue)) {
+                loadingState.startLoading();
+
                 timeoutId = setTimeout(async () => {
                     const filteredOptions: number[] = _selectedOptions.map((so) => so.id as number).filter((id) => id !== undefined)
     
@@ -158,12 +164,14 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                     if (!fetchedOptions.length) fetchGuard.worthFetching(inputValue, false)
 
                     setOptions(fetchedOptions);
+                    loadingState.stopLoading();
                 }, debounceTime)
             }
             
             return () => {
-                clearTimeout(timeoutId)
+                clearTimeout(timeoutId);
                 abortController.abort();
+                loadingState.stopLoading();
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps

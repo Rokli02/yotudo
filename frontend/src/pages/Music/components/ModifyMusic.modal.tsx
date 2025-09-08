@@ -13,6 +13,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import { Music, MusicUpdate, NewMusic } from '@src/api'
 import {
     CustomDialagStyle,
+    DialogActionsStyle,
     getAuthorOptions,
     getContributorOptions,
     getGenreOptions,
@@ -27,9 +28,10 @@ interface ModifyMusicModalProps {
     onClose: () => void,
     music: Music,
     onSubmit: (musicToUpdate: MusicUpdate, index?: number) => Promise<boolean>,
+    onDelete: (music: Music) => Promise<boolean>,
 }
 
-export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, music, onSubmit }) => {
+export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, music, onSubmit, onDelete }) => {
     const _onSubmit: IForm['onSubmit'] = async (value: NewMusic) => {
         const response = await onSubmit({ ...music, ...value});
 
@@ -38,6 +40,14 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
         }
 
         return response;
+    }
+
+    const _onDelete = async () => {
+        const response = await onDelete(music)
+
+        if (response) {
+            onClose();
+        }
     }
 
     return ( <Dialog sx={CustomDialagStyle} open={open} onClose={onClose}>
@@ -102,8 +112,9 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                     />
                 </FormControl>
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={DialogActionsStyle}>
                 <Button type='submit' color='success'>Módosítás</Button>
+                <Button type='button' color='error' variant='outlined' onClick={_onDelete}>Törlés</Button>
             </DialogActions>
         </Form>
     </Dialog>

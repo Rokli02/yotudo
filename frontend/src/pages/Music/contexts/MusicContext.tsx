@@ -1,15 +1,18 @@
 /* eslint-disable no-case-declarations */
 import { createContext, FC, ReactElement, useEffect, useState } from "react";
-import { Music, MusicService, NewMusic, Page, Pagination, MusicUpdate, StatusService, Status } from "@src/api";
+import { Music, MusicService, NewMusic, Page, Pagination, MusicUpdate, StatusService, Status, DialogService } from "@src/api";
 import { PageSetter, usePage } from "@src/hooks/usePage";
 import { EventsOn } from "@wailsjs/runtime/runtime";
 
 export interface IMusicContext {
     musics: Pagination<Music[]>;
     page: Page;
-    setPage: PageSetter<[number]>,
+    currentStatus: Status,
+    setCurrentStatus: (status: Status) => void;
+    setPage: PageSetter,
     addMusic: (music: NewMusic) => Promise<boolean>;
     modifyMusic: (musicToUpdate: MusicUpdate, index?: number) => Promise<boolean>;
+    deleteMusic(music: Music): Promise<boolean>;
     performAction: (music: Music) => Promise<void>;
 }
 
@@ -20,7 +23,8 @@ export const MusicContext = createContext<IMusicContext>(null as unknown as IMus
 
 export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({ children }) => {
     const [musics, setMusics] = useState<Pagination<Music[]>>({ data: [], count: 0 });
-    const [page, setPage, _setPage] = usePage<[number]>(PAGE_SIZE, (state, status) => MusicService.GetMusics(state, status).then(setMusics));
+    const [currentStatus, _setCurrentStatus] = useState<Status>({id: -1, name: 'Nincs', description: ''})
+    const [page, setPage, _setPage] = usePage(PAGE_SIZE, (state) => MusicService.GetMusics(state, currentStatus.id).then(setMusics));
     const [status, setStatus] = useState<Status[]>([])
 
     async function addMusic(music: NewMusic): Promise<boolean> {
@@ -96,6 +100,18 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
         }
     }
 
+    async function deleteMusic(music: Music): Promise<boolean> {
+        return DialogService.OpenConfirmationDialog("Zene törlés", "Biztosan törlöd a megnyitott zenét?")
+            .then(async (res) => {
+                if (!res) return false;
+               
+                const deleteResult = await MusicService.DeleteMusic(music.id);
+                if (!deleteResult) return deleteResult;
+
+                return MusicService.GetMusics(page, currentStatus.id).then(setMusics).then(() => true).catch(() => false);
+            })
+    }
+
     function modifyMusicAt(source: Music[], music: Music, index?: number): boolean {
         if (!index) {
             for (let i = 0; i < source.length; i++) {
@@ -112,6 +128,12 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
         }
 
         return false;
+    }
+
+    function setCurrentStatus(status: Status) {
+        _setCurrentStatus(status)
+
+        MusicService.GetMusics(page, status.id).then(setMusics)
     }
 
     useEffect(() => {
@@ -140,26 +162,14 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
                     console.log(`Download progress for id=${musicId} is ${progress}%`)
                     break;
                 case 'completed':
-                    MusicService.GetMusicById(musicId).then((m) => {
-                        setMusics((pre) => ({
-                            count: pre.count,
-                            data: pre.data.map((music) => {
-                                if (music.id !== musicId || music.status.id == status[2].id) return music;
-    
-                                return m;
-                            }),   
-                        }));
-                    })
+                    setMusics((pre) => ({
+                        count: pre.count,
+                        data: pre.data.map((music) => {
+                            if (music.id !== musicId || music.status.id == status[2].id) return music;
 
-                    // TODO: Ez a kod visszaállítása, amint a thumbnail letöltés meg lett mókolva
-                    // setMusics((pre) => ({
-                    //     count: pre.count,
-                    //     data: pre.data.map((music) => {
-                    //         if (music.id !== musicId || music.status.id == status[2].id) return music;
-
-                    //         return { ...music, status: status[2] };
-                    //     }),   
-                    // }));
+                            return { ...music, status: status[2] };
+                        }),   
+                    }));
 
                     break;
                 case 'failed':
@@ -187,9 +197,12 @@ export const MusicProvider: FC<{ children: ReactElement | ReactElement[] }> = ({
         <MusicContext.Provider value={{
             musics,
             page,
+            currentStatus,
+            setCurrentStatus,
             setPage,
             addMusic,
             modifyMusic,
+            deleteMusic,
             performAction,
         }}>
             {children}

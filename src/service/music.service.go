@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
+	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
@@ -16,6 +16,7 @@ type MusicService struct {
 	musicRepository       *repository.Music
 	authorRepository      *repository.Author
 	contributorRepository *repository.Contributor
+	imageService          *ImageService
 	youtubeDLService      *YoutubeDLService
 	fileService           FileService
 }
@@ -24,6 +25,7 @@ func NewMusicService(
 	musicRepository *repository.Music,
 	authorRepository *repository.Author,
 	contributorRepository *repository.Contributor,
+	imageService *ImageService,
 	youtubeDLService *YoutubeDLService,
 	fileService FileService,
 ) *MusicService {
@@ -31,6 +33,7 @@ func NewMusicService(
 		musicRepository:       musicRepository,
 		authorRepository:      authorRepository,
 		contributorRepository: contributorRepository,
+		imageService:          imageService,
 		youtubeDLService:      youtubeDLService,
 		fileService:           fileService,
 	}
@@ -63,37 +66,65 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 	}
 
 	switch newMusic.PicType {
+	case "":
+		fallthrough
 	case "none":
-		newMusic.PicFilename = ""
+		newMusic.Image = nil
 	case "thumbnail":
 		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(newMusic.Url)
 		if err != nil {
 			logger.Error(err)
-		} else {
+			newMusic.Image = nil
+			break
+		}
+
+		if foundImage, err := c.imageService.GetBySource(thumbnailUrl); err != nil {
 			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
 			if err != nil {
 				logger.Error(err)
+				newMusic.Image = nil
 			} else {
-				newMusic.PicFilename = tmpFilename
+				newMusic.Image = &model.PossiblyNewImage{Name: tmpFilename, Source: &thumbnailUrl}
 			}
+		} else {
+			logger.DebugF("Found an already existing source(id=%d, name=%s)", foundImage.Id, foundImage.Name)
+			newMusic.Image = foundImage.ToPossiblyNewImage()
 		}
 	case "web":
-		if newMusic.PicFilename != "" {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(newMusic.PicFilename)
+		if !newMusic.Image.HasName() {
+			break
+		}
+
+		if foundImage, err := c.imageService.GetBySource(newMusic.Image.Name); err != nil {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(newMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
+				newMusic.Image = nil
 			} else {
-				newMusic.PicFilename = tmpFilename
+				newMusic.Image = &model.PossiblyNewImage{Name: tmpFilename, Source: &newMusic.Image.Name}
 			}
+		} else {
+			logger.DebugF("Found an already existing source(id=%d, name=%s)", foundImage.Id, foundImage.Name)
+			newMusic.Image = foundImage.ToPossiblyNewImage()
 		}
 	case "local":
-		if newMusic.PicFilename != "" {
-			tmpFilename, err := c.fileService.CopyImageFromFS(newMusic.PicFilename)
+		if !newMusic.Image.HasName() {
+			break
+		}
+
+		filename := c.fileService.GetFilename(newMusic.Image.Name)
+
+		if image, err := c.imageService.GetByName(filename); err != nil {
+			tmpFilename, err := c.fileService.CopyImageFromFS(newMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				newMusic.PicFilename = tmpFilename
+				newMusic.Image = nil
+				break
 			}
+
+			newMusic.Image.Name = tmpFilename
+		} else {
+			newMusic.Image.FromImage(image)
 		}
 	}
 
@@ -107,8 +138,8 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 		return nil, err
 	}
 
-	if savedMusic.PicFilename != nil {
-		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, *savedMusic.PicFilename), settings.Global.App.ImagesLocation)
+	if savedMusic.Image != nil && newMusic.Image.IsNew() {
+		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, savedMusic.Image.Name), settings.Global.App.ImagesLocation)
 		if err != nil {
 			logger.Error(err)
 		}
@@ -141,53 +172,78 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		updateMusic.Filename = *musicEntity.Filename
 	}
 
-	if updateMusic.PicFilename == "" {
-		if musicEntity.PicFilename != nil {
-			updateMusic.PicFilename = *musicEntity.PicFilename
-		}
-	}
-
-	oldPicFilename := musicEntity.PicFilename
 	switch updateMusic.PicType {
+	case "":
+		if musicEntity.ImageId != nil {
+			updateMusic.Image = &model.PossiblyNewImage{Id: musicEntity.ImageId}
+		}
 	case "none":
-		updateMusic.PicFilename = ""
+		updateMusic.Image = nil
 	case "thumbnail":
 		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(updateMusic.Url)
 		if err != nil {
 			logger.Error(err)
-		} else {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
-			if err != nil {
-				logger.Error(err)
-			} else {
-				updateMusic.PicFilename = tmpFilename
-			}
-		}
-	case "web":
-		if updateMusic.PicFilename != "" {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(updateMusic.PicFilename)
-			if err != nil {
-				logger.Error(err)
-			} else {
-				updateMusic.PicFilename = tmpFilename
-			}
-		}
-	case "local":
-		if musicEntity.PicFilename != nil && strings.HasSuffix(updateMusic.PicFilename, *musicEntity.PicFilename) {
-			updateMusic.PicFilename = *musicEntity.PicFilename
-
+			updateMusic.Image = nil
 			break
 		}
 
-		logger.Debug("updateMusic.PicFilename doesn't refer to itself")
-
-		if updateMusic.PicFilename != "" {
-			tmpFilename, err := c.fileService.CopyImageFromFS(updateMusic.PicFilename)
+		if foundImage, err := c.imageService.GetBySource(thumbnailUrl); err != nil {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
 			if err != nil {
 				logger.Error(err)
+				updateMusic.Image = nil
 			} else {
-				updateMusic.PicFilename = tmpFilename
+				updateMusic.Image = &model.PossiblyNewImage{Name: tmpFilename, Source: &thumbnailUrl}
 			}
+		} else {
+			logger.DebugF("Found an already existing source(id=%d, name=%s)", foundImage.Id, foundImage.Name)
+			updateMusic.Image = foundImage.ToPossiblyNewImage()
+		}
+	case "web":
+		if !updateMusic.Image.HasName() {
+			break
+		}
+
+		if foundImage, err := c.imageService.GetBySource(updateMusic.Image.Name); err != nil {
+			tmpFilename, err := c.fileService.DownloadImageFromWeb(updateMusic.Image.Name)
+			if err != nil {
+				logger.Error(err)
+				updateMusic.Image = nil
+			} else {
+				updateMusic.Image = &model.PossiblyNewImage{Name: tmpFilename, Source: &updateMusic.Image.Name}
+			}
+		} else {
+			logger.DebugF("Found an already existing source(id=%d, name=%s)", foundImage.Id, foundImage.Name)
+			updateMusic.Image = foundImage.ToPossiblyNewImage()
+		}
+	case "local":
+		if !updateMusic.Image.HasName() {
+			break
+		}
+
+		filename := c.fileService.GetFilename(updateMusic.Image.Name)
+
+		if image, err := c.imageService.GetByName(filename); err != nil {
+			tmpFilename, err := c.fileService.CopyImageFromFS(updateMusic.Image.Name)
+			if err != nil {
+				logger.Error(err)
+				updateMusic.Image = nil
+				break
+			}
+
+			updateMusic.Image.Name = tmpFilename
+		} else {
+			updateMusic.Image.FromImage(image)
+		}
+	}
+
+	isNewImage := updateMusic.Image.IsNew()
+	if isNewImage {
+		if savedImage, err := c.imageService.Save(updateMusic.Image); err != nil {
+			logger.Error(err)
+			updateMusic.Image = nil
+		} else {
+			updateMusic.Image.FromImage(savedImage)
 		}
 	}
 
@@ -196,14 +252,34 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		return nil, err
 	}
 
-	if oldPicFilename != nil && (updatedMusic.PicFilename == nil || *oldPicFilename != *updatedMusic.PicFilename) {
-		os.Remove(path.Join(settings.Global.App.ImagesLocation, *oldPicFilename))
-	}
-
-	if updatedMusic.PicFilename != nil && (oldPicFilename == nil || *oldPicFilename != *updatedMusic.PicFilename) {
-		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, *updatedMusic.PicFilename), settings.Global.App.ImagesLocation)
-		if err != nil {
-			logger.Error(err)
+	if updatedMusic.Image == nil { // Nincs elmentett kép
+		logger.Debug("Nincs elmentett kép")
+		if musicEntity.ImageId != nil { // Volt elmentett kép
+			logger.Debug("Volt elmentett kép")
+			if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+				logger.Error(err)
+			}
+		}
+	} else { // Van elmentett kép
+		logger.Debug("Van elmentett kép")
+		if musicEntity.ImageId == nil { // Nem volt elmentett kép
+			logger.Debug("Nem volt elmentett kép")
+			if isNewImage { // A mentett kép új, át kell mozgatni
+				logger.Debug("A mentett kép új, át kell mozgatni")
+				if err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
+					logger.Error(err)
+				}
+			}
+		} else if updatedMusic.Image.Id != *musicEntity.ImageId { // Volt elmentett kép ÉS nem ugyanaz
+			logger.Debug("Volt elmentett kép ÉS nem ugyanaz")
+			if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+				logger.Error(err)
+			} else if isNewImage { // A mentett kép új, át kell mozgatni
+				logger.Debug("A mentett kép új, át kell mozgatni")
+				if err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
+					logger.Error(err)
+				}
+			}
 		}
 	}
 
@@ -211,8 +287,30 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 }
 
 func (c *MusicService) Delete(id int64) error {
+	var musicEntity *entity.Music
+
+	if _musicEntity, err := c.musicRepository.FindById_Entity(id); err != nil {
+		logger.Error(err)
+		return err
+	} else {
+		musicEntity = _musicEntity
+	}
+
 	if deleted, err := c.musicRepository.DeleteOne(id); err != nil || !deleted {
+		logger.Error(err)
 		return errors.ErrUnableToDelete
+	}
+
+	if musicEntity.ImageId != nil {
+		if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+			logger.Error(err)
+		}
+	}
+
+	if musicEntity.Filename != nil {
+		if err := os.Remove(path.Join(settings.Global.App.MusicsLocation, *musicEntity.Filename)); err != nil {
+			logger.Error(err)
+		}
 	}
 
 	return nil

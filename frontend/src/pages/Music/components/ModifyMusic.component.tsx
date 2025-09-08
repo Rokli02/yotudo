@@ -5,7 +5,7 @@ import { ModifyMusicModal } from './ModifyMusic.modal';
 
 export const ModifyMusicComponent: FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { musics, modifyMusic } = useMusicContext();
+    const { musics, modifyMusic, deleteMusic } = useMusicContext();
 
     const spData = useMemo(() => {
         const id = Number(searchParams.get('id'));
@@ -26,7 +26,7 @@ export const ModifyMusicComponent: FC = () => {
 
     return (
         <>
-            { !spData ? undefined : <ModifyMusicModal open={!!spData} onClose={() => setSearchParams({})} music={spData} onSubmit={modifyMusic}/> }
+            { !spData ? undefined : <ModifyMusicModal open={!!spData} onClose={() => setSearchParams({})} music={spData} onSubmit={modifyMusic} onDelete={deleteMusic}/> }
         </>
     )
 }

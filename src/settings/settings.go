@@ -62,10 +62,10 @@ func LoadSettings() (*Settings, error) {
 		},
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
-			Version:  "1.0.1",
+			Version:  "1.1.0",
 		},
 		Logger: LoggerSettings{
-			Level: "warning",
+			Level: "info",
 			Types: []string{"console"},
 		},
 	}

@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"testing"
+	"yotudo/src/database/entity"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
@@ -11,9 +12,10 @@ func TestSaveMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	johnLenon, _ := authorRepository.SaveOne("John Lenon")
+	johnLenon := Must(authorRepository.SaveOne("John Lenon"))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:      "Test Muzsika",
 		Published: 2001,
@@ -27,26 +29,23 @@ func TestSaveMusic(t *testing.T) {
 	}
 
 	row := db.Conn.QueryRow("SELECT * FROM music WHERE id=?", musicId)
-	res := make([]any, 11)
-	err = row.Scan(&res[0], &res[1], &res[2], &res[3], &res[4], &res[5], &res[6], &res[7], &res[8], &res[9], &res[10])
-	if err != nil {
-		t.Error(err)
+	musicEntity := &entity.Music{}
 
-		return
-	}
+	Must(musicEntity.FromScan(row.Scan))
 
-	logger.Debug(res)
+	logger.Debug(musicEntity)
 }
 
 func TestSaveMusicWithContributors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	johnLenon, _ := authorRepository.SaveOne("John Lenon")
-	eltonBro, _ := authorRepository.SaveOne("Elton Bro")
-	skibidiGuy, _ := authorRepository.SaveOne("Skibidi Guy")
+	johnLenon := Must(authorRepository.SaveOne("John Lenon"))
+	eltonBro := Must(authorRepository.SaveOne("Elton Bro"))
+	skibidiGuy := Must(authorRepository.SaveOne("Skibidi Guy"))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:      "Test Muzsika",
 		Published: 2001,
@@ -66,13 +65,9 @@ func TestSaveMusicWithContributors(t *testing.T) {
 	}
 
 	row := db.Conn.QueryRow("SELECT * FROM music WHERE id=?", musicId)
-	res := make([]any, 11)
-	err = row.Scan(&res[0], &res[1], &res[2], &res[3], &res[4], &res[5], &res[6], &res[7], &res[8], &res[9], &res[10])
-	if err != nil {
-		t.Error(err)
+	musicEntity := &entity.Music{}
 
-		return
-	}
+	Must(musicEntity.FromScan(row.Scan))
 
 	contributorIds := make([]int64, 0, 2)
 	rows, _ := db.Conn.Query("SELECT author_id FROM contributor WHERE music_id=?;", musicId)
@@ -87,16 +82,54 @@ func TestSaveMusicWithContributors(t *testing.T) {
 		t.Errorf("Did not found every added contributors (expected=2, got=%d)", len(contributorIds))
 	}
 
-	logger.Debug(res)
+	logger.Debug(musicEntity)
+}
+
+func TestSaveMusicWithImage(t *testing.T) {
+	db := getInMemoryDB()
+	defer db.Close()
+	authorRepository := repository.NewAuthorRepository(db.Conn)
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
+
+	johnLenon := Must(authorRepository.SaveOne("John Lenon"))
+
+	musicId, err := musicRepository.SaveOne(&model.NewMusic{
+		Name:      "Test Muzsika",
+		Published: 2001,
+		Url:       "http://jurta.hu?v=12345",
+		Author:    model.OptionalAuthor{Id: &johnLenon.Id},
+		Image:     &model.PossiblyNewImage{Name: "newImage.png"},
+		GenreId:   1,
+	})
+
+	if err != nil {
+		t.Error(err)
+
+		return
+	}
+
+	row := db.Conn.QueryRow("SELECT * FROM music WHERE id=?", musicId)
+	musicEntity := &entity.Music{}
+
+	Must(musicEntity.FromScan(row.Scan))
+
+	if image, err := imageRepository.FindById(nil, *musicEntity.ImageId); err != nil {
+		t.Error(err)
+		return
+	} else {
+		logger.Debug("Image got saved:", image)
+	}
 }
 
 func TestFindMusicById(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	johnLenon, _ := authorRepository.SaveOne("John Lenon")
+	johnLenon := Must(authorRepository.SaveOne("John Lenon"))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:    "Test Muzsika",
 		Album:   "Mi lenne album",
@@ -123,11 +156,12 @@ func TestFindMusicByIdAfterSavingContributors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	johnLenon, _ := authorRepository.SaveOne("John Lenon")
-	eltonJohn, _ := authorRepository.SaveOne("Elton John")
-	billyBobber, _ := authorRepository.SaveOne("Billy Bobber")
+	johnLenon := Must(authorRepository.SaveOne("John Lenon"))
+	eltonJohn := Must(authorRepository.SaveOne("Elton John"))
+	billyBobber := Must(authorRepository.SaveOne("Billy Bobber"))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:   "Test Muzsika",
 		Album:  "Mi lenne album",
@@ -159,9 +193,10 @@ func TestUpdateOneMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	authors, _ := authorRepository.SaveMany([]string{"Test1", "Test2", "Test12", "Test30", "Test23"})
+	authors := Must(authorRepository.SaveMany([]string{"Test1", "Test2", "Test12", "Test30", "Test23"}))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:      "Test Muzsika",
 		Album:     "Mi lenne album",
@@ -219,9 +254,10 @@ func TestUpdateOneMusic_ErrNotFound(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
-	author, _ := authorRepository.SaveOne("Test1")
+	author := Must(authorRepository.SaveOne("Test1"))
 	musicId, err := musicRepository.SaveOne(&model.NewMusic{
 		Name:      "Test Muzsika",
 		Album:     "Mi lenne album",
@@ -254,7 +290,8 @@ func TestFindManyMusic(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	authorRepository := repository.NewAuthorRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn))
+	imageRepository := repository.NewImageRepository(db.Conn)
+	musicRepository := repository.NewMusicRepository(db.Conn, repository.NewContributorRepository(db.Conn), imageRepository)
 
 	logger.Info("Repos created")
 

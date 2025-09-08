@@ -118,7 +118,6 @@ export const getContributorOptions: MultiselectAutocompleteProps['getOptions'] =
 
 export const CustomDialagStyle: SxProps<Theme> = {
     '& .MuiDialog-container': {
-        marginBlock: '4% 6%',
         alignItems: 'flex-start',
         '& .MuiPaper-root': {
             maxWidth: '650px',
@@ -141,6 +140,12 @@ export const CustomDialagStyle: SxProps<Theme> = {
         flexDirection: 'column',
         rowGap: '1rem',
     },
+};
+
+export const DialogActionsStyle: SxProps<Theme> = {
+    width: '100%',
+    justifyContent: 'center',
+    gap: '3rem'
 };
 
 export const TitleStyle: SxProps<Theme> = {

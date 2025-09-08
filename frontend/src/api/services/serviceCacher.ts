@@ -1,4 +1,3 @@
-//TODO: Átalakítani, hogy kulcs-érték alapú legyen az adattárolás, Setter és Getter metódussal (Redis szerű)
 export class DataCache<T = unknown> {
     private ttl: number;
     private lastModified: number;

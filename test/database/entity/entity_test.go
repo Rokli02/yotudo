@@ -114,3 +114,32 @@ func TestMigrationGetNone(t *testing.T) {
 		return
 	}
 }
+
+func TestMigrationMultipleEqualVersion(t *testing.T) {
+	migrations := []entity.Migration{
+		{
+			Version:   entity.MigrationVersion{0, 1, 4},
+			Migration: "Numbero uno",
+		},
+		{
+			Version:   entity.MigrationVersion{0, 1, 5},
+			Migration: "Numbero uno",
+		},
+		{
+			Version:   entity.MigrationVersion{0, 1, 5},
+			Migration: "Dos Tacos",
+		},
+		{
+			Version:   entity.MigrationVersion{0, 3, 2},
+			Migration: "Dos Tacos",
+		},
+	}
+	currentVersion := entity.MigrationVersion{0, 1, 4}
+	expectedLength := 3
+
+	receivedMigrations := entity.MigrationsByVersion(migrations, currentVersion)
+
+	if len(receivedMigrations) != expectedLength {
+		t.Errorf("Migration size expected to be '%d', but got '%d'", expectedLength, len(receivedMigrations))
+	}
+}

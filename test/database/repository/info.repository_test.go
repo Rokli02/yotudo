@@ -10,6 +10,7 @@ import (
 
 func TestSaveInfo(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	if err := infoRepository.CreateOne(&entity.Info{Key: "test_width", Value: "1200", ValueType: entity.IntValue}); err != nil {
@@ -20,6 +21,7 @@ func TestSaveInfo(t *testing.T) {
 
 func TestGetByIdInfo(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	const (
@@ -42,6 +44,7 @@ func TestGetByIdInfo(t *testing.T) {
 
 func TestGetByIdInfo_NotFound(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	const (
@@ -60,6 +63,7 @@ func TestGetByIdInfo_NotFound(t *testing.T) {
 
 func TestGetByKeys(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	const (
@@ -81,6 +85,7 @@ func TestGetByKeys(t *testing.T) {
 
 func TestGetByKeyPrefix(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	const (
@@ -102,6 +107,7 @@ func TestGetByKeyPrefix(t *testing.T) {
 
 func TestUpdateOne(t *testing.T) {
 	db := getInMemoryDB()
+	defer db.Close()
 	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	const (

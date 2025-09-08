@@ -64,6 +64,20 @@ export namespace model {
 	        this.Name = source["Name"];
 	    }
 	}
+	export class Image {
+	    Id: number;
+	    Name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Image(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Id = source["Id"];
+	        this.Name = source["Name"];
+	    }
+	}
 	export class Music {
 	    Id: number;
 	    Name: string;
@@ -71,7 +85,7 @@ export namespace model {
 	    Album?: string;
 	    Url: string;
 	    Filename?: string;
-	    PicFilename?: string;
+	    Image?: Image;
 	    Status: number;
 	    Genre: Genre;
 	    Author: Author;
@@ -89,7 +103,7 @@ export namespace model {
 	        this.Album = source["Album"];
 	        this.Url = source["Url"];
 	        this.Filename = source["Filename"];
-	        this.PicFilename = source["PicFilename"];
+	        this.Image = this.convertValues(source["Image"], Image);
 	        this.Status = source["Status"];
 	        this.Genre = this.convertValues(source["Genre"], Genre);
 	        this.Author = this.convertValues(source["Author"], Author);
@@ -114,6 +128,22 @@ export namespace model {
 		    return a;
 		}
 	}
+	export class PossiblyNewImage {
+	    Id?: number;
+	    Name: string;
+	    Source?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PossiblyNewImage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Id = source["Id"];
+	        this.Name = source["Name"];
+	        this.Source = source["Source"];
+	    }
+	}
 	export class OptionalAuthor {
 	    Id?: number;
 	    Name?: string;
@@ -136,7 +166,7 @@ export namespace model {
 	    Author: OptionalAuthor;
 	    Contributors: OptionalAuthor[];
 	    GenreId: number;
-	    PicFilename: string;
+	    Image?: PossiblyNewImage;
 	    PicType: string;
 	
 	    static createFrom(source: any = {}) {
@@ -152,7 +182,7 @@ export namespace model {
 	        this.Author = this.convertValues(source["Author"], OptionalAuthor);
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.GenreId = source["GenreId"];
-	        this.PicFilename = source["PicFilename"];
+	        this.Image = this.convertValues(source["Image"], PossiblyNewImage);
 	        this.PicType = source["PicType"];
 	    }
 	
@@ -253,6 +283,7 @@ export namespace model {
 		    return a;
 		}
 	}
+	
 	export class Sort {
 	    Key: string;
 	    Dir: number;
@@ -293,8 +324,8 @@ export namespace model {
 	    Contributors: OptionalAuthor[];
 	    Status: number;
 	    GenreId: number;
+	    Image?: PossiblyNewImage;
 	    Filename: string;
-	    PicFilename: string;
 	    PicType: string;
 	
 	    static createFrom(source: any = {}) {
@@ -312,8 +343,8 @@ export namespace model {
 	        this.Contributors = this.convertValues(source["Contributors"], OptionalAuthor);
 	        this.Status = source["Status"];
 	        this.GenreId = source["GenreId"];
+	        this.Image = this.convertValues(source["Image"], PossiblyNewImage);
 	        this.Filename = source["Filename"];
-	        this.PicFilename = source["PicFilename"];
 	        this.PicType = source["PicType"];
 	    }
 	

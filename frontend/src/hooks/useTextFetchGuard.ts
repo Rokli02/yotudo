@@ -26,7 +26,7 @@ class FetchGuard {
 
     worthFetching(text: string, shouldFetchNextTime?: boolean): boolean {
         if (shouldFetchNextTime !== undefined) return this.setProperties(text, shouldFetchNextTime);
-        if (this.previousText === undefined) return this.setProperties(text, true);
+        if (this.previousText === undefined || this.previousText === '') return this.setProperties(text, true);
         if (this.previousText === text) return this.setProperties(this.previousText, false);
         if (!this.shouldFetch && text.substring(0, this.previousText.length) === this.previousText) return this.setProperties(this.previousText, false);
 

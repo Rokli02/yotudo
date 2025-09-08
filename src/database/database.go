@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"regexp"
 	"strings"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/repository"
@@ -23,10 +24,13 @@ func (db *Database) databaseTables() []entity.Entity {
 		entity.Genre{},
 		entity.Status{},
 		entity.Author{},
+		entity.Image{},
 		entity.Music{},
 		entity.Contributor{},
 	}
 }
+
+var spaceEliminator regexp.Regexp = *regexp.MustCompile(`\s{2,}`)
 
 func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 	dbOption := DefaultDatabaseOptions(settings.Global.Database)
@@ -105,10 +109,12 @@ func (db *Database) init() {
 	sb := strings.Builder{}
 
 	for _, table := range databaseTableList {
-		sb.WriteString(table.Template())
+		sb.WriteString(spaceEliminator.ReplaceAllString(table.Template(), " "))
 	}
 
-	_, err := db.Conn.Exec(sb.String())
+	createTableQuery := sb.String()
+
+	_, err := db.Conn.Exec(createTableQuery)
 	if err != nil {
 		logger.Error(err)
 		panic(-1)
@@ -129,7 +135,7 @@ func (db *Database) migrateDatabase(versionText string, infoRepository *reposito
 
 		if len(migrations) > 0 {
 			for _, migration := range migrations {
-				sb.WriteString(migration.Migration)
+				sb.WriteString(spaceEliminator.ReplaceAllString(migration.Migration, " "))
 				sb.WriteString("\n")
 			}
 		}

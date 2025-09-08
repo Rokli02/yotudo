@@ -9,7 +9,7 @@ type Music struct {
 	Album        *string
 	Url          string
 	Filename     *string
-	PicFilename  *string
+	Image        *Image
 	Status       int8
 	Genre        Genre
 	Author       Author
@@ -44,8 +44,8 @@ func (m *Music) ToUpdateMusic() *UpdateMusic {
 		updateMusic.Filename = *m.Filename
 	}
 
-	if m.PicFilename != nil {
-		updateMusic.PicFilename = *m.PicFilename
+	if m.Image != nil {
+		updateMusic.Image = m.Image.ToPossiblyNewImage()
 	}
 
 	if len(m.Contributors) != 0 {
@@ -71,7 +71,7 @@ type NewMusic struct {
 	Author       OptionalAuthor
 	Contributors []OptionalAuthor
 	GenreId      int64
-	PicFilename  string
+	Image        *PossiblyNewImage
 	PicType      string
 }
 
@@ -89,8 +89,8 @@ type UpdateMusic struct {
 	Contributors []OptionalAuthor
 	Status       int8
 	GenreId      int64
+	Image        *PossiblyNewImage
 	Filename     string
-	PicFilename  string
 	PicType      string
 }
 
@@ -98,7 +98,7 @@ func (m *UpdateMusic) GetOptionalAuthor() *OptionalAuthor         { return &m.Au
 func (m *UpdateMusic) GetOptionalContributors() []OptionalAuthor  { return m.Contributors }
 func (m *UpdateMusic) SetOptionalContributors(c []OptionalAuthor) { m.Contributors = c }
 
-func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicFilename *string) {
+func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename *string, ImageId *int64) {
 	if m.Published != 0 {
 		Published = &m.Published
 	}
@@ -107,8 +107,8 @@ func (m *UpdateMusic) GetOptionalParams() (Published *int, Album, Filename, PicF
 		Album = &m.Album
 	}
 
-	if m.PicFilename != "" {
-		PicFilename = &m.PicFilename
+	if m.Image != nil {
+		ImageId = m.Image.Id
 	}
 
 	if m.Filename != "" {

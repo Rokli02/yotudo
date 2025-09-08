@@ -253,8 +253,8 @@ const ThumbnailBackgroundStyle: SxProps<Theme> = {
     pointerEvents: 'none',
     opacity: .23,
     backgroundBlendMode: 'darken',
-    'object-fit': 'cover',
-    'mask-image': `radial-gradient(
+    objectFit: 'cover',
+    maskImage: `radial-gradient(
         circle at center,
         rgba(255,255,255,1) 0%,
         rgba(255,255,255,0) 67%

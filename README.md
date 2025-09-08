@@ -28,14 +28,6 @@ logger:
 ```
 
 ## Backend továbbfejlesztés:
-- Képek tárolása táblában ---> a zenék hivatkoznak rá, így nem kell mindig új fájlt létrehozni, ha netán album borítónak felel meg
-```sql
-CREATE TABLE image (
-    id INTEGER PRIMARY KEY,
-    path TEXT UNIQUE NOT NULL,
-    referedCount INTEGER DEFAULT 1,
-);
-```
 - Album tábla autocomplete-hez, egy-egy album egy adott
 ```sql
 CREATE TABLE album (
@@ -48,10 +40,7 @@ CREATE TABLE album (
 -- For migration-hydration
 INSERT OR IGNORE INTO album(...) SELECT album as name, author_id FROM music;
 ```
-`Jelenleg nincs fejlesztési terv a backend-hez`
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
-- styled(...) komponensek elhagyása -> 'sx' prop használata helyette
 - formok konroláltá alakítása
-- Zene hozzáadásakor a közreműködő kiválasztó mező képes legyen szerzőt létrehozni

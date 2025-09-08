@@ -15,12 +15,14 @@ import (
 type Music struct {
 	db                    *sql.DB
 	contributorRepository *Contributor
+	imageRepository       *Image
 }
 
-func NewMusicRepository(db *sql.DB, contributorRepository *Contributor) *Music {
+func NewMusicRepository(db *sql.DB, contributorRepository *Contributor, imageRepository *Image) *Music {
 	return &Music{
 		db:                    db,
 		contributorRepository: contributorRepository,
+		imageRepository:       imageRepository,
 	}
 }
 
@@ -36,13 +38,14 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 
 	query := builders.NewQueryBuilder(fmt.Sprintf(
 		`SELECT
-			m.id, m.name, m.published, m.album, m.url, m.filename, m.pic_filename, m.status,
+			m.id, m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
 			a.id, a.name, genre.id, genre.name, ac.id, ac.name, (%s) as total_count
 		FROM music AS m 
 		JOIN author AS a ON m.author_id = a.id
 		JOIN genre ON m.genre_id = genre.id
 		LEFT JOIN contributor ON m.id = contributor.music_id
-		LEFT JOIN author AS ac ON contributor.author_id = ac.id`,
+		LEFT JOIN author AS ac ON contributor.author_id = ac.id
+		LEFT JOIN image ON image.id=m.image_id`,
 		totalCountQuery,
 	), &args).
 		WithFilter("m.name", filter).
@@ -73,9 +76,11 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 		}
 		var contributorId *int64
 		var contributorName *string
+		var imageId *int64
+		var imagePath *string
 
 		if err := rows.Scan(
-			&currentMusic.Id, &currentMusic.Name, &currentMusic.Published, &currentMusic.Album, &currentMusic.Url, &currentMusic.Filename, &currentMusic.PicFilename, &currentMusic.Status,
+			&currentMusic.Id, &currentMusic.Name, &currentMusic.Published, &currentMusic.Album, &currentMusic.Url, &currentMusic.Filename, &imageId, &imagePath, &currentMusic.Status,
 			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributorId, &contributorName, &totalCount,
 		); err != nil {
 			logger.Warning("Music.FindByPageAndStatus:", err)
@@ -92,6 +97,10 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 			if contributorId != nil && contributorName != nil {
 				musics[lastIndex].Contributors = append(musics[lastIndex].Contributors, model.Author{Id: *contributorId, Name: *contributorName})
 			}
+
+			if imageId != nil && imagePath != nil && musics[lastIndex].Image == nil {
+				musics[lastIndex].Image = &model.Image{Id: *imageId, Name: *imagePath}
+			}
 		}
 	}
 
@@ -103,13 +112,14 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 
 	rows, err := m.db.Query(
 		`SELECT
-			m.name, m.published, m.album, m.url, m.filename, m.pic_filename, m.status,
+			m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
 			a.id, a.name, genre.id, genre.name, ac.id, ac.name
 		FROM music AS m 
 		JOIN author AS a ON m.author_id = a.id
 		JOIN genre ON m.genre_id = genre.id
 		LEFT JOIN contributor ON m.id = contributor.music_id
 		LEFT JOIN author AS ac ON contributor.author_id = ac.id
+		LEFT JOIN image ON image.id=m.image_id
 		WHERE m.id=?;`,
 		id,
 	)
@@ -128,21 +138,27 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 		Genre:        model.Genre{},
 	}
 
+	var imageId *int64
+	var imagePath *string
+
 	for rows.Next() {
 		var contributorId *int64
 		var contributorName *string
 
 		if err := rows.Scan(
-			&music.Name, &music.Published, &music.Album, &music.Url, &music.Filename, &music.PicFilename, &music.Status,
+			&music.Name, &music.Published, &music.Album, &music.Url, &music.Filename, &imageId, &imagePath, &music.Status,
 			&music.Author.Id, &music.Author.Name, &music.Genre.Id, &music.Genre.Name, &contributorId, &contributorName,
 		); err != nil {
 			logger.Warning("Music.FinyById", err)
 
 			return nil, errors.ErrNotFound
 		} else if contributorId != nil {
-			logger.DebugF("Contributor(id=%d, name=%s)", *contributorId, *contributorName)
 			music.Contributors = append(music.Contributors, model.Author{Id: *contributorId, Name: *contributorName})
 		}
+	}
+
+	if imageId != nil && imagePath != nil {
+		music.Image = &model.Image{Id: *imageId, Name: *imagePath}
 	}
 
 	return music, nil
@@ -152,14 +168,12 @@ func (m *Music) FindById_Entity(musicId int64) (*entity.Music, error) {
 	entity := &entity.Music{}
 
 	if err := m.db.QueryRow(
-		"SELECT id, author_id, name, published, album, genre_id, url, filename, pic_filename, status, updated_at FROM music WHERE id=? LIMIT 1", musicId,
+		"SELECT id, author_id, name, published, album, genre_id, url, filename, image_id, status, updated_at FROM music WHERE id=? LIMIT 1", musicId,
 	).Scan(
-		&entity.Id, &entity.AuthorId, &entity.Name, &entity.Published, &entity.Album, &entity.GenreId, &entity.Url, &entity.Filename, &entity.PicFilename, &entity.Status, &entity.UpdatedAt,
+		&entity.Id, &entity.AuthorId, &entity.Name, &entity.Published, &entity.Album, &entity.GenreId, &entity.Url, &entity.Filename, &entity.ImageId, &entity.Status, &entity.UpdatedAt,
 	); err != nil {
 		return nil, errors.ErrNotFound
 	}
-
-	logger.Debug("Found Entity:", entity.String())
 
 	return entity, nil
 }
@@ -174,14 +188,18 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		album = &newMusic.Album
 	}
 
-	var picFilename *string
-	if newMusic.PicFilename != "" {
-		picFilename = &newMusic.PicFilename
+	var imageId *int64
+	if newMusic.Image.IsNew() && newMusic.Image.HasName() {
+		if savedImage, err := m.imageRepository.SaveOne(nil, newMusic.Image); err != nil {
+			logger.Error(err)
+		} else {
+			imageId = &savedImage.Id
+		}
 	}
 
 	res, err := m.db.Exec(
-		"INSERT INTO music (name, published, album, url, pic_filename, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?,?);",
-		newMusic.Name, published, album, newMusic.Url, picFilename,
+		"INSERT INTO music (name, published, album, url, image_id, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?,?);",
+		newMusic.Name, published, album, newMusic.Url, imageId,
 		newMusic.Author.Id, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
 	)
 	if err != nil {
@@ -210,7 +228,7 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 }
 
 /*
-Updates Music and its contributor references too.
+Updates Music, its contributors and connecting image too.
 */
 func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music, returnError error) {
 	logger.Debug("Updating music:", music.String())
@@ -268,14 +286,14 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	}()
 
 	// Update 'music' record based on the given properties
-	published, album, filename, picFilename := music.GetOptionalParams()
+	published, album, filename, imageId := music.GetOptionalParams()
 	res, err := trans.Exec(`
 		UPDATE music
 		SET author_id=?, name=?, published=?, album=?, genre_id=?, url=?, filename=?,
-			pic_filename=?, status=?, updated_at=?
+			image_id=?, status=?, updated_at=?
 		WHERE id=?`,
 		*music.Author.Id, music.Name, published, album, music.GenreId, music.Url, filename,
-		picFilename, music.Status, time.Now().Format(DefaultDateFormat), musicId,
+		imageId, music.Status, time.Now().Format(DefaultDateFormat), musicId,
 	)
 	if err != nil {
 		logger.Error(err)

@@ -93,10 +93,20 @@ func (s FileService) IsExists(path string) bool {
 	return false
 }
 
+func (s FileService) GetFilename(path string) string {
+	var filename string = path
+	if lastSlashIndex := strings.LastIndexAny(path, "\\/"); lastSlashIndex != -1 {
+		filename = path[lastSlashIndex+1:]
+	}
+
+	return filename
+}
+
 /*
 Saves the given 'imageUri' into a file in the local temp folder and returns its name.
 */
 func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
+	logger.DebugF("Downloading image from uri='%s'", imageUri)
 	imageUrl, err := url.Parse(imageUri)
 	if err != nil {
 		return "", err
@@ -123,7 +133,8 @@ func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 		}
 	}
 
-	filename := fmt.Sprintf("%s[%x].%s", purgedFilename, time.Now().UnixMilli(), fileExtension)
+	maxPurgedFilenameLength := min(len(purgedFilename), 96)
+	filename := fmt.Sprintf("%s[%x].%s", purgedFilename[:maxPurgedFilenameLength], time.Now().UnixMilli(), fileExtension)
 
 	createdImageFile, err := os.Create(pathModule.Join(settings.Global.App.TempLocation, filename))
 	if err != nil {
@@ -143,15 +154,7 @@ func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 Copies the given 'imagePath' into the local temp folder and returns its name.
 */
 func (s FileService) CopyImageFromFS(imagePath string) (string, error) {
-	var filename string = imagePath
-	if lastSlashIndex := strings.LastIndexAny(imagePath, "\\/"); lastSlashIndex != -1 {
-		filename = imagePath[lastSlashIndex+1:]
-	}
-
-	imageExt := pathModule.Ext(filename)
-	if base, found := strings.CutSuffix(filename, imageExt); found {
-		filename = fmt.Sprintf("%s[%x]%s", base, time.Now().UnixMilli(), imageExt)
-	}
+	filename := s.GetFilename(imagePath)
 
 	logger.DebugF("ImagePath='%s', extracted filename='%s'", imagePath, filename)
 

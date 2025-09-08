@@ -153,8 +153,9 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 	}()
 
 	// Check for a thumbnail that might be attached to the music
-	if music.PicFilename != nil {
-		imageWidth, imageHeight, imageExt, err := c.fileService.GetImageConfig(*music.PicFilename)
+	if music.Image != nil {
+		musicImagePath := music.Image.Name
+		imageWidth, imageHeight, imageExt, err := c.fileService.GetImageConfig(musicImagePath)
 		if err != nil {
 			logger.Error(err)
 
@@ -164,15 +165,15 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 		imageSize := min(THUMBNAIL_SIZE, imageWidth, imageHeight)
 		offsetX, offsetY := (imageWidth-imageSize)/2, (imageHeight-imageSize)/2
 
-		if tempPictureBase, found := strings.CutSuffix(*music.PicFilename, imageExt); found {
+		if tempPictureBase, found := strings.CutSuffix(musicImagePath, imageExt); found {
 			tempPicturePath = fmt.Sprintf("%s.%s", tempPictureBase, FINAL_IMAGE_EXTENSION)
 		} else {
-			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", imageExt, *music.PicFilename)
+			logger.WarningF("Couldn't find file extension (%s) in filename (%s)", imageExt, musicImagePath)
 
 			goto leave_music_picfile
 		}
 
-		picturePath := path.Join(settings.Global.App.ImagesLocation, *music.PicFilename)
+		picturePath := path.Join(settings.Global.App.ImagesLocation, musicImagePath)
 		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
 
 		ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*10)

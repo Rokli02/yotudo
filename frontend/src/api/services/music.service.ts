@@ -1,7 +1,7 @@
 import { model } from "@wailsjs/go/models";
 import { Music, NewMusic, MusicUpdate } from "../models/Music";
 import { Page, Pagination } from "../models/Page";
-import { GetManyByPagination, GetById, Save, Update } from '@service/MusicService';
+import { GetManyByPagination, GetById, Save, Update, Delete } from '@service/MusicService';
 import { DownloadByMusicId, MoveToDownloadDir } from '@service/YoutubeService';
 import { GetAllStatus } from "./status.service";
 import { Status } from "../models/Misc";
@@ -32,7 +32,7 @@ export async function SaveMusic(newMusic: NewMusic): Promise<Music | null> {
         Album: newMusic.album,
         GenreId: newMusic.genre.id,
         Published: newMusic.published,
-        PicFilename: newMusic.picName,
+        Image: newMusic.picName ? { Name: newMusic.picName} : undefined,
         PicType: newMusic.picName_chosenType,
     } as model.NewMusic));
 
@@ -52,9 +52,9 @@ export async function UpdateMusic(newMusic: MusicUpdate): Promise<Music | null> 
         GenreId: newMusic.genre.id,
         Published: newMusic.published,
         Status: newMusic.status.id,
-        PicFilename: newMusic.picName,
+        Image: newMusic.picName ? { Name: newMusic.picName } : undefined,
         PicType: newMusic.picName_chosenType,
-    }))
+    } as model.UpdateMusic))
 
     const statusMap = await GetAllStatus();
 
@@ -62,7 +62,7 @@ export async function UpdateMusic(newMusic: MusicUpdate): Promise<Music | null> 
 }
 
 export async function DeleteMusic(id: number): Promise<boolean> {
-    return Promise.resolve(false);
+    return Delete(id).then(() => true).catch(() => false);
 }
 
 export async function MoveMusicTo(id: number): Promise<void> {
@@ -96,6 +96,6 @@ function convertGoMusicToTsMusic(music: model.Music, status: Status[]): Music {
             name: music.Author.Name,
         },
         contributor: music.Contributors.map((c) => ({ id: c.Id, name: c.Name })),
-        picName: music.PicFilename,
+        picName: music.Image?.Name,
     }
 }

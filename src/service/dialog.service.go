@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"yotudo/src/lib/logger"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -34,4 +35,26 @@ func (s *DialogService) OpenFileDialog() (string, error) {
 		},
 		CanCreateDirectories: false,
 	})
+}
+
+func (s *DialogService) OpenConfirmationDialog(title string, message string) bool {
+	res, err := runtime.MessageDialog(*s.ctx, runtime.MessageDialogOptions{
+		Title:         title,
+		Message:       message,
+		Type:          runtime.QuestionDialog,
+		DefaultButton: "No",
+	})
+	if err != nil {
+		logger.Error(err)
+		return false
+	}
+
+	switch res {
+	case "Yes":
+		return true
+	case "No":
+		fallthrough
+	default:
+		return false
+	}
 }

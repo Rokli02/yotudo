@@ -10,9 +10,8 @@ import { StatusService, Status } from '@src/api';
 import { Box } from '@mui/material';
 
 export const HeaderComponent: FC = () => {
-    const { musics: { count }, page, setPage } = useMusicContext();
+    const { musics: { count }, page, setPage, currentStatus, setCurrentStatus } = useMusicContext();
     const [statuses, setStatuses] = useState<Status[]>([])
-    const [currentStatus, setCurrentStatus] = useState<Option<number>>({value: -1, label: 'Nincs'})
 
     const numOfPages = useMemo(() => {
         if (!count || !page.size) {
@@ -27,12 +26,11 @@ export const HeaderComponent: FC = () => {
     }, [statuses])
 
     const onDebounce: SearchbarProps['onDebounce'] = (search) => {
-        setPage({ filter: search }, currentStatus!.value);
+        setPage({ filter: search });
     }
 
-    function onStatusSelect<T extends number>(value: T) {
-        setCurrentStatus(convertStatusToOption(statuses.find((s) => s.id === value)!));
-        setPage({}, value);
+    function onStatusSelect(statusId: number) {
+        setCurrentStatus(statuses.find((s) => s.id === statusId)!);
     }
 
     useEffect(() => {
@@ -52,7 +50,7 @@ export const HeaderComponent: FC = () => {
                 />
                 <FormControl className='select_status'>
                     <InputLabel>Filter</InputLabel>
-                    <Select label="Filter" fullWidth options={statusOptions} value={currentStatus.value} onChange={onStatusSelect}/>
+                    <Select label="Filter" fullWidth options={statusOptions} value={currentStatus.id} onChange={onStatusSelect}/>
                 </FormControl>
             </Box>
             <Box sx={PaginationContainerStyle}>
@@ -63,7 +61,7 @@ export const HeaderComponent: FC = () => {
                             count={numOfPages}
                             page={page.page + 1}
                             onChange={(_, currentPage) => {
-                                setPage({ page: currentPage - 1 }, currentStatus.value);
+                                setPage({ page: currentPage - 1 });
                             }}
                         />
                 }
