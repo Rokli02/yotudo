@@ -26,11 +26,13 @@ export default MiscPage;
 
 const ContainerStyle: SxProps<Theme> = {
   position: 'relative',
-  flexWrap: 'wrap',
   display: 'flex',
+  flexWrap: 'wrap',
+  flexDirection: 'column',
   padding: '1rem 1rem',
   gap: '1rem 2%',
-  justifyContent: 'center',
+  justifyContent: 'start',
+  alignItems: 'center',
   'h1': {
     width: '100%',
     textAlign: 'center',

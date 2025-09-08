@@ -66,7 +66,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                 })
             break;
             case 'createOption':
-                if (!loadingState.value) break;
+                if (loadingState.value) break;
 
                 const trimedValue = (value as string).trim();
                 const foundOption = _options.find((o) => o.label.toLowerCase().search(trimedValue.toLowerCase()) !== -1);

@@ -27,8 +27,7 @@ const (
 func (Info) Template() string {
 	return fmt.Sprintf(`
 	CREATE TABLE info (
-		id INTEGER PRIMARY KEY,
-		name TEXT NOT NULL UNIQUE,
+		name TEXT PRIMARY KEY,
 		value TEXT NOT NULL,
 		value_type TINYINT DEFAULT 0
 	);
@@ -54,6 +53,7 @@ func (i Info) Migration(currentVersion MigrationVersion) []Migration {
 				INSERT INTO info(name, value, value_type) SELECT name, value, value_type FROM info_old;
 
 				DROP TABLE info_old;`,
+			SkipOnFreshInit: true,
 		},
 		{
 			Version: MigrationVersion{1, 0, 1},

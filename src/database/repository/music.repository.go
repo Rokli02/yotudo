@@ -219,7 +219,7 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		contributorIds[i] = *newMusic.Contributors[i].Id
 	}
 
-	_, err = m.contributorRepository.SaveMany(id, contributorIds)
+	_, err = m.contributorRepository.SaveMany(nil, id, contributorIds)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -328,15 +328,8 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		if len(contributorsToDelete) != 0 {
 			logger.Debug("Contributors To Delete:", contributorsToDelete)
 
-			qms, args := inClause(contributorsToDelete, musicId)
-			res, err := trans.Exec(fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN (%s)", qms), args...)
-			if err != nil {
-				logger.Error(err)
-			}
-
-			if affected, err := res.RowsAffected(); affected != int64(len(contributorsToDelete)) {
-				logger.Error("Couldn't delete all of the contributors:", err)
-				returnError = errors.ErrUnableToUpdate
+			if _, err := m.contributorRepository.DeleteMany(trans, musicId, contributorsToDelete); err != nil {
+				returnError = err
 
 				return
 			}
@@ -346,26 +339,8 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		if len(contributorsToAdd) != 0 {
 			logger.Debug("Contributors To Add:", contributorsToAdd)
 
-			args := make([]any, len(contributorsToAdd))
-			values := make([]string, len(contributorsToAdd))
-			for i, authorId := range contributorsToAdd {
-				values[i] = fmt.Sprintf("(%d, ?)", musicId)
-				args[i] = authorId
-			}
-
-			query := fmt.Sprintf("INSERT INTO contributor (music_id, author_id) VALUES%s;", strings.Join(values, ", "))
-			res, err := trans.Exec(query, args...)
-			if err != nil {
-				logger.Error(err)
-				returnError = errors.ErrUnableToUpdate
-
-				return
-			}
-
-			if affected, err := res.RowsAffected(); affected != int64(len(contributorsToAdd)) {
-				logger.Error("Couldn't insert all of the new contributors:", err)
-				returnError = errors.ErrUnableToUpdate
-
+			if _, err := m.contributorRepository.SaveMany(trans, musicId, contributorsToAdd); err != nil {
+				returnError = err
 				return
 			}
 		}
@@ -415,7 +390,7 @@ func (m *Music) DeleteOne(id int64) (bool, error) {
 		}
 	}()
 
-	if _, err := tranx.Exec("DELETE FROM contributor WHERE music_id=?", id); err != nil {
+	if err := m.contributorRepository.DeleteManyByMusicId(tranx, id); err != nil {
 		logger.Error(err)
 
 		return false, errors.ErrUnknown

@@ -24,6 +24,11 @@ var _ Entity = Music{}
 func (m Music) Migration(currentVersion MigrationVersion) []Migration {
 	migrations := []Migration{
 		{
+			Version:         MigrationVersion{1, 1, 0},
+			Migration:       "INSERT INTO image(name, referedCount) SELECT pic_filename as name, 1 as referedCount FROM music WHERE pic_filename IS NOT NULL;",
+			SkipOnFreshInit: true,
+		},
+		{
 			Version: MigrationVersion{1, 1, 0},
 			Migration: `
 			CREATE TABLE music_new (
@@ -40,7 +45,7 @@ func (m Music) Migration(currentVersion MigrationVersion) []Migration {
 				status          TINYINT     DEFAULT 0,
 				updated_at      TEXT        NOT NULL,
 				FOREIGN KEY(author_id)  REFERENCES author(id),
-				FOREIGN KEY(genre_id)   REFERENCES genre(id)
+				FOREIGN KEY(genre_id)   REFERENCES genre(id),
 				FOREIGN KEY(image_id)   REFERENCES image(id)
 			);
 
@@ -53,6 +58,7 @@ func (m Music) Migration(currentVersion MigrationVersion) []Migration {
 			UPDATE music SET image_id=image.id FROM image WHERE music.pic_filename=image.name;
 
 			ALTER TABLE music DROP COLUMN pic_filename;`,
+			SkipOnFreshInit: true,
 		},
 		{
 			Version: MigrationVersion{1, 1, 1},
@@ -92,11 +98,12 @@ func (m Music) Template() string {
 		genre_id        INTEGER     NOT NULL,
 		url             TEXT        NOT NULL,
 		filename        TEXT,
-		pic_filename	TEXT,
+		image_id		INTEGER,
 		status          TINYINT     DEFAULT 0,
 		updated_at      TEXT        NOT NULL,
 		FOREIGN KEY(author_id)  REFERENCES author(id),
-		FOREIGN KEY(genre_id)   REFERENCES genre(id)
+		FOREIGN KEY(genre_id)   REFERENCES genre(id),
+		FOREIGN KEY(image_id)   REFERENCES image(id)
 	);`
 }
 

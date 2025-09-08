@@ -1,11 +1,11 @@
-import { CachedRounded, Done, Inventory, SvgIconComponent, DoNotDisturb, Download, SaveAlt } from "@mui/icons-material";
+import { CachedRounded, CloudDownload, SvgIconComponent, DoNotDisturb, Download } from "@mui/icons-material";
 import styled from "styled-components";
 
 export const StatusIcon: Record<number, SvgIconComponent> = {
     '-1': DoNotDisturb,
-    0: Inventory,
+    0: CloudDownload,
     1: CachedRounded,
-    2: Done,
+    2: Download,
 }
 
 const AnimatedCachedRounded = styled(CachedRounded)({
@@ -24,7 +24,7 @@ const AnimatedCachedRounded = styled(CachedRounded)({
 })
 
 export const StatusActionIcon: Record<number, SvgIconComponent> = {
-    0: Download,
+    0: CloudDownload,
     1: AnimatedCachedRounded,
-    2: SaveAlt,
+    2: Download,
 }

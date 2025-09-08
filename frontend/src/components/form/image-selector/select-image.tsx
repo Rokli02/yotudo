@@ -22,7 +22,7 @@ export const SelectImage: FC<SelectImageProps> = ({ value, onChange, restoreValu
             case 'none':
             case 'thumbnail': {
                 return <>
-                    <div />
+                    <div className="spacey" />
                     <IconButton sx={ContentStyle.ActionButton} onClick={restoreValue} title="Visszaállítás">
                         <Replay />
                     </IconButton>
@@ -32,15 +32,18 @@ export const SelectImage: FC<SelectImageProps> = ({ value, onChange, restoreValu
                 return <SelectImageWeb onChange={onChange}/>
             }
             case 'local': {
-                return <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => {
-                        DialogService.OpenFileDialog()
-                            .then((selectedFilename) => onChange('local', selectedFilename))
-                            .catch(() => {})
-                    }}
-                >Kiválasztás</Button>
+                return <>
+                    <div className="spacey" />
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                            DialogService.OpenFileDialog()
+                                .then((selectedFilename) => onChange('local', selectedFilename))
+                                .catch(() => {})
+                        }}
+                    >Kiválasztás</Button>
+                </>
             }
         }
     }, [option, value])
@@ -93,18 +96,34 @@ const SelectOptions: Record<SelectorType, Option<SelectorType>> = {
 }
 const SelectOptionsArray = Object.values(SelectOptions)
 
-
 const ContainerStyle: SxProps<Theme> = {
     display: 'inline-grid',
     alignItems: 'center',
     width: '100%',
-    gridTemplateColumns: '100px auto min-content',
-    columnGap: '10px'
+    gridTemplateColumns: '80px auto min-content',
+    columnGap: '10px',
+    transition: 'grid-template-columns 250ms ease-in-out',
+    '&:has(.spacey)': {
+        gridTemplateColumns: '140px auto min-content',
+    },
 }
 
 const ContentStyle = {
     Select: {
         height: '46px',
+        '&.MuiInputBase-root': {
+            color: 'var(--font-color)',
+            '.MuiSvgIcon-root': {
+                color: '#ffffff66',
+                transition: 'transform 250ms',
+            },
+            '.MuiOutlinedInput-notchedOutline, :before': {
+                borderColor: '#ffffff3a',
+            },
+            ':after': {
+                borderColor: 'var(--primary-color)',
+            },
+        },
     },
     ActionButton: {
         color: 'var(--font-color)',

@@ -28,10 +28,6 @@ func (s *Settings) Merge(other *settingsYaml) error {
 		s.App.FFMPEGLocation = other.App.FFMPEGLocation
 	}
 
-	if other.Database.Location != "" {
-		s.Database.Location = other.Database.Location
-	}
-
 	if other.Logger.Level != "" {
 		s.Logger.Level = other.Logger.Level
 	}
@@ -72,19 +68,14 @@ type LoggerSettings struct {
 }
 
 type settingsYaml struct {
-	App      settingsYaml_App      `yaml:"app"`
-	Database settingsYaml_Database `yaml:"database"`
-	Logger   settingsYaml_Logger   `yaml:"logger"`
+	App    settingsYaml_App    `yaml:"app"`
+	Logger settingsYaml_Logger `yaml:"logger"`
 }
 
 type settingsYaml_App struct {
 	DownloadLocation string `yaml:"downloadLocation"`
 	YTDLLocation     string `yaml:"ytdlLocation"`
 	FFMPEGLocation   string `yaml:"ffmpegLocation"`
-}
-
-type settingsYaml_Database struct {
-	Location string `yaml:"location"`
 }
 
 type settingsYaml_Logger struct {

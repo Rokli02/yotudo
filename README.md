@@ -8,6 +8,10 @@ A `make.sh` fájl magába foglalja a development szerver futtatását, productio
 
 ## Configuráció
 
+Szükséges a megléte két másik programnak a működéshez:
+- <u>*__ffmpeg__*</u>: A zene fájlok feldolgozásához szükséges (https://ffmpeg.org/download.html)
+- <u>*__yt-dlp__*</u>: A zenék letöltéséhez szükséges (https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#installation)
+
 ### *data/config.yaml*
 ```yaml
 app:
@@ -28,7 +32,7 @@ logger:
 ```
 
 ## Backend továbbfejlesztés:
-- Album tábla autocomplete-hez, egy-egy album egy adott
+- Album tábla autocomplete-hez, egy-egy album egy adott előadóhoz kötődjön
 ```sql
 CREATE TABLE album (
     id INTEGER PRIMARY KEY,
@@ -37,10 +41,10 @@ CREATE TABLE album (
     UNIQUE(author_id, name)
 );
 
--- For migration-hydration
-INSERT OR IGNORE INTO album(...) SELECT album as name, author_id FROM music;
 ```
+- TODO-k megcsinálása
 
 ## Frontend továbbfejlesztés:
 - TODO-k megcsinálása
 - formok konroláltá alakítása
+- Szerver hosztolás, amin lehet látni, belehallgatni a zenékbe és letölteni azokat

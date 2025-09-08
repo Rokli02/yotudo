@@ -12,7 +12,7 @@ export const SelectedFilename: FC<SelectedFilenameProps> = ({value, onRemove}) =
     return (
         <Box sx={SelectedFilenameStyle.Wrapper}>
             <Image sx={SelectedFilenameStyle.Image} />
-            <Box sx={SelectedFilenameStyle.TextWrapper}>
+            <Box sx={SelectedFilenameStyle.TextWrapper} title={value}>
                 <Typography sx={SelectedFilenameStyle.Text}>{value}</Typography>
             </Box>
             <IconButton sx={SelectedFilenameStyle.UnselectButton} onClick={onRemove} title="Eltávolítás">

@@ -17,9 +17,12 @@ func NewContributorRepository(db *sql.DB) *Contributor {
 	return &Contributor{db: db}
 }
 
-// TODO: Bevezetni a metódusok első paramétereként a Connection típusú változót
-func (c *Contributor) FindByMusicId(musicId int64) []entity.Author {
-	rows, err := c.db.Query(`
+func (c *Contributor) FindByMusicId(conn Connection, musicId int64) []entity.Author {
+	if conn == nil {
+		conn = c.db
+	}
+
+	rows, err := conn.Query(`
 		SELECT contributor.author_id, author.name FROM contributor 
 		JOIN author ON author.id = contributor.author_id 
 		WHERE contributor.music_id = ?`,
@@ -47,9 +50,13 @@ func (c *Contributor) FindByMusicId(musicId int64) []entity.Author {
 	return authors
 }
 
-func (c *Contributor) SaveMany(musicId int64, authorIds []int64) (int64, error) {
+func (c *Contributor) SaveMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
 	if musicId <= 0 || len(authorIds) == 0 {
 		return 0, nil
+	}
+
+	if conn == nil {
+		conn = c.db
 	}
 
 	args := make([]any, len(authorIds))
@@ -78,9 +85,13 @@ func (c *Contributor) SaveMany(musicId int64, authorIds []int64) (int64, error) 
 	return 0, errors.ErrUnknown
 }
 
-func (c *Contributor) DeleteMany(musicId int64, authorIds []int64) (int64, error) {
+func (c *Contributor) DeleteMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
 	if musicId <= 0 || len(authorIds) == 0 {
 		return 0, nil
+	}
+
+	if conn == nil {
+		conn = c.db
 	}
 
 	qms, args := inClause(authorIds, musicId)
@@ -102,4 +113,18 @@ func (c *Contributor) DeleteMany(musicId int64, authorIds []int64) (int64, error
 	}
 
 	return 0, errors.ErrUnknown
+}
+
+func (c *Contributor) DeleteManyByMusicId(conn Connection, musicId int64) error {
+	if conn == nil {
+		conn = c.db
+	}
+
+	if _, err := conn.Exec("DELETE FROM contributor WHERE music_id=?", musicId); err != nil {
+		logger.Error(err)
+
+		return errors.ErrUnableToDelete
+	}
+
+	return nil
 }

@@ -12,8 +12,9 @@ type Entity interface {
 }
 
 type Migration struct {
-	Version   MigrationVersion
-	Migration string
+	Version         MigrationVersion
+	Migration       string
+	SkipOnFreshInit bool
 }
 
 type MigrationVersion [3]int16

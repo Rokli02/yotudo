@@ -41,9 +41,6 @@ func CreateEssentialDirectoriesAndFiles() error {
 			FFMPEGLocation: "ffmpeg",
 			YTDLLocation:   "yt-dlp",
 		},
-		Database: settingsYaml_Database{
-			Location: "./data/yU0dRywKd",
-		},
 	}); err != nil {
 		return err
 	}
@@ -62,7 +59,7 @@ func LoadSettings() (*Settings, error) {
 		},
 		Database: DatabaseSettings{
 			Location: "./data/agd_01",
-			Version:  "1.1.0",
+			Version:  "1.1.1",
 		},
 		Logger: LoggerSettings{
 			Level: "info",

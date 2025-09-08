@@ -29,12 +29,9 @@ func (i Image) Template() string {
 func (i Image) Migration(currentVersion MigrationVersion) []Migration {
 	migrations := []Migration{
 		{
-			Version:   MigrationVersion{1, 1, 0},
-			Migration: i.Template(),
-		},
-		{
-			Version:   MigrationVersion{1, 1, 0},
-			Migration: "INSERT INTO image(name, referedCount) SELECT pic_filename as name, 1 as referedCount FROM music WHERE pic_filename IS NOT NULL;",
+			Version:         MigrationVersion{1, 1, 0},
+			Migration:       i.Template(),
+			SkipOnFreshInit: true,
 		},
 	}
 

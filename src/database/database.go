@@ -47,7 +47,7 @@ func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 		logger.Info("Initializing Database ...")
 
 		db.init()
-		db.migrateDatabase("0.0.0", infoRepository)
+		db.migrateDatabase("0.0.0", infoRepository, true)
 	} else {
 		info, err := infoRepository.FindOneByKey("version")
 		if err != nil {
@@ -60,7 +60,7 @@ func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 			logger.WarningF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
 			logger.Info("Migrating database to the newest version...")
 
-			db.migrateDatabase(info.ValueToString(), infoRepository)
+			db.migrateDatabase(info.ValueToString(), infoRepository, false)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (db *Database) init() {
 	}
 }
 
-func (db *Database) migrateDatabase(versionText string, infoRepository *repository.Info) error {
+func (db *Database) migrateDatabase(versionText string, infoRepository *repository.Info, skipUnnecessaryMigrations bool) error {
 	// Convert version string into fixed array
 	version := entity.MigrationVersion{0, 0, 0}
 	version.SetFromText(versionText)
@@ -135,18 +135,27 @@ func (db *Database) migrateDatabase(versionText string, infoRepository *reposito
 
 		if len(migrations) > 0 {
 			for _, migration := range migrations {
+				if migration.SkipOnFreshInit && skipUnnecessaryMigrations {
+					continue
+				}
+
 				sb.WriteString(spaceEliminator.ReplaceAllString(migration.Migration, " "))
 				sb.WriteString("\n")
 			}
 		}
 	}
 
-	migrationString := sb.String()
+	if sb.Len() != 0 {
+		migrationString := sb.String()
+		logger.Debug(migrationString)
 
-	if _, err := db.Conn.Exec(migrationString); err != nil {
-		logger.Error("Error during database migration (Couldn't execute built command):", err)
+		if _, err := db.Conn.Exec(migrationString); err != nil {
+			logger.Error("Error during database migration (Couldn't execute built command):", err)
 
-		return err
+			return err
+		}
+	} else {
+		logger.Info("Migration doesn't modified any schema")
 	}
 
 	return infoRepository.UpdateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
