@@ -94,7 +94,7 @@ export const FormAutocomplete: FC<AutocompleteProps> = ({
                 timeoutId = setTimeout(async () => {
                     const fetchedOptions = await getOptions(textFieldValue, abortController);
     
-                    if (!fetchedOptions.length) fetchGuard.worthFetching(textFieldValue, false);
+                    fetchGuard.setShouldFetch(!!fetchedOptions.length);
     
                     setOptions(fetchedOptions)
                     loadingState.stopLoading();

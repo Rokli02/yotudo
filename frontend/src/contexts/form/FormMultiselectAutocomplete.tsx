@@ -147,8 +147,8 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
     useEffect(() => {
         if (!fetchOnce && !options?.length) {
             const abortController = new AbortController();
-
             let timeoutId: NodeJS.Timeout
+
             if (fetchGuard.worthFetching(inputValue)) {
                 loadingState.startLoading();
 
@@ -161,7 +161,7 @@ export const FormMultiselectAutocomplete: FC<MultiselectAutocompleteProps> = ({
                         abortController,
                     );
 
-                    if (!fetchedOptions.length) fetchGuard.worthFetching(inputValue, false)
+                    fetchGuard.setShouldFetch(!!fetchedOptions.length);
 
                     setOptions(fetchedOptions);
                     loadingState.stopLoading();

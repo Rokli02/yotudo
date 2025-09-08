@@ -14,6 +14,10 @@ class FetchGuard {
         this.makeItWorthFetching()
     }
 
+    setShouldFetch(shouldFetch: boolean) {
+        return this.shouldFetch = shouldFetch;
+    }
+
     private setProperties(text: string, shouldFetch: boolean): boolean {
         this.previousText = text;
         return this.shouldFetch = shouldFetch
@@ -24,12 +28,12 @@ class FetchGuard {
         this.previousText = undefined;
     }
 
-    worthFetching(text: string, shouldFetchNextTime?: boolean): boolean {
-        if (shouldFetchNextTime !== undefined) return this.setProperties(text, shouldFetchNextTime);
-        if (this.previousText === undefined || this.previousText === '') return this.setProperties(text, true);
-        if (this.previousText === text) return this.setProperties(this.previousText, false);
-        if (!this.shouldFetch && text.substring(0, this.previousText.length) === this.previousText) return this.setProperties(this.previousText, false);
+    worthFetching(text: string): boolean {
+        if (!this.previousText) return this.setProperties(text, true);
+        if (!this.shouldFetch && text.substring(0, this.previousText.length) === this.previousText) return false
 
-        return this.setProperties(text, true)
+        this.previousText = text;
+
+        return true;
     }
 }

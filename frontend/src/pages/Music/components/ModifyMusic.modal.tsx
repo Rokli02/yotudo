@@ -89,7 +89,7 @@ export const ModifyMusicModal: FC<ModifyMusicModalProps> = ({ open, onClose, mus
                 <Divider dir='horizontal' length='570px' sx={{ backgroundColor: 'var(--primary-color)' }}/>
                 <FormControl>
                     <InputLabel>Album</InputLabel>
-                    <FormInput name='album' type='text' value={music['album']}/>
+                    <FormInput name='album' type='text' value={music['album'] ?? ''}/>
                 </FormControl>
                 <FormControl>
                     <InputLabel>Kiadás dátuma</InputLabel>
