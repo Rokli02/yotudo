@@ -21,11 +21,10 @@ app:
     ytdlLocation: "***"
     # Az ffmpeg elérési útvonalja
     ffmpegLocation: "***"
-database:
-    # A lokális adatbázis elérési útvonalja
-    location: "./data/***"
 logger:
+    # Milyen szintű futási információkat osszon meg velünk a program
     level: info
+    # Ezeket az információkat milyen formában és hol közölje velünk - a konzol alapú egyedül fejlesztés közben indokolt
     types:
         - console
         - file
