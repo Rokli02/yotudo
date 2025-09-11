@@ -19,14 +19,20 @@ var GlobalAuthorRepository *AuthorRepository = nil
 func (a *AuthorRepository) FindByPage(filter string, page *model.Page, sort []model.Sort) ([]model.Author, int) {
 	args := make([]any, 0)
 
-	totalCountQuery := builders.
-		NewQueryBuilder("SELECT COUNT(1) FROM author", &args).
+	totalCountQuery, tcqArgs := builders.
+		NewQueryBuilder("SELECT COUNT(1) FROM author", nil).
 		WithFilter("name", filter).
 		WithoutSemicolon().
 		Build()
 
-	query := builders.
-		NewQueryBuilder(fmt.Sprintf("SELECT id, name, (%s) as total_count FROM author", totalCountQuery), &args).
+	var totalCount int = -1
+	if err := database.Instance.QueryRow(totalCountQuery, *tcqArgs...).Scan(&totalCount); err != nil {
+		logger.Error(err)
+		return []model.Author{}, 0
+	}
+
+	query, _ := builders.
+		NewQueryBuilder("SELECT id, name FROM author", &args).
 		WithFilter("name", filter).
 		WithSort(sort).
 		WithPagination(page).
@@ -43,11 +49,10 @@ func (a *AuthorRepository) FindByPage(filter string, page *model.Page, sort []mo
 
 	authors := make([]model.Author, 0, page.Size)
 
-	var totalCount int
 	for rows.Next() {
 		author := model.Author{}
 
-		err = rows.Scan(&author.Id, &author.Name, &totalCount)
+		err = rows.Scan(&author.Id, &author.Name)
 		if err != nil {
 			logger.Warning("Author.FindByPage:", err)
 		} else {

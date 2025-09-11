@@ -21,8 +21,17 @@ type QueryBuilder struct {
 }
 
 func NewQueryBuilder(base string, args *[]any) *QueryBuilder {
+	var _args *[]any
+
+	if args != nil {
+		_args = args
+	} else {
+		temp := make([]any, 0)
+		_args = &temp
+	}
+
 	qb := &QueryBuilder{
-		args: args,
+		args: _args,
 	}
 
 	qb.builder.WriteString(base)
@@ -30,12 +39,12 @@ func NewQueryBuilder(base string, args *[]any) *QueryBuilder {
 	return qb
 }
 
-func (qb *QueryBuilder) Build() string {
+func (qb *QueryBuilder) Build() (string, *[]any) {
 	if qb.state&ignoreEndingSemicolon == 0 {
 		qb.builder.WriteString(";")
 	}
 
-	return qb.builder.String()
+	return qb.builder.String(), qb.args
 }
 
 func (qb *QueryBuilder) WithoutSemicolon() QueryBuilderFinalStage {
@@ -124,5 +133,5 @@ type QueryBuilderStage3 interface {
 
 type QueryBuilderFinalStage interface {
 	WithoutSemicolon() QueryBuilderFinalStage
-	Build() string
+	Build() (string, *[]any)
 }

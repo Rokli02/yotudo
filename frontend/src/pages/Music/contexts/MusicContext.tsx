@@ -16,7 +16,7 @@ export interface IMusicContext {
     performAction: (music: Music) => Promise<void>;
 }
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 16;
 const MUSIC_STATUS_EVENT_NAME = 'download-progress'
 
 export const MusicContext = createContext<IMusicContext>(null as unknown as IMusicContext);

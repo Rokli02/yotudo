@@ -24,8 +24,6 @@ export function usePage<ExtraArgs extends Array<unknown> = []>(
             
             return newState;
         })
-
-        // Talán 'await'-elni kéne rá, de most jó lesz így
     }
 
     return [page, setPage, _setPage];

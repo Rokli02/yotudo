@@ -40,6 +40,7 @@ CREATE TABLE album (
     UNIQUE(author_id, name)
 );
 ```
+- Abort logika implementálása a felesleges lekérdezések elkerüléséhez
 - TODO-k megcsinálása
 
 ## Frontend továbbfejlesztés:

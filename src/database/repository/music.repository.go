@@ -19,32 +19,40 @@ var GlobalMusicRepository *MusicRepository = nil
 
 func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *model.Page, sort []model.Sort) ([]model.Music, int) {
 	args := make([]any, 0)
-	totalCountQuery := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", &args).
+	totalCountQuery, tcqArgs := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", nil).
 		WithFilter("name", filter).
 		WithCondition("status", status, func(value any) bool {
 			return value.(int) > -1
 		}).
-		WithoutSemicolon().
 		Build()
 
-	query := builders.NewQueryBuilder(fmt.Sprintf(
-		`SELECT
-			m.id, m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
-			a.id, a.name, genre.id, genre.name, ac.id, ac.name, (%s) as total_count
-		FROM music AS m 
-		JOIN author AS a ON m.author_id = a.id
-		JOIN genre ON m.genre_id = genre.id
-		LEFT JOIN contributor ON m.id = contributor.music_id
-		LEFT JOIN author AS ac ON contributor.author_id = ac.id
-		LEFT JOIN image ON image.id=m.image_id`,
-		totalCountQuery,
-	), &args).
+	var totalCount int = -1
+	if err := database.Instance.QueryRow(totalCountQuery, *tcqArgs...).Scan(&totalCount); err != nil {
+		logger.Error(err)
+		return []model.Music{}, 0
+	}
+
+	nestedQuery, _ := builders.NewQueryBuilder("SELECT * FROM music", &args).
 		WithFilter("m.name", filter).
 		WithCondition("m.status", status, func(value any) bool {
 			return value.(int) > -1
 		}).
 		WithSort(sort).
 		WithPagination(page).
+		WithoutSemicolon().
+		Build()
+
+	query, _ := builders.NewQueryBuilder(fmt.Sprintf(
+		`SELECT
+			m.id, m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
+			a.id, a.name, genre.id, genre.name, ac.id, ac.name
+		FROM (%s) AS m 
+		JOIN author AS a ON m.author_id = a.id
+		JOIN genre ON m.genre_id = genre.id
+		LEFT JOIN contributor ON m.id = contributor.music_id
+		LEFT JOIN author AS ac ON contributor.author_id = ac.id
+		LEFT JOIN image ON image.id=m.image_id`, nestedQuery,
+	), &args).
 		Build()
 
 	rows, err := database.Instance.Query(query, args...)
@@ -59,7 +67,6 @@ func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *m
 	musics := make([]model.Music, 0)
 	lastIndex := -1
 
-	var totalCount int
 	for rows.Next() {
 		currentMusic := model.Music{
 			Author: model.Author{},
@@ -72,7 +79,7 @@ func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *m
 
 		if err := rows.Scan(
 			&currentMusic.Id, &currentMusic.Name, &currentMusic.Published, &currentMusic.Album, &currentMusic.Url, &currentMusic.Filename, &imageId, &imagePath, &currentMusic.Status,
-			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributorId, &contributorName, &totalCount,
+			&currentMusic.Author.Id, &currentMusic.Author.Name, &currentMusic.Genre.Id, &currentMusic.Genre.Name, &contributorId, &contributorName,
 		); err != nil {
 			logger.Warning("Music.FindByPageAndStatus:", err)
 		} else {

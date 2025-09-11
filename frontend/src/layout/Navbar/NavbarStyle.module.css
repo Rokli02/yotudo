@@ -1,6 +1,6 @@
 #navbar {
   background-color: var(--primary-color);
-  position: relative;
+  position: sticky;
   display: grid;
   grid-template-columns: auto min-content;
   top: 0;
@@ -9,6 +9,7 @@
   align-items: center;
   column-gap: 12px;
   box-shadow: 3px 3px 9px #00000055;
+  z-index: 99;
 }
 
 #navbar > .nav-items {

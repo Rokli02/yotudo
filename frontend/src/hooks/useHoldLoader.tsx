@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { ComponentProps, FC, forwardRef, memo, MouseEvent, useRef } from 'react'
+import { ComponentProps, FC, forwardRef, MouseEvent, useRef } from 'react'
 
 const MAX_MOVEMENT_LIMIT = 10;
 const LOADER_SIZE = 35;

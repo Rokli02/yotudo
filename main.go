@@ -35,11 +35,11 @@ func main() {
 
 	app := src.NewApp()
 
-	statusService := service.GlobalStatusService
-	genreService := service.GlobalGenreService
-	authorService := service.GlobalAuthorService
-	musicService := service.GlobalMusicService
-	youtubeService := service.GlobalYoutubeService
+	statusService := &service.StatusService{}
+	genreService := &service.GenreService{}
+	authorService := &service.AuthorService{}
+	musicService := &service.MusicService{}
+	youtubeService := &service.YoutubeService{}
 	dialogService := service.NewDialogService(&app.Ctx)
 
 	if !service.GlobalFileService.HasExecutable() {
