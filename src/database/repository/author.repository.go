@@ -5,21 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+	"yotudo/src/database"
 	"yotudo/src/database/builders"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 )
 
-type Author struct {
-	db *sql.DB
-}
+type AuthorRepository struct{}
 
-func NewAuthorRepository(db *sql.DB) *Author {
-	return &Author{db: db}
-}
+var GlobalAuthorRepository *AuthorRepository = nil
 
-func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) ([]model.Author, int) {
+func (a *AuthorRepository) FindByPage(filter string, page *model.Page, sort []model.Sort) ([]model.Author, int) {
 	args := make([]any, 0)
 
 	totalCountQuery := builders.
@@ -35,7 +32,7 @@ func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) 
 		WithPagination(page).
 		Build()
 
-	rows, err := a.db.Query(query, args...)
+	rows, err := database.Instance.Query(query, args...)
 	if err != nil {
 		logger.Error(err)
 
@@ -61,10 +58,10 @@ func (a *Author) FindByPage(filter string, page *model.Page, sort []model.Sort) 
 	return authors, totalCount
 }
 
-func (a *Author) SaveOne(name string) (*model.Author, error) {
+func (a *AuthorRepository) SaveOne(name string) (*model.Author, error) {
 	var newAuthor *model.Author
 
-	res, err := a.db.Exec("INSERT INTO author (name) VALUES(?);", name)
+	res, err := database.Instance.Exec("INSERT INTO author (name) VALUES(?);", name)
 	if err != nil {
 		logger.Error(err)
 
@@ -80,12 +77,12 @@ func (a *Author) SaveOne(name string) (*model.Author, error) {
 	}
 }
 
-func (a *Author) SaveMany(names []string) ([]model.Author, error) {
+func (a *AuthorRepository) SaveMany(names []string) ([]model.Author, error) {
 	if len(names) == 0 {
 		return nil, errors.ErrNotReceivedInputs
 	}
 
-	tranx, err := a.db.Begin()
+	tranx, err := database.Instance.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +133,7 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 	}
 
 	qms, args := inClause(ids)
-	rows, err := a.db.Query(fmt.Sprintf("SELECT id, name FROM author WHERE id IN (%s)", qms), args...)
+	rows, err := database.Instance.Query(fmt.Sprintf("SELECT id, name FROM author WHERE id IN (%s)", qms), args...)
 	if err != nil {
 		logger.Error(err)
 
@@ -160,7 +157,7 @@ func (a *Author) SaveMany(names []string) ([]model.Author, error) {
 	return authors, nil
 }
 
-func (a *Author) IsReferencingToMusic(musicId int64) bool {
+func (a *AuthorRepository) IsReferencingToMusic(musicId int64) bool {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*4)
 	defer cancelCtx()
 
@@ -194,13 +191,13 @@ func (a *Author) IsReferencingToMusic(musicId int64) bool {
 	return isRefed
 }
 
-func (a *Author) isReferencedQuery(ctx context.Context, queryString string, musicId int64) chan bool {
+func (a *AuthorRepository) isReferencedQuery(ctx context.Context, queryString string, musicId int64) chan bool {
 	isRefChan := make(chan bool)
 
 	go func() {
 		var count int
 
-		row := a.db.QueryRowContext(ctx, queryString, musicId)
+		row := database.Instance.QueryRowContext(ctx, queryString, musicId)
 		if err := row.Scan(&count); err != nil {
 			logger.Error(err)
 
@@ -215,8 +212,8 @@ func (a *Author) isReferencedQuery(ctx context.Context, queryString string, musi
 	return isRefChan
 }
 
-func (a *Author) DeleteOne(id int64) bool {
-	res, err := a.db.Exec("DELETE FROM author WHERE id=?", id)
+func (a *AuthorRepository) DeleteOne(id int64) bool {
+	res, err := database.Instance.Exec("DELETE FROM author WHERE id=?", id)
 	if err != nil {
 		logger.Error(err)
 

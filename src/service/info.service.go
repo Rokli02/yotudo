@@ -7,15 +7,9 @@ import (
 	"yotudo/src/lib/logger"
 )
 
-type InfoService struct {
-	infoRepository *repository.Info
-}
+type InfoService struct{}
 
-func NewInfoService(infoRepository *repository.Info) *InfoService {
-	return &InfoService{
-		infoRepository: infoRepository,
-	}
-}
+var GlobalInfoService *InfoService = nil
 
 const (
 	m_WINDOW_WIDTH_KEY  = "window_width"
@@ -26,7 +20,7 @@ func (s *InfoService) GetWindowSize() (int, int) {
 	width := 1280
 	height := 768
 
-	infos, err := s.infoRepository.FindManyByKeys(m_WINDOW_WIDTH_KEY, m_WINDOW_HEIGHT_KEY)
+	infos, err := repository.GlobalInfoRepository.FindManyByKeys(m_WINDOW_WIDTH_KEY, m_WINDOW_HEIGHT_KEY)
 	if err != nil {
 		logger.Error(err)
 		return width, height
@@ -57,11 +51,11 @@ func (s *InfoService) SetWindowSize(width, height int) error {
 		return fmt.Errorf("window size must be bigger than (300,200) but got (%d,%d)", width, height)
 	}
 
-	if err := s.infoRepository.UpdateOne(&entity.Info{Key: m_WINDOW_WIDTH_KEY, Value: width, ValueType: entity.IntValue}); err != nil {
+	if err := repository.GlobalInfoRepository.UpdateOne(&entity.Info{Key: m_WINDOW_WIDTH_KEY, Value: width, ValueType: entity.IntValue}); err != nil {
 		return err
 	}
 
-	if err := s.infoRepository.UpdateOne(&entity.Info{Key: m_WINDOW_HEIGHT_KEY, Value: height, ValueType: entity.IntValue}); err != nil {
+	if err := repository.GlobalInfoRepository.UpdateOne(&entity.Info{Key: m_WINDOW_HEIGHT_KEY, Value: height, ValueType: entity.IntValue}); err != nil {
 		return err
 	}
 

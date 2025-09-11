@@ -18,26 +18,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type YoutubeService struct {
-	ctx             *context.Context
-	musicRepository *repository.Music
-	fileService     FileService
-	ytDLService     *YoutubeDLService
-}
+type YoutubeService struct{}
 
-func NewYoutubeService(
-	ctx *context.Context,
-	musicRepository *repository.Music,
-	fileService FileService,
-	ytDLService *YoutubeDLService,
-) *YoutubeService {
-	return &YoutubeService{
-		ctx:             ctx,
-		musicRepository: musicRepository,
-		fileService:     fileService,
-		ytDLService:     ytDLService,
-	}
-}
+var GlobalYoutubeService *YoutubeService = nil
 
 type eventResult string
 
@@ -49,13 +32,13 @@ const (
 )
 
 func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) error {
-	music, err := c.musicRepository.FindById(musicId)
+	music, err := repository.GlobalMusicRepository.FindById(musicId)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		ctx, cancel := context.WithCancel(*c.ctx)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		// Starting download event
@@ -63,7 +46,7 @@ func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) erro
 
 		// Give feedback about download event
 		// If anything goes wrong send failed event result
-		if url, err := c.ytDLService.PrepareUrl(music.Url, true); err != nil {
+		if url, err := GlobalYoutubeDLService.PrepareUrl(music.Url, true); err != nil {
 			logger.Warning(err)
 
 			runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, -1, eventResultFailed, err))
@@ -73,7 +56,7 @@ func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) erro
 		}
 
 		runtime.EventsEmit(ctx, eventName, c.createEventData(musicId, 10, eventResultDownloading, nil))
-		savedMusic, err := c.ytDLService.DownloadVideo(ctx, music)
+		savedMusic, err := GlobalYoutubeDLService.DownloadVideo(ctx, music)
 		if err != nil {
 			logger.Warning(err)
 
@@ -81,7 +64,7 @@ func (c *YoutubeService) DownloadByMusicId(musicId int64, eventName string) erro
 			return
 		}
 
-		_, err = c.musicRepository.UpdateOne(savedMusic.Id, savedMusic.ToUpdateMusic())
+		_, err = repository.GlobalMusicRepository.UpdateOne(savedMusic.Id, savedMusic.ToUpdateMusic())
 		if err != nil {
 			logger.Error("CRITICAL ERROR: video got downloaded but couldn't update its record in db:", err)
 
@@ -106,7 +89,7 @@ func (c *YoutubeService) createEventData(musicId int64, progress float32, status
 }
 
 func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
-	music, err := c.musicRepository.FindById(musicId)
+	music, err := repository.GlobalMusicRepository.FindById(musicId)
 	if err != nil {
 		return err
 	}
@@ -122,7 +105,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 
 	// Check for music file
 	musicPath := path.Join(settings.Global.App.MusicsLocation, *music.Filename)
-	if !c.fileService.IsExists(musicPath) {
+	if !GlobalFileService.IsExists(musicPath) {
 		err := fmt.Sprintf("Music was not found in its directory (filename=%s)", *music.Filename)
 
 		logger.Warning(err)
@@ -131,7 +114,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 	}
 
 	// Check for music with same name in temp directory
-	if c.fileService.IsExists(path.Join(settings.Global.App.TempLocation, *music.Filename)) {
+	if GlobalFileService.IsExists(path.Join(settings.Global.App.TempLocation, *music.Filename)) {
 		err := fmt.Sprintf("For some unknown reason music wasn't moved from temp directory (filename=%s)", *music.Filename)
 
 		logger.Warning(err)
@@ -155,7 +138,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 	// Check for a thumbnail that might be attached to the music
 	if music.Image != nil {
 		musicImagePath := music.Image.Name
-		imageWidth, imageHeight, imageExt, err := c.fileService.GetImageConfig(musicImagePath)
+		imageWidth, imageHeight, imageExt, err := GlobalFileService.GetImageConfig(musicImagePath)
 		if err != nil {
 			logger.Error(err)
 
@@ -176,7 +159,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 		picturePath := path.Join(settings.Global.App.ImagesLocation, musicImagePath)
 		tempPicturePath = path.Join(settings.Global.App.TempLocation, tempPicturePath)
 
-		ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*10)
+		ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancelCtx()
 
 		cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation,
@@ -207,13 +190,10 @@ leave_music_picfile:
 
 	c.addMetadatas(&ffmpegArguments, music)
 
-	ctx, cancelCtx := context.WithTimeout(*c.ctx, time.Second*30)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancelCtx()
 
-	filename := *music.Filename
-	if _filename, found := strings.CutSuffix(filename, FILE_EXTENSION); found {
-		filename = _filename + FINAL_MUSIC_EXTENSION
-	}
+	filename := fmt.Sprintf("%s.%s", GlobalFileService.CreateFilename(music), FINAL_MUSIC_EXTENSION)
 
 	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))
 

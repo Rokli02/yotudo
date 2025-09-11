@@ -5,18 +5,17 @@ import (
 	"regexp"
 	"strings"
 	"yotudo/src/database/entity"
-	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
 	"yotudo/src/settings"
 
 	_ "modernc.org/sqlite"
 )
 
+var Instance *sql.DB
+
 type Database struct {
 	Conn *sql.DB
 }
-
-type DatabaseOptionsFunc func(opts *DatabaseOptions)
 
 func (db *Database) databaseTables() []entity.Entity {
 	return []entity.Entity{
@@ -41,28 +40,24 @@ func LoadDatabase(optsFuncs ...DatabaseOptionsFunc) *Database {
 	db := newDatabase(dbOption)
 
 	isExists := db.isAlreadyInitialized()
-	infoRepository := repository.NewInfoRepository(db.Conn)
 
 	if !isExists {
 		logger.Info("Initializing Database ...")
 
 		db.init()
-		db.migrateDatabase("0.0.0", infoRepository, true)
+		db.migrateDatabase("0.0.0", true)
 	} else {
-		info, err := infoRepository.FindOneByKey("version")
-		if err != nil {
-			logger.Error(err)
+		version := db.getVersion()
 
-			panic(err)
-		}
-
-		if info != nil && info.Value != settings.Global.Database.Version {
-			logger.WarningF("Current database version is %s, but the newest is %s", info.Value, settings.Global.Database.Version)
+		if version != settings.Global.Database.Version {
+			logger.WarningF("Current database version is %s, but the newest is %s", version, settings.Global.Database.Version)
 			logger.Info("Migrating database to the newest version...")
 
-			db.migrateDatabase(info.ValueToString(), infoRepository, false)
+			db.migrateDatabase(version, false)
 		}
 	}
+
+	Instance = db.Conn
 
 	return db
 }
@@ -88,6 +83,7 @@ func newDatabase(dbOption *DatabaseOptions) *Database {
 func (db *Database) Close() {
 	logger.Info("Closing Database ...")
 	db.Conn.Close()
+	Instance = nil
 }
 
 func (db *Database) isAlreadyInitialized() bool {
@@ -121,7 +117,7 @@ func (db *Database) init() {
 	}
 }
 
-func (db *Database) migrateDatabase(versionText string, infoRepository *repository.Info, skipUnnecessaryMigrations bool) error {
+func (db *Database) migrateDatabase(versionText string, skipUnnecessaryMigrations bool) error {
 	// Convert version string into fixed array
 	version := entity.MigrationVersion{0, 0, 0}
 	version.SetFromText(versionText)
@@ -158,5 +154,24 @@ func (db *Database) migrateDatabase(versionText string, infoRepository *reposito
 		logger.Info("Migration doesn't modified any schema")
 	}
 
-	return infoRepository.UpdateOne(&entity.Info{Key: "version", Value: settings.Global.Database.Version, ValueType: entity.StringValue})
+	return db.updateVersionToNewest()
+}
+
+func (db *Database) getVersion() string {
+	info := &entity.Info{}
+
+	row := db.Conn.QueryRow("SELECT name, value, value_type FROM info WHERE name = 'version';")
+	if row == nil || info.FromScan(row.Scan) != nil {
+		logger.Error("Couldn't find version in 'info' table")
+
+		panic(-1)
+	}
+
+	return must(info.GetValue()).(string)
+}
+
+func (db *Database) updateVersionToNewest() error {
+	_, err := db.Conn.Exec("UPDATE info SET value=? WHERE name='version';", settings.Global.Database.Version)
+
+	return err
 }

@@ -1,24 +1,20 @@
 package repository
 
 import (
-	"database/sql"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 )
 
-type Genre struct {
-	db *sql.DB
-}
+type GenreRepository struct{}
 
-func NewGenreRepository(db *sql.DB) *Genre {
-	return &Genre{db: db}
-}
+var GlobaGenreRepository *GenreRepository = nil
 
-func (g *Genre) FindAll() []entity.Genre {
+func (g *GenreRepository) FindAll() []entity.Genre {
 	var genres []entity.Genre
 
-	rows, err := g.db.Query("SELECT id, name FROM genre;")
+	rows, err := database.Instance.Query("SELECT id, name FROM genre;")
 	if err != nil {
 		logger.Error(err)
 
@@ -42,9 +38,9 @@ func (g *Genre) FindAll() []entity.Genre {
 	return genres
 }
 
-func (g *Genre) IsAlreadyUsed(id int64) bool {
+func (g *GenreRepository) IsAlreadyUsed(id int64) bool {
 	var musicId int64
-	row := g.db.QueryRow("SELECT id FROM music WHERE genre_id=? LIMIT 1", id)
+	row := database.Instance.QueryRow("SELECT id FROM music WHERE genre_id=? LIMIT 1", id)
 	if err := row.Scan(&musicId); err != nil {
 		return false
 	}
@@ -56,8 +52,8 @@ func (g *Genre) IsAlreadyUsed(id int64) bool {
 	return false
 }
 
-func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
-	res, err := g.db.Exec("INSERT INTO genre (name) VALUES (?);", name)
+func (g *GenreRepository) SaveOne(name string) (*entity.Genre, error) {
+	res, err := database.Instance.Exec("INSERT INTO genre (name) VALUES (?);", name)
 	if err != nil {
 		logger.Error("Genre.SaveOne:", err)
 
@@ -78,8 +74,8 @@ func (g *Genre) SaveOne(name string) (*entity.Genre, error) {
 	}
 }
 
-func (g *Genre) Rename(id int64, newName string) (*entity.Genre, error) {
-	res, err := g.db.Exec("UPDATE genre SET name=? WHERE id=?", newName, id)
+func (g *GenreRepository) Rename(id int64, newName string) (*entity.Genre, error) {
+	res, err := database.Instance.Exec("UPDATE genre SET name=? WHERE id=?", newName, id)
 	if err != nil {
 		logger.Error("Genre.Rename", err)
 
@@ -103,8 +99,8 @@ func (g *Genre) Rename(id int64, newName string) (*entity.Genre, error) {
 	}, nil
 }
 
-func (g *Genre) DeleteOne(id int64) error {
-	res, err := g.db.Exec("DELETE FROM genre WHERE id=?", id)
+func (g *GenreRepository) DeleteOne(id int64) error {
+	res, err := database.Instance.Exec("DELETE FROM genre WHERE id=?", id)
 	if err != nil {
 		logger.Error(err)
 

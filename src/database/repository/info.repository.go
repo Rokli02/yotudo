@@ -1,23 +1,19 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 )
 
-type Info struct {
-	db *sql.DB
-}
+type InfoRepository struct{}
 
-func NewInfoRepository(db *sql.DB) *Info {
-	return &Info{db: db}
-}
+var GlobalInfoRepository *InfoRepository = nil
 
-func (r *Info) CreateOne(info *entity.Info) error {
-	res, err := r.db.Exec("INSERT INTO info(name, value, value_type) VALUES(?,?,?);", info.Key, info.ValueToString(), info.ValueType)
+func (i *InfoRepository) CreateOne(info *entity.Info) error {
+	res, err := database.Instance.Exec("INSERT INTO info(name, value, value_type) VALUES(?,?,?);", info.Key, info.ValueToString(), info.ValueType)
 	if err != nil {
 		logger.Warning(err)
 
@@ -32,8 +28,8 @@ func (r *Info) CreateOne(info *entity.Info) error {
 	return nil
 }
 
-func (r *Info) UpdateOne(info *entity.Info) error {
-	res, err := r.db.Exec("UPDATE info SET value=?, value_type=? WHERE name=?", info.ValueToString(), info.ValueType, info.Key)
+func (i *InfoRepository) UpdateOne(info *entity.Info) error {
+	res, err := database.Instance.Exec("UPDATE info SET value=?, value_type=? WHERE name=?", info.ValueToString(), info.ValueType, info.Key)
 	if err != nil {
 		return err
 	}
@@ -47,8 +43,8 @@ func (r *Info) UpdateOne(info *entity.Info) error {
 	return nil
 }
 
-func (r *Info) FindOneByKey(key string) (*entity.Info, error) {
-	row := r.db.QueryRow("SELECT name, value, value_type FROM info WHERE name = ?;", key)
+func (i *InfoRepository) FindOneByKey(key string) (*entity.Info, error) {
+	row := database.Instance.QueryRow("SELECT name, value, value_type FROM info WHERE name = ?;", key)
 	if row == nil {
 		logger.Warning("Selected row from info table was 'nil'")
 
@@ -57,17 +53,17 @@ func (r *Info) FindOneByKey(key string) (*entity.Info, error) {
 
 	info := &entity.Info{}
 
-	if err := row.Scan(&info.Key, &info.Value, &info.ValueType); err != nil {
+	if err := info.FromScan(row.Scan); err != nil {
 		return nil, err
 	}
 
 	return info, nil
 }
 
-func (r *Info) FindManyByKeys(keys ...string) ([]entity.Info, error) {
+func (i *InfoRepository) FindManyByKeys(keys ...string) ([]entity.Info, error) {
 	qsm, args := inClause(keys)
 
-	row, err := r.db.Query(fmt.Sprintf("SELECT name, value, value_type FROM info WHERE name IN (%s)", qsm), args...)
+	row, err := database.Instance.Query(fmt.Sprintf("SELECT name, value, value_type FROM info WHERE name IN (%s)", qsm), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +74,7 @@ func (r *Info) FindManyByKeys(keys ...string) ([]entity.Info, error) {
 	for row.Next() {
 		info := entity.Info{}
 
-		if err := row.Scan(&info.Key, &info.Value, &info.ValueType); err != nil {
+		if err := info.FromScan(row.Scan); err != nil {
 			logger.Warning("FindManyByPrefix entity parse failed:", err)
 		} else {
 			infos = append(infos, info)
@@ -88,8 +84,8 @@ func (r *Info) FindManyByKeys(keys ...string) ([]entity.Info, error) {
 	return infos, nil
 }
 
-func (r *Info) FindManyByPrefix(keyPrefix string) ([]entity.Info, error) {
-	row, err := r.db.Query("SELECT name, value, value_type FROM info WHERE name LIKE ? || '%'", keyPrefix)
+func (i *InfoRepository) FindManyByPrefix(keyPrefix string) ([]entity.Info, error) {
+	row, err := database.Instance.Query("SELECT name, value, value_type FROM info WHERE name LIKE ? || '%'", keyPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +96,7 @@ func (r *Info) FindManyByPrefix(keyPrefix string) ([]entity.Info, error) {
 	for row.Next() {
 		info := entity.Info{}
 
-		if err := row.Scan(&info.Key, &info.Value, &info.ValueType); err != nil {
+		if err := info.FromScan(row.Scan); err != nil {
 			logger.Warning("FindManyByPrefix entity parse failed:", err)
 		} else {
 			infos = append(infos, info)

@@ -127,3 +127,7 @@ func (i *Info) GetValue() (any, error) {
 
 	panic("SHOULD_NOT_REACH")
 }
+
+func (i *Info) FromScan(Scan func(dest ...any) error) error {
+	return Scan(&i.Key, &i.Value, &i.ValueType)
+}

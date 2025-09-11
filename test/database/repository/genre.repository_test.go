@@ -10,7 +10,7 @@ import (
 func TestGenreFindAll(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewGenreRepository(db.Conn)
+	repo := repository.GlobaGenreRepository
 
 	allGenre := repo.FindAll()
 	logger.Info("All Genre:", allGenre)
@@ -19,7 +19,7 @@ func TestGenreFindAll(t *testing.T) {
 func TestGenreSave(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewGenreRepository(db.Conn)
+	repo := repository.GlobaGenreRepository
 
 	savedGenre, err := repo.SaveOne("TestKat")
 	logger.Info("Saved Genre:", savedGenre)
@@ -32,7 +32,7 @@ func TestGenreSave(t *testing.T) {
 func TestGenreRename(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewGenreRepository(db.Conn)
+	repo := repository.GlobaGenreRepository
 
 	allGenre := repo.FindAll()
 	logger.Info("All Genre:", allGenre)
@@ -50,11 +50,9 @@ func TestGenreRename(t *testing.T) {
 func TestGenreIsAlreadyUsed(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	genreRepository := repository.NewGenreRepository(db.Conn)
-	authorRepository := repository.NewAuthorRepository(db.Conn)
-	contributorRepository := repository.NewContributorRepository(db.Conn)
-	imageRepository := repository.NewImageRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository, imageRepository)
+	genreRepository := repository.GlobaGenreRepository
+	authorRepository := repository.GlobalAuthorRepository
+	musicRepository := repository.GlobalMusicRepository
 
 	var expectedGenreId int64
 
@@ -78,11 +76,9 @@ func TestGenreIsAlreadyUsed(t *testing.T) {
 func TestGenreIsNotAlreadyUsed(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	genreRepository := repository.NewGenreRepository(db.Conn)
-	authorRepository := repository.NewAuthorRepository(db.Conn)
-	contributorRepository := repository.NewContributorRepository(db.Conn)
-	imageRepository := repository.NewImageRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository, imageRepository)
+	genreRepository := repository.GlobaGenreRepository
+	authorRepository := repository.GlobalAuthorRepository
+	musicRepository := repository.GlobalMusicRepository
 
 	var expectedGenreId int64
 

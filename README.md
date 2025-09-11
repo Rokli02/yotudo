@@ -39,7 +39,6 @@ CREATE TABLE album (
     author_id INTEGER NOT NULL,
     UNIQUE(author_id, name)
 );
-
 ```
 - TODO-k megcsinálása
 

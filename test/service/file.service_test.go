@@ -9,7 +9,7 @@ import (
 
 func TestValidName(t *testing.T) {
 	fileName := "valami jo.exe"
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	if !service.ValidName(fileName) {
 		t.Errorf("\"%s\"is a valid filename", fileName)
@@ -18,7 +18,7 @@ func TestValidName(t *testing.T) {
 
 func TestBlankStringAsName(t *testing.T) {
 	fileName := "       "
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	if service.ValidName(fileName) {
 		t.Errorf("\"%s\"is not a valid filename", fileName)
@@ -27,7 +27,7 @@ func TestBlankStringAsName(t *testing.T) {
 
 func TestInvalidFilename(t *testing.T) {
 	fileName := "nem|jo:.exe"
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	if service.ValidName(fileName) {
 		t.Errorf("\"%s\"is not a valid filename", fileName)
@@ -37,7 +37,7 @@ func TestInvalidFilename(t *testing.T) {
 func TestPurgeFilename(t *testing.T) {
 	fileName := " nem|jo:.exe"
 	expectedName := "nem_jo_.exe"
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	purgedFileName := service.PurgeFileName(fileName)
 
@@ -48,7 +48,7 @@ func TestPurgeFilename(t *testing.T) {
 
 func TestPurgeFilenameNotNeeded(t *testing.T) {
 	fileName := "jo fajlnev.png"
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	purgedFileName := service.PurgeFileName(fileName)
 
@@ -67,7 +67,7 @@ func TestCreateFilename(t *testing.T) {
 		},
 	}
 	expectedFilenamePrefix := "test.author (sanesz, kanesz) - test ["
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	filename := service.CreateFilename(music)
 
@@ -88,7 +88,7 @@ func TestCreateFilenameWithPurge(t *testing.T) {
 		},
 	}
 	expectedFilenamePrefix := "test.author_ (sanesz, kanesz) - test__ ["
-	service := service.NewFileService()
+	service := service.GlobalFileService
 
 	filename := service.CreateFilename(music)
 

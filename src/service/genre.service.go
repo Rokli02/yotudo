@@ -6,16 +6,12 @@ import (
 	"yotudo/src/model"
 )
 
-type GenreService struct {
-	genreRepository *repository.Genre
-}
+type GenreService struct{}
 
-func NewGenreService(genreRepository *repository.Genre) *GenreService {
-	return &GenreService{genreRepository: genreRepository}
-}
+var GlobalGenreService *GenreService = nil
 
 func (c *GenreService) GetAll() []model.Genre {
-	entities := c.genreRepository.FindAll()
+	entities := repository.GlobaGenreRepository.FindAll()
 
 	genres := make([]model.Genre, len(entities))
 	for i, entity := range entities {
@@ -26,7 +22,7 @@ func (c *GenreService) GetAll() []model.Genre {
 }
 
 func (c *GenreService) Save(genreName string) (*model.Genre, error) {
-	entity, err := c.genreRepository.SaveOne(genreName)
+	entity, err := repository.GlobaGenreRepository.SaveOne(genreName)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +31,7 @@ func (c *GenreService) Save(genreName string) (*model.Genre, error) {
 }
 
 func (c *GenreService) Rename(id int64, newGenreName string) (*model.Genre, error) {
-	entity, err := c.genreRepository.Rename(id, newGenreName)
+	entity, err := repository.GlobaGenreRepository.Rename(id, newGenreName)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +40,9 @@ func (c *GenreService) Rename(id int64, newGenreName string) (*model.Genre, erro
 }
 
 func (c *GenreService) Delete(id int64) error {
-	if c.genreRepository.IsAlreadyUsed(id) {
+	if repository.GlobaGenreRepository.IsAlreadyUsed(id) {
 		return errors.ErrUnableToDelete
 	}
 
-	return c.genreRepository.DeleteOne(id)
+	return repository.GlobaGenreRepository.DeleteOne(id)
 }

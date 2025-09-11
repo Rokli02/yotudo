@@ -10,7 +10,7 @@ import (
 func TestSaveAuthors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewAuthorRepository(db.Conn)
+	repo := repository.GlobalAuthorRepository
 
 	author, err := repo.SaveOne("Énekes 1")
 	if err != nil {
@@ -23,7 +23,7 @@ func TestSaveAuthors(t *testing.T) {
 func TestSaveAuthorsThenGetSome(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewAuthorRepository(db.Conn)
+	repo := repository.GlobalAuthorRepository
 
 	repo.SaveOne("Énekes 1")
 	repo.SaveOne("Színész 7")
@@ -51,7 +51,7 @@ func TestSaveAuthorsThenGetSome(t *testing.T) {
 func TestSaveManyAuthors(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewAuthorRepository(db.Conn)
+	repo := repository.GlobalAuthorRepository
 
 	savedAuthors, err := repo.SaveMany([]string{"Tester Énekes", "Profi Énekes", "Amatör Zajkeltő"})
 	if err != nil {
@@ -68,7 +68,7 @@ func TestSaveManyAuthors(t *testing.T) {
 func TestSaveManyAuthorsFailUniqueNameRestraint(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewAuthorRepository(db.Conn)
+	repo := repository.GlobalAuthorRepository
 
 	authorNames := []string{"Egyedi Énekes", "Egyedi Énekes"}
 
@@ -82,10 +82,8 @@ func TestSaveManyAuthorsFailUniqueNameRestraint(t *testing.T) {
 func TestIsReferencingToMusic(t *testing.T) {
 	db := getInMemoryDB(true)
 	defer db.Close()
-	repo := repository.NewAuthorRepository(db.Conn)
-	contributorRepository := repository.NewContributorRepository(db.Conn)
-	imageRepository := repository.NewImageRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository, imageRepository)
+	repo := repository.GlobalAuthorRepository
+	musicRepository := repository.GlobalMusicRepository
 
 	savedAuthors, err := repo.SaveMany([]string{"TestR", "Másodpilóta", "Harmadlegény", "Ismeretlen Kukac"})
 	if err != nil {

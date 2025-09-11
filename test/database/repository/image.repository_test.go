@@ -11,7 +11,7 @@ import (
 func TestSaveOne(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	imageRepository := repository.NewImageRepository(db.Conn)
+	imageRepository := repository.GlobalImageRepository
 
 	savedImage, err := imageRepository.SaveOne(db.Conn, &model.PossiblyNewImage{Name: "kitalalt.jpg"})
 	if err != nil {
@@ -35,7 +35,7 @@ func TestSaveOne(t *testing.T) {
 func TestSaveOneWithNilConn(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	imageRepository := repository.NewImageRepository(db.Conn)
+	imageRepository := repository.GlobalImageRepository
 
 	savedImage, err := imageRepository.SaveOne(nil, &model.PossiblyNewImage{Name: "kitalalt.jpg"})
 	if err != nil {
@@ -59,7 +59,7 @@ func TestSaveOneWithNilConn(t *testing.T) {
 func TestFindById(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	imageRepository := repository.NewImageRepository(db.Conn)
+	imageRepository := repository.GlobalImageRepository
 
 	Must(imageRepository.SaveOne(nil, &model.PossiblyNewImage{Name: "test1.jpg"}))
 	si2 := Must(imageRepository.SaveOne(nil, &model.PossiblyNewImage{Name: "karcsi.jpg"}))
@@ -76,7 +76,7 @@ func TestFindById(t *testing.T) {
 func TestFindByIdNotFound(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	imageRepository := repository.NewImageRepository(db.Conn)
+	imageRepository := repository.GlobalImageRepository
 
 	_, err := imageRepository.FindById(nil, 100)
 	if err == nil {

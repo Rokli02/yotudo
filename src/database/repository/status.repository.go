@@ -1,23 +1,19 @@
 package repository
 
 import (
-	"database/sql"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/lib/logger"
 )
 
-type Status struct {
-	db *sql.DB
-}
+type StatusRepository struct{}
 
-func NewStatusRepository(db *sql.DB) *Status {
-	return &Status{db: db}
-}
+var GlobalStatusRepository *StatusRepository = nil
 
-func (s *Status) FindAll() []entity.Status {
+func (s *StatusRepository) FindAll() []entity.Status {
 	var statuses []entity.Status
 
-	rows, err := s.db.Query("SELECT id, name, description FROM status;")
+	rows, err := database.Instance.Query("SELECT id, name, description FROM status;")
 	if err != nil {
 		logger.Error(err)
 

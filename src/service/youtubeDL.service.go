@@ -18,13 +18,9 @@ import (
 
 var ytRegexp = regexp.MustCompile(`^(https?://)?(www.)?(youtube.com|youtu.be)/(watch\?v=\S{11})`)
 
-type YoutubeDLService struct {
-	fileService FileService
-}
+type YoutubeDLService struct{}
 
-func NewYoutubeDLService(fileService FileService) *YoutubeDLService {
-	return &YoutubeDLService{fileService: fileService}
-}
+var GlobalYoutubeDLService *YoutubeDLService = nil
 
 const (
 	FILE_EXTENSION        = "webm"
@@ -33,7 +29,7 @@ const (
 	YT_THUMBNAIL_URL      = "https://i.ytimg.com/vi/%s/0.jpg"
 )
 
-func (s YoutubeDLService) PrepareUrl(url string, stripUnnecessaryParameters bool) (string, error) {
+func (s *YoutubeDLService) PrepareUrl(url string, stripUnnecessaryParameters bool) (string, error) {
 	if !ytRegexp.Match([]byte(url)) {
 		return "", fmt.Errorf("the given url is not a youtube video link")
 	}
@@ -60,7 +56,7 @@ func (s YoutubeDLService) PrepareUrl(url string, stripUnnecessaryParameters bool
 	return url, nil
 }
 
-func (s YoutubeDLService) HasExecutable() bool {
+func (s *YoutubeDLService) HasExecutable() bool {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelCtx()
 
@@ -97,8 +93,8 @@ func (s YoutubeDLService) HasExecutable() bool {
 	}
 }
 
-func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Music) (*model.Music, error) {
-	baseFilename := s.fileService.CreateFilename(music)
+func (s *YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Music) (*model.Music, error) {
+	baseFilename := GlobalFileService.CreateFilename(music)
 	filename := fmt.Sprintf("%s.%s", baseFilename, FILE_EXTENSION)
 	tempFilePath := path.Join(settings.Global.App.TempLocation, filename)
 
@@ -136,7 +132,7 @@ func (s YoutubeDLService) DownloadVideo(ctxArg context.Context, music *model.Mus
 	}
 
 	// Move file to music dir
-	if err := s.fileService.MoveTo(tempFilePath, settings.Global.App.MusicsLocation); err != nil {
+	if err := GlobalFileService.MoveTo(tempFilePath, settings.Global.App.MusicsLocation); err != nil {
 		logger.Warning("YoutubeService.DownloadVideo [Couldn't move music to its directory]", err)
 
 		return music, err

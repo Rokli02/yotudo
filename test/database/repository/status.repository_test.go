@@ -9,7 +9,7 @@ import (
 func TestGetAllStatuses(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
-	repo := repository.NewStatusRepository(db.Conn)
+	repo := repository.GlobalStatusRepository
 
 	allStatus := repo.FindAll()
 	logger.Info("Statuses:", allStatus)

@@ -22,7 +22,7 @@ import (
 	"golang.org/x/image/webp"
 )
 
-type FileService uint8
+type FileService struct{}
 
 const THUMBNAIL_SIZE = 512
 
@@ -31,23 +31,21 @@ var (
 	invalidFilenameCharacters = regexp.MustCompile(`[\\\:\*\?\"\/\<\>\|\0]`)
 )
 
-func NewFileService() FileService {
-	return FileService(0)
-}
+var GlobalFileService *FileService = nil
 
-func (s FileService) ValidName(fileName string) bool {
+func (s *FileService) ValidName(fileName string) bool {
 	return !strings.HasPrefix(fileName, " ") &&
 		!strings.HasSuffix(fileName, " ") &&
 		validFilenameRegexp.Match([]byte(fileName))
 }
 
-func (s FileService) PurgeFileName(fileName string) string {
+func (s *FileService) PurgeFileName(fileName string) string {
 	trimedFileName := strings.TrimSpace(fileName)
 
 	return invalidFilenameCharacters.ReplaceAllString(trimedFileName, "_")
 }
 
-func (s FileService) CreateFilename(music *model.Music) string {
+func (s *FileService) CreateFilename(music *model.Music) string {
 	nameBuilder := strings.Builder{}
 	nameBuilder.WriteString(music.Author.Name)
 
@@ -70,7 +68,7 @@ func (s FileService) CreateFilename(music *model.Music) string {
 	return s.PurgeFileName(nameBuilder.String())
 }
 
-func (s FileService) MoveTo(from, to string) error {
+func (s *FileService) MoveTo(from, to string) error {
 	filename := pathModule.Base(from)
 	newPath := pathModule.Join(to, filename)
 
@@ -83,7 +81,7 @@ func (s FileService) MoveTo(from, to string) error {
 	return os.Rename(from, newPath)
 }
 
-func (s FileService) IsExists(path string) bool {
+func (s *FileService) IsExists(path string) bool {
 	if f, err := os.Open(path); err == nil {
 		f.Close()
 
@@ -93,7 +91,7 @@ func (s FileService) IsExists(path string) bool {
 	return false
 }
 
-func (s FileService) GetFilename(path string) string {
+func (s *FileService) GetFilename(path string) string {
 	var filename string = path
 	if lastSlashIndex := strings.LastIndexAny(path, "\\/"); lastSlashIndex != -1 {
 		filename = path[lastSlashIndex+1:]
@@ -105,7 +103,7 @@ func (s FileService) GetFilename(path string) string {
 /*
 Saves the given 'imageUri' into a file in the local temp folder and returns its name.
 */
-func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
+func (s *FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 	logger.DebugF("Downloading image from uri='%s'", imageUri)
 	imageUrl, err := url.Parse(imageUri)
 	if err != nil {
@@ -153,7 +151,7 @@ func (s FileService) DownloadImageFromWeb(imageUri string) (string, error) {
 /*
 Copies the given 'imagePath' into the local temp folder and returns its name.
 */
-func (s FileService) CopyImageFromFS(imagePath string) (string, error) {
+func (s *FileService) CopyImageFromFS(imagePath string) (string, error) {
 	filename := s.GetFilename(imagePath)
 
 	logger.DebugF("ImagePath='%s', extracted filename='%s'", imagePath, filename)
@@ -175,7 +173,7 @@ func (s FileService) CopyImageFromFS(imagePath string) (string, error) {
 	return filename, nil
 }
 
-func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) {
+func (s *FileService) GetImageConfig(imagePath string) (int, int, string, error) {
 	ext := pathModule.Ext(imagePath)
 	var width, height int
 	picturePath := pathModule.Join(settings.Global.App.ImagesLocation, imagePath)
@@ -227,7 +225,7 @@ func (s FileService) GetImageConfig(imagePath string) (int, int, string, error) 
 	return newWidth, newHeight, ext, nil
 }
 
-func (s FileService) HasExecutable() bool {
+func (s *FileService) HasExecutable() bool {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*4)
 	defer cancelCtx()
 

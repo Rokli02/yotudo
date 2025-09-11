@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"yotudo/src/database"
 	"yotudo/src/database/builders"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
@@ -12,21 +13,11 @@ import (
 	"yotudo/src/model"
 )
 
-type Music struct {
-	db                    *sql.DB
-	contributorRepository *Contributor
-	imageRepository       *Image
-}
+type MusicRepository struct{}
 
-func NewMusicRepository(db *sql.DB, contributorRepository *Contributor, imageRepository *Image) *Music {
-	return &Music{
-		db:                    db,
-		contributorRepository: contributorRepository,
-		imageRepository:       imageRepository,
-	}
-}
+var GlobalMusicRepository *MusicRepository = nil
 
-func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page, sort []model.Sort) ([]model.Music, int) {
+func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *model.Page, sort []model.Sort) ([]model.Music, int) {
 	args := make([]any, 0)
 	totalCountQuery := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", &args).
 		WithFilter("name", filter).
@@ -56,7 +47,7 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 		WithPagination(page).
 		Build()
 
-	rows, err := m.db.Query(query, args...)
+	rows, err := database.Instance.Query(query, args...)
 	if err != nil {
 		logger.Error(err)
 
@@ -107,10 +98,10 @@ func (m *Music) FindByPageAndStatus(status int, filter string, page *model.Page,
 	return musics, totalCount
 }
 
-func (m *Music) FindById(id int64) (*model.Music, error) {
+func (m *MusicRepository) FindById(id int64) (*model.Music, error) {
 	var music *model.Music
 
-	rows, err := m.db.Query(
+	rows, err := database.Instance.Query(
 		`SELECT
 			m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
 			a.id, a.name, genre.id, genre.name, ac.id, ac.name
@@ -164,10 +155,10 @@ func (m *Music) FindById(id int64) (*model.Music, error) {
 	return music, nil
 }
 
-func (m *Music) FindById_Entity(musicId int64) (*entity.Music, error) {
+func (m *MusicRepository) FindById_Entity(musicId int64) (*entity.Music, error) {
 	entity := &entity.Music{}
 
-	if err := m.db.QueryRow(
+	if err := database.Instance.QueryRow(
 		"SELECT id, author_id, name, published, album, genre_id, url, filename, image_id, status, updated_at FROM music WHERE id=? LIMIT 1", musicId,
 	).Scan(
 		&entity.Id, &entity.AuthorId, &entity.Name, &entity.Published, &entity.Album, &entity.GenreId, &entity.Url, &entity.Filename, &entity.ImageId, &entity.Status, &entity.UpdatedAt,
@@ -178,7 +169,7 @@ func (m *Music) FindById_Entity(musicId int64) (*entity.Music, error) {
 	return entity, nil
 }
 
-func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
+func (m *MusicRepository) SaveOne(newMusic *model.NewMusic) (int64, error) {
 	var published *int = nil
 	var album *string = nil
 	if newMusic.Published != 0 {
@@ -190,14 +181,14 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 
 	var imageId *int64
 	if newMusic.Image.IsNew() && newMusic.Image.HasName() {
-		if savedImage, err := m.imageRepository.SaveOne(nil, newMusic.Image); err != nil {
+		if savedImage, err := GlobalImageRepository.SaveOne(nil, newMusic.Image); err != nil {
 			logger.Error(err)
 		} else {
 			imageId = &savedImage.Id
 		}
 	}
 
-	res, err := m.db.Exec(
+	res, err := database.Instance.Exec(
 		"INSERT INTO music (name, published, album, url, image_id, author_id, genre_id, updated_at) VALUES(?,?,?,?,?,?,?,?);",
 		newMusic.Name, published, album, newMusic.Url, imageId,
 		newMusic.Author.Id, newMusic.GenreId, time.Now().Format(DefaultDateFormat),
@@ -219,7 +210,7 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 		contributorIds[i] = *newMusic.Contributors[i].Id
 	}
 
-	_, err = m.contributorRepository.SaveMany(nil, id, contributorIds)
+	_, err = GlobalContributorRepository.SaveMany(nil, id, contributorIds)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -230,14 +221,14 @@ func (m *Music) SaveOne(newMusic *model.NewMusic) (int64, error) {
 /*
 Updates Music, its contributors and connecting image too.
 */
-func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music, returnError error) {
+func (m *MusicRepository) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneResponse *model.Music, returnError error) {
 	logger.Debug("Updating music:", music.String())
 
 	// If a value in 'contributorState' is 'false' must be deleted, if 'true' must be added, otherwise do nothing
 	contributorState := map[int64]bool{}
 
 	// Get contributors' ids from 'contributor' table
-	rows, err := m.db.Query("SELECT author_id FROM contributor WHERE music_id=?", musicId)
+	rows, err := database.Instance.Query("SELECT author_id FROM contributor WHERE music_id=?", musicId)
 	if err != nil {
 		logger.Error(err)
 	} else {
@@ -264,7 +255,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		}
 	}
 
-	trans, err := m.db.Begin()
+	trans, err := database.Instance.Begin()
 	if err != nil {
 		logger.ErrorF("CRITICAL ERROR: Transaction couldn't start for updating music(id=%d)", musicId)
 		logger.Error(err)
@@ -328,7 +319,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		if len(contributorsToDelete) != 0 {
 			logger.Debug("Contributors To Delete:", contributorsToDelete)
 
-			if _, err := m.contributorRepository.DeleteMany(trans, musicId, contributorsToDelete); err != nil {
+			if _, err := GlobalContributorRepository.DeleteMany(trans, musicId, contributorsToDelete); err != nil {
 				returnError = err
 
 				return
@@ -339,7 +330,7 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 		if len(contributorsToAdd) != 0 {
 			logger.Debug("Contributors To Add:", contributorsToAdd)
 
-			if _, err := m.contributorRepository.SaveMany(trans, musicId, contributorsToAdd); err != nil {
+			if _, err := GlobalContributorRepository.SaveMany(trans, musicId, contributorsToAdd); err != nil {
 				returnError = err
 				return
 			}
@@ -358,8 +349,8 @@ func (m *Music) UpdateOne(musicId int64, music *model.UpdateMusic) (updateOneRes
 	return
 }
 
-func (m *Music) UpdateStatus(id int64, status int) error {
-	res, err := m.db.Exec("UPDATE music SET status=? WHERE id=?", status, id)
+func (m *MusicRepository) UpdateStatus(id int64, status int) error {
+	res, err := database.Instance.Exec("UPDATE music SET status=? WHERE id=?", status, id)
 	if err != nil {
 		logger.Error(err)
 
@@ -377,8 +368,8 @@ func (m *Music) UpdateStatus(id int64, status int) error {
 	return nil
 }
 
-func (m *Music) DeleteOne(id int64) (bool, error) {
-	tranx, err := m.db.Begin()
+func (m *MusicRepository) DeleteOne(id int64) (bool, error) {
+	tranx, err := database.Instance.Begin()
 	if err != nil {
 		logger.Error(err)
 
@@ -390,7 +381,7 @@ func (m *Music) DeleteOne(id int64) (bool, error) {
 		}
 	}()
 
-	if err := m.contributorRepository.DeleteManyByMusicId(tranx, id); err != nil {
+	if err := GlobalContributorRepository.DeleteManyByMusicId(tranx, id); err != nil {
 		logger.Error(err)
 
 		return false, errors.ErrUnknown

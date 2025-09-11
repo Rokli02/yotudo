@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"os"
 	pathModule "path"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/repository"
 	"yotudo/src/lib/logger"
@@ -11,17 +12,12 @@ import (
 	"yotudo/src/settings"
 )
 
-type ImageService struct {
-	db              *sql.DB
-	imageRepository *repository.Image
-}
+type ImageService struct{}
 
-func NewImageService(db *sql.DB, imageRepository *repository.Image) *ImageService {
-	return &ImageService{db: db, imageRepository: imageRepository}
-}
+var GlobalImageService *ImageService = nil
 
 func (s *ImageService) Save(image *model.PossiblyNewImage) (*model.Image, error) {
-	savedImage, err := s.imageRepository.SaveOne(nil, image)
+	savedImage, err := repository.GlobalImageRepository.SaveOne(nil, image)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +26,7 @@ func (s *ImageService) Save(image *model.PossiblyNewImage) (*model.Image, error)
 }
 
 func (s *ImageService) GetByName(name string) (*model.Image, error) {
-	foundImage, err := s.imageRepository.FindByName(nil, name)
+	foundImage, err := repository.GlobalImageRepository.FindByName(nil, name)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +35,7 @@ func (s *ImageService) GetByName(name string) (*model.Image, error) {
 }
 
 func (s *ImageService) GetBySource(source string) (*model.Image, error) {
-	foundImage, err := s.imageRepository.FindBySource(nil, source)
+	foundImage, err := repository.GlobalImageRepository.FindBySource(nil, source)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +46,13 @@ func (s *ImageService) GetBySource(source string) (*model.Image, error) {
 func (s *ImageService) DeleteImageIfUnused(id int64) error {
 	var foundImage *entity.Image
 
-	if _foundImage, err := s.imageRepository.FindById(nil, id); err != nil {
+	if _foundImage, err := repository.GlobalImageRepository.FindById(nil, id); err != nil {
 		return err
 	} else {
 		foundImage = _foundImage
 	}
 
-	tx, err := s.db.Begin()
+	tx, err := database.Instance.Begin()
 	if err != nil {
 		logger.Error("Couldn't start transaction for 'DecreaseReferedCountAndDelete'")
 		return err
@@ -69,7 +65,7 @@ func (s *ImageService) DeleteImageIfUnused(id int64) error {
 
 	if foundImage.ReferedCount <= 0 {
 		logger.Debug("Have to delete image fron DB and FS")
-		if err := s.imageRepository.DeleteById(tx, id); err != nil {
+		if err := repository.GlobalImageRepository.DeleteById(tx, id); err != nil {
 			return err
 		}
 

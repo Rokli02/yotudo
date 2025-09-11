@@ -12,35 +12,12 @@ import (
 	"yotudo/src/settings"
 )
 
-type MusicService struct {
-	musicRepository       *repository.Music
-	authorRepository      *repository.Author
-	contributorRepository *repository.Contributor
-	imageService          *ImageService
-	youtubeDLService      *YoutubeDLService
-	fileService           FileService
-}
+type MusicService struct{}
 
-func NewMusicService(
-	musicRepository *repository.Music,
-	authorRepository *repository.Author,
-	contributorRepository *repository.Contributor,
-	imageService *ImageService,
-	youtubeDLService *YoutubeDLService,
-	fileService FileService,
-) *MusicService {
-	return &MusicService{
-		musicRepository:       musicRepository,
-		authorRepository:      authorRepository,
-		contributorRepository: contributorRepository,
-		imageService:          imageService,
-		youtubeDLService:      youtubeDLService,
-		fileService:           fileService,
-	}
-}
+var GlobalMusicService *MusicService = nil
 
 func (c *MusicService) GetManyByPagination(filter string, statusId int, page *model.Page, sort []model.Sort) *model.Pagination[[]model.Music] {
-	musics, totalCount := c.musicRepository.FindByPageAndStatus(statusId, filter, page, sort)
+	musics, totalCount := repository.GlobalMusicRepository.FindByPageAndStatus(statusId, filter, page, sort)
 
 	return &model.Pagination[[]model.Music]{
 		Data:  musics,
@@ -53,7 +30,7 @@ func (c *MusicService) GetById(id int64) (*model.Music, error) {
 		return nil, fmt.Errorf("valid id must be given")
 	}
 
-	return c.musicRepository.FindById(id)
+	return repository.GlobalMusicRepository.FindById(id)
 }
 
 func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
@@ -71,15 +48,15 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 	case "none":
 		newMusic.Image = nil
 	case "thumbnail":
-		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(newMusic.Url)
+		thumbnailUrl, err := GlobalYoutubeDLService.GetVideoThumbnailUrl(newMusic.Url)
 		if err != nil {
 			logger.Error(err)
 			newMusic.Image = nil
 			break
 		}
 
-		if foundImage, err := c.imageService.GetBySource(thumbnailUrl); err != nil {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
+		if foundImage, err := GlobalImageService.GetBySource(thumbnailUrl); err != nil {
+			tmpFilename, err := GlobalFileService.DownloadImageFromWeb(thumbnailUrl)
 			if err != nil {
 				logger.Error(err)
 				newMusic.Image = nil
@@ -95,8 +72,8 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 			break
 		}
 
-		if foundImage, err := c.imageService.GetBySource(newMusic.Image.Name); err != nil {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(newMusic.Image.Name)
+		if foundImage, err := GlobalImageService.GetBySource(newMusic.Image.Name); err != nil {
+			tmpFilename, err := GlobalFileService.DownloadImageFromWeb(newMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
 				newMusic.Image = nil
@@ -112,10 +89,10 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 			break
 		}
 
-		filename := c.fileService.GetFilename(newMusic.Image.Name)
+		filename := GlobalFileService.GetFilename(newMusic.Image.Name)
 
-		if image, err := c.imageService.GetByName(filename); err != nil {
-			tmpFilename, err := c.fileService.CopyImageFromFS(newMusic.Image.Name)
+		if image, err := GlobalImageService.GetByName(filename); err != nil {
+			tmpFilename, err := GlobalFileService.CopyImageFromFS(newMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
 				newMusic.Image = nil
@@ -128,18 +105,18 @@ func (c *MusicService) Save(newMusic *model.NewMusic) (*model.Music, error) {
 		}
 	}
 
-	insertedId, err := c.musicRepository.SaveOne(newMusic)
+	insertedId, err := repository.GlobalMusicRepository.SaveOne(newMusic)
 	if err != nil {
 		return nil, err
 	}
 
-	savedMusic, err := c.musicRepository.FindById(insertedId)
+	savedMusic, err := repository.GlobalMusicRepository.FindById(insertedId)
 	if err != nil {
 		return nil, err
 	}
 
 	if savedMusic.Image != nil && newMusic.Image.IsNew() {
-		err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, savedMusic.Image.Name), settings.Global.App.ImagesLocation)
+		err := GlobalFileService.MoveTo(path.Join(settings.Global.App.TempLocation, savedMusic.Image.Name), settings.Global.App.ImagesLocation)
 		if err != nil {
 			logger.Error(err)
 		}
@@ -153,7 +130,7 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		return nil, errors.ErrNotReceivedInputs
 	}
 
-	musicEntity, err := c.musicRepository.FindById_Entity(updateMusic.Id)
+	musicEntity, err := repository.GlobalMusicRepository.FindById_Entity(updateMusic.Id)
 	if err != nil {
 		logger.Warning(err)
 
@@ -180,15 +157,15 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 	case "none":
 		updateMusic.Image = nil
 	case "thumbnail":
-		thumbnailUrl, err := c.youtubeDLService.GetVideoThumbnailUrl(updateMusic.Url)
+		thumbnailUrl, err := GlobalYoutubeDLService.GetVideoThumbnailUrl(updateMusic.Url)
 		if err != nil {
 			logger.Error(err)
 			updateMusic.Image = nil
 			break
 		}
 
-		if foundImage, err := c.imageService.GetBySource(thumbnailUrl); err != nil {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(thumbnailUrl)
+		if foundImage, err := GlobalImageService.GetBySource(thumbnailUrl); err != nil {
+			tmpFilename, err := GlobalFileService.DownloadImageFromWeb(thumbnailUrl)
 			if err != nil {
 				logger.Error(err)
 				updateMusic.Image = nil
@@ -204,8 +181,8 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 			break
 		}
 
-		if foundImage, err := c.imageService.GetBySource(updateMusic.Image.Name); err != nil {
-			tmpFilename, err := c.fileService.DownloadImageFromWeb(updateMusic.Image.Name)
+		if foundImage, err := GlobalImageService.GetBySource(updateMusic.Image.Name); err != nil {
+			tmpFilename, err := GlobalFileService.DownloadImageFromWeb(updateMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
 				updateMusic.Image = nil
@@ -221,10 +198,10 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 			break
 		}
 
-		filename := c.fileService.GetFilename(updateMusic.Image.Name)
+		filename := GlobalFileService.GetFilename(updateMusic.Image.Name)
 
-		if image, err := c.imageService.GetByName(filename); err != nil {
-			tmpFilename, err := c.fileService.CopyImageFromFS(updateMusic.Image.Name)
+		if image, err := GlobalImageService.GetByName(filename); err != nil {
+			tmpFilename, err := GlobalFileService.CopyImageFromFS(updateMusic.Image.Name)
 			if err != nil {
 				logger.Error(err)
 				updateMusic.Image = nil
@@ -239,7 +216,7 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 
 	isNewImage := updateMusic.Image.IsNew()
 	if isNewImage {
-		if savedImage, err := c.imageService.Save(updateMusic.Image); err != nil {
+		if savedImage, err := GlobalImageService.Save(updateMusic.Image); err != nil {
 			logger.Error(err)
 			updateMusic.Image = nil
 		} else {
@@ -247,7 +224,7 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		}
 	}
 
-	updatedMusic, err := c.musicRepository.UpdateOne(updateMusic.Id, updateMusic)
+	updatedMusic, err := repository.GlobalMusicRepository.UpdateOne(updateMusic.Id, updateMusic)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +233,7 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 		logger.Debug("Nincs elmentett kép")
 		if musicEntity.ImageId != nil { // Volt elmentett kép
 			logger.Debug("Volt elmentett kép")
-			if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+			if err := GlobalImageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
 				logger.Error(err)
 			}
 		}
@@ -266,17 +243,17 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 			logger.Debug("Nem volt elmentett kép")
 			if isNewImage { // A mentett kép új, át kell mozgatni
 				logger.Debug("A mentett kép új, át kell mozgatni")
-				if err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
+				if err := GlobalFileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
 					logger.Error(err)
 				}
 			}
 		} else if updatedMusic.Image.Id != *musicEntity.ImageId { // Volt elmentett kép ÉS nem ugyanaz
 			logger.Debug("Volt elmentett kép ÉS nem ugyanaz")
-			if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+			if err := GlobalImageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
 				logger.Error(err)
 			} else if isNewImage { // A mentett kép új, át kell mozgatni
 				logger.Debug("A mentett kép új, át kell mozgatni")
-				if err := c.fileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
+				if err := GlobalFileService.MoveTo(path.Join(settings.Global.App.TempLocation, updatedMusic.Image.Name), settings.Global.App.ImagesLocation); err != nil {
 					logger.Error(err)
 				}
 			}
@@ -289,20 +266,20 @@ func (c *MusicService) Update(updateMusic *model.UpdateMusic) (*model.Music, err
 func (c *MusicService) Delete(id int64) error {
 	var musicEntity *entity.Music
 
-	if _musicEntity, err := c.musicRepository.FindById_Entity(id); err != nil {
+	if _musicEntity, err := repository.GlobalMusicRepository.FindById_Entity(id); err != nil {
 		logger.Error(err)
 		return err
 	} else {
 		musicEntity = _musicEntity
 	}
 
-	if deleted, err := c.musicRepository.DeleteOne(id); err != nil || !deleted {
+	if deleted, err := repository.GlobalMusicRepository.DeleteOne(id); err != nil || !deleted {
 		logger.Error(err)
 		return errors.ErrUnableToDelete
 	}
 
 	if musicEntity.ImageId != nil {
-		if err := c.imageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
+		if err := GlobalImageService.DeleteImageIfUnused(*musicEntity.ImageId); err != nil {
 			logger.Error(err)
 		}
 	}
@@ -326,7 +303,7 @@ func (c *MusicService) processMusicAuthor(music model.OptionalAuthorGetter) erro
 			return fmt.Errorf("no author was given")
 		}
 
-		savedAuthor, err := c.authorRepository.SaveOne(*author.Name)
+		savedAuthor, err := repository.GlobalAuthorRepository.SaveOne(*author.Name)
 		if err != nil {
 			return err
 		}
@@ -364,7 +341,7 @@ func (c *MusicService) processMusicContributors(music model.OptionalContributors
 		if newContributorAuthors != nil {
 			logger.Debug("Received contributor(s) without id")
 
-			if savedNewContributors, err := c.authorRepository.SaveMany(newContributorAuthors); err != nil {
+			if savedNewContributors, err := repository.GlobalAuthorRepository.SaveMany(newContributorAuthors); err != nil {
 				logger.Error(err)
 
 				return err

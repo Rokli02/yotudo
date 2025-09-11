@@ -7,7 +7,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	logger.InitializeLogger("debug", []string{logger.Console_Type})
+	_, closeLoggers := logger.InitializeLogger("debug", []string{logger.Console_Type})
+	defer closeLoggers()
 
 	if c := m.Run(); c != 0 {
 		os.Exit(c)

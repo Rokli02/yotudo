@@ -1,24 +1,20 @@
 package repository
 
 import (
-	"database/sql"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 	"yotudo/src/model"
 )
 
-type Image struct {
-	db *sql.DB
-}
+type ImageRepository struct{}
 
-func NewImageRepository(db *sql.DB) *Image {
-	return &Image{db: db}
-}
+var GlobalImageRepository *ImageRepository = nil
 
-func (i *Image) FindById(conn Connection, id int64) (*entity.Image, error) {
+func (i *ImageRepository) FindById(conn Connection, id int64) (*entity.Image, error) {
 	if conn == nil {
-		conn = i.db
+		conn = database.Instance
 	}
 
 	img := &entity.Image{}
@@ -31,9 +27,9 @@ func (i *Image) FindById(conn Connection, id int64) (*entity.Image, error) {
 	return img, nil
 }
 
-func (i *Image) FindByName(conn Connection, name string) (*entity.Image, error) {
+func (i *ImageRepository) FindByName(conn Connection, name string) (*entity.Image, error) {
 	if conn == nil {
-		conn = i.db
+		conn = database.Instance
 	}
 
 	img := &entity.Image{}
@@ -46,9 +42,9 @@ func (i *Image) FindByName(conn Connection, name string) (*entity.Image, error) 
 	return img, nil
 }
 
-func (i *Image) FindBySource(conn Connection, source string) (*entity.Image, error) {
+func (i *ImageRepository) FindBySource(conn Connection, source string) (*entity.Image, error) {
 	if conn == nil {
-		conn = i.db
+		conn = database.Instance
 	}
 
 	img := &entity.Image{}
@@ -61,9 +57,9 @@ func (i *Image) FindBySource(conn Connection, source string) (*entity.Image, err
 	return img, nil
 }
 
-func (i *Image) SaveOne(conn Connection, image *model.PossiblyNewImage) (*entity.Image, error) {
+func (i *ImageRepository) SaveOne(conn Connection, image *model.PossiblyNewImage) (*entity.Image, error) {
 	if conn == nil {
-		conn = i.db
+		conn = database.Instance
 	}
 
 	if res, err := conn.Exec("INSERT INTO image (name, sourcePath) VALUES (?, ?);", image.Name, image.Source); err != nil {
@@ -77,9 +73,9 @@ func (i *Image) SaveOne(conn Connection, image *model.PossiblyNewImage) (*entity
 	}
 }
 
-func (i *Image) DeleteById(conn Connection, id int64) error {
+func (i *ImageRepository) DeleteById(conn Connection, id int64) error {
 	if conn == nil {
-		conn = i.db
+		conn = database.Instance
 	}
 
 	if _, err := conn.Exec("DELETE FROM image WHERE id=?;", id); err != nil {

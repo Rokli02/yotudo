@@ -4,7 +4,6 @@ import (
 	"embed"
 	"yotudo/src"
 	"yotudo/src/database"
-	"yotudo/src/database/repository"
 	"yotudo/src/handler"
 	"yotudo/src/lib/logger"
 	"yotudo/src/service"
@@ -32,42 +31,30 @@ func main() {
 	defer closeLoggers()
 
 	db := database.LoadDatabase()
+	defer db.Close()
+
 	app := src.NewApp()
-	app.SetDatabaseConnection(db)
 
-	infoRepository := repository.NewInfoRepository(db.Conn)
-	statusRepository := repository.NewStatusRepository(db.Conn)
-	genreRepository := repository.NewGenreRepository(db.Conn)
-	authorRepository := repository.NewAuthorRepository(db.Conn)
-	contributorRepository := repository.NewContributorRepository(db.Conn)
-	imageRepository := repository.NewImageRepository(db.Conn)
-	musicRepository := repository.NewMusicRepository(db.Conn, contributorRepository, imageRepository)
-
-	infoService := service.NewInfoService(infoRepository)
-	fileService := service.NewFileService()
-	imageService := service.NewImageService(db.Conn, imageRepository)
-	youtubeDLService := service.NewYoutubeDLService(fileService)
-	statusService := service.NewStatusService(statusRepository)
-	genreService := service.NewGenreService(genreRepository)
-	authorService := service.NewAuthorService(authorRepository)
-	musicService := service.NewMusicService(musicRepository, authorRepository, contributorRepository, imageService, youtubeDLService, fileService)
-	youtubeService := service.NewYoutubeService(&app.Ctx, musicRepository, fileService, youtubeDLService)
+	statusService := service.GlobalStatusService
+	genreService := service.GlobalGenreService
+	authorService := service.GlobalAuthorService
+	musicService := service.GlobalMusicService
+	youtubeService := service.GlobalYoutubeService
 	dialogService := service.NewDialogService(&app.Ctx)
 
-	if !fileService.HasExecutable() {
+	if !service.GlobalFileService.HasExecutable() {
 		logger.Error("Couldn't find ffmpeg executable")
 
 		panic("Couldn't find ffmpeg executable")
 	}
 
-	if !youtubeDLService.HasExecutable() {
+	if !service.GlobalYoutubeDLService.HasExecutable() {
 		logger.Error("Couldn't find youtube helper executable")
 
 		panic("Couldn't find youtube helper executable")
 	}
 
-	app.SetInfoService(infoService)
-	windowWidth, windowHeight := infoService.GetWindowSize()
+	windowWidth, windowHeight := service.GlobalInfoService.GetWindowSize()
 
 	assetsHandler := handler.NewAssetsHandler()
 

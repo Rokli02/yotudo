@@ -5,16 +5,12 @@ import (
 	"yotudo/src/model"
 )
 
-type StatusService struct {
-	statusRepository *repository.Status
-}
+type StatusService struct{}
 
-func NewStatusService(statusRepository *repository.Status) *StatusService {
-	return &StatusService{statusRepository: statusRepository}
-}
+var GlobalStatusService *StatusService = nil
 
 func (c *StatusService) GetAll() []model.Status {
-	entities := c.statusRepository.FindAll()
+	entities := repository.GlobalStatusRepository.FindAll()
 
 	result := make([]model.Status, len(entities))
 	for i, entity := range entities {

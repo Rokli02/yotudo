@@ -1,25 +1,21 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
+	"yotudo/src/database"
 	"yotudo/src/database/entity"
 	"yotudo/src/database/errors"
 	"yotudo/src/lib/logger"
 )
 
-type Contributor struct {
-	db *sql.DB
-}
+type ContributorRepository struct{}
 
-func NewContributorRepository(db *sql.DB) *Contributor {
-	return &Contributor{db: db}
-}
+var GlobalContributorRepository *ContributorRepository = nil
 
-func (c *Contributor) FindByMusicId(conn Connection, musicId int64) []entity.Author {
+func (c *ContributorRepository) FindByMusicId(conn Connection, musicId int64) []entity.Author {
 	if conn == nil {
-		conn = c.db
+		conn = database.Instance
 	}
 
 	rows, err := conn.Query(`
@@ -50,13 +46,13 @@ func (c *Contributor) FindByMusicId(conn Connection, musicId int64) []entity.Aut
 	return authors
 }
 
-func (c *Contributor) SaveMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
+func (c *ContributorRepository) SaveMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
 	if musicId <= 0 || len(authorIds) == 0 {
 		return 0, nil
 	}
 
 	if conn == nil {
-		conn = c.db
+		conn = database.Instance
 	}
 
 	args := make([]any, len(authorIds))
@@ -67,7 +63,7 @@ func (c *Contributor) SaveMany(conn Connection, musicId int64, authorIds []int64
 	}
 
 	query := fmt.Sprintf("INSERT INTO contributor (music_id, author_id) VALUES%s;", strings.Join(values, ", "))
-	res, err := c.db.Exec(query, args...)
+	res, err := database.Instance.Exec(query, args...)
 	if err != nil {
 		logger.Error("Contributor.SaveMany:", err)
 
@@ -85,19 +81,19 @@ func (c *Contributor) SaveMany(conn Connection, musicId int64, authorIds []int64
 	return 0, errors.ErrUnknown
 }
 
-func (c *Contributor) DeleteMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
+func (c *ContributorRepository) DeleteMany(conn Connection, musicId int64, authorIds []int64) (int64, error) {
 	if musicId <= 0 || len(authorIds) == 0 {
 		return 0, nil
 	}
 
 	if conn == nil {
-		conn = c.db
+		conn = database.Instance
 	}
 
 	qms, args := inClause(authorIds, musicId)
 
 	query := fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN(%s)", qms)
-	res, err := c.db.Exec(query, args...)
+	res, err := database.Instance.Exec(query, args...)
 	if err != nil {
 		logger.Error("Contributor.DeleteMany:", err)
 
@@ -115,9 +111,9 @@ func (c *Contributor) DeleteMany(conn Connection, musicId int64, authorIds []int
 	return 0, errors.ErrUnknown
 }
 
-func (c *Contributor) DeleteManyByMusicId(conn Connection, musicId int64) error {
+func (c *ContributorRepository) DeleteManyByMusicId(conn Connection, musicId int64) error {
 	if conn == nil {
-		conn = c.db
+		conn = database.Instance
 	}
 
 	if _, err := conn.Exec("DELETE FROM contributor WHERE music_id=?", musicId); err != nil {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"yotudo/src/database"
 	"yotudo/src/lib/logger"
 	"yotudo/src/service"
 	"yotudo/src/settings"
@@ -13,21 +12,13 @@ import (
 )
 
 type App struct {
-	Ctx         context.Context
-	db          *database.Database
-	infoService *service.InfoService
+	Ctx context.Context
 }
 
 func NewApp() *App {
-	return &App{}
-}
+	app := &App{}
 
-func (a *App) SetDatabaseConnection(db *database.Database) {
-	a.db = db
-}
-
-func (a *App) SetInfoService(infoService *service.InfoService) {
-	a.infoService = infoService
+	return app
 }
 
 func (a *App) Startup(ctx context.Context) {
@@ -37,10 +28,6 @@ func (a *App) Startup(ctx context.Context) {
 
 func (a *App) Shutdown(ctx context.Context) {
 	logger.Info("Application is shuting down...")
-
-	if a.db != nil {
-		a.db.Close()
-	}
 
 	// Delete every file from /tmp folder
 	if tempDir, err := os.Open(settings.Global.App.TempLocation); err != nil {
@@ -65,8 +52,8 @@ skip_tmp_dir_prune:
 }
 
 func (a *App) BeforeClose(ctx context.Context) (prevent bool) {
-	if a.infoService != nil {
-		if err := a.infoService.SetWindowSize(runtime.WindowGetSize(ctx)); err != nil {
+	if service.GlobalInfoService != nil {
+		if err := service.GlobalInfoService.SetWindowSize(runtime.WindowGetSize(ctx)); err != nil {
 			logger.Error(err)
 		}
 	}

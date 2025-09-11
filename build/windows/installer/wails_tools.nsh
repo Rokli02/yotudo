@@ -8,16 +8,16 @@
     !define INFO_PROJECTNAME "yotudo"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "yotudo"
+    !define INFO_COMPANYNAME "JSzF Corp."
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "yotudo"
+    !define INFO_PRODUCTNAME "Youtudo"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "1.0.0"
+    !define INFO_PRODUCTVERSION "1.1.0"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "Copyright........."
+    !define INFO_COPYRIGHT "Copyright?!?!?"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"

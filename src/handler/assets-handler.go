@@ -18,14 +18,14 @@ func NewAssetsHandler() *AssetsHandler {
 	return &AssetsHandler{}
 }
 
-func (h *AssetsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (*AssetsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if imageName, found := strings.CutPrefix(req.URL.Path, "/image/"); found {
 		imagePath := path.Join(settings.Global.App.ImagesLocation, imageName)
 
 		file, err := os.ReadFile(imagePath)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
-			res.Write([]byte(fmt.Sprintf("Requesting image with name: \"%s\", but found nothing", imageName)))
+			fmt.Fprintf(res, "Requesting image with name: \"%s\", but found nothing", imageName)
 		}
 
 		res.Write(file)
@@ -33,7 +33,7 @@ func (h *AssetsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.WarningF("Requesting asset with name: \"%s\", but found nothing", req.URL.Path)
 	res.WriteHeader(http.StatusBadRequest)
-	res.Write([]byte(fmt.Sprintf("Requesting asset with name: \"%s\", but found nothing", req.URL.Path)))
+	fmt.Fprintf(res, "Requesting asset with name: \"%s\", but found nothing", req.URL.Path)
+	logger.WarningF("Requesting asset with name: \"%s\", but found nothing", req.URL.Path)
 }
