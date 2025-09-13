@@ -47,3 +47,5 @@ CREATE TABLE album (
 - TODO-k megcsinálása
 - formok konroláltá alakítása
 - Szerver hosztolás, amin lehet látni, belehallgatni a zenékbe és letölteni azokat
+    5Let: https://levelup.gitconnected.com/how-to-add-a-mini-audio-player-to-your-website-with-react-184046e17472
+    QR Encoder: https://github.com/skip2/go-qrcode/tree/master

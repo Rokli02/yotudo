@@ -12,11 +12,14 @@ import (
 )
 
 type App struct {
-	Ctx context.Context
+	Ctx        context.Context
+	httpServer *Server
 }
 
-func NewApp() *App {
-	app := &App{}
+func NewApp(httpServer *Server) *App {
+	app := &App{
+		httpServer: httpServer,
+	}
 
 	return app
 }
@@ -24,10 +27,13 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	logger.Info("Application is starting up...")
 	a.Ctx = ctx
+	a.StartServer()
 }
 
 func (a *App) Shutdown(ctx context.Context) {
 	logger.Info("Application is shuting down...")
+
+	a.StopServer()
 
 	// Delete every file from /tmp folder
 	if tempDir, err := os.Open(settings.Global.App.TempLocation); err != nil {
@@ -59,4 +65,12 @@ func (a *App) BeforeClose(ctx context.Context) (prevent bool) {
 	}
 
 	return
+}
+
+func (a *App) StartServer() error {
+	return a.httpServer.Start()
+}
+
+func (a *App) StopServer() error {
+	return a.httpServer.Stop(a.Ctx)
 }

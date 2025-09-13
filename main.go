@@ -18,6 +18,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed all:web-app/dist
+var webApp embed.FS
+
 func main() {
 	if err := settings.CreateEssentialDirectoriesAndFiles(); err != nil {
 		panic(err)
@@ -33,7 +36,8 @@ func main() {
 	db := database.LoadDatabase()
 	defer db.Close()
 
-	app := src.NewApp()
+	webServer := src.NewServer(&webApp)
+	app := src.NewApp(webServer)
 
 	statusService := &service.StatusService{}
 	genreService := &service.GenreService{}
