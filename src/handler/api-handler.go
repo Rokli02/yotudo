@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func GetApiHandlers() http.Handler {
+func ApiHandlers() http.Handler {
 	mux := http.NewServeMux()
 
 	var musicsHandler *MusicsHandler = nil

@@ -40,7 +40,9 @@ CREATE TABLE album (
     UNIQUE(author_id, name)
 );
 ```
-- Abort logika implementálása a felesleges lekérdezések elkerüléséhez
+- Abort logika implementálása a felesleges lekérdezések elkerüléséhez (talán a contextus megszakításával érhető el)
+- context első paraméter hozzáadás az összes repo függvényhez
+- A webszerver indításához szükséges metaadatok DB-ből történő kiolvasása
 - TODO-k megcsinálása
 
 ## Frontend továbbfejlesztés:

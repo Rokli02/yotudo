@@ -18,7 +18,6 @@ type MusicRepository struct{}
 var GlobalMusicRepository *MusicRepository = nil
 
 func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *model.Page, sort []model.Sort) ([]model.Music, int) {
-	args := make([]any, 0)
 	totalCountQuery, tcqArgs := builders.NewQueryBuilder("SELECT COUNT(1) FROM music", nil).
 		WithFilter("name", filter).
 		WithCondition("status", status, func(value any) bool {
@@ -32,9 +31,9 @@ func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *m
 		return []model.Music{}, 0
 	}
 
-	nestedQuery, _ := builders.NewQueryBuilder("SELECT * FROM music", &args).
-		WithFilter("m.name", filter).
-		WithCondition("m.status", status, func(value any) bool {
+	nestedQuery, args := builders.NewQueryBuilder("SELECT * FROM music", nil).
+		WithFilter("name", filter).
+		WithCondition("status", status, func(value any) bool {
 			return value.(int) > -1
 		}).
 		WithSort(sort).
@@ -42,7 +41,7 @@ func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *m
 		WithoutSemicolon().
 		Build()
 
-	query, _ := builders.NewQueryBuilder(fmt.Sprintf(
+	query := fmt.Sprintf(
 		`SELECT
 			m.id, m.name, m.published, m.album, m.url, m.filename, image.id, image.name, m.status,
 			a.id, a.name, genre.id, genre.name, ac.id, ac.name
@@ -52,10 +51,9 @@ func (m *MusicRepository) FindByPageAndStatus(status int, filter string, page *m
 		LEFT JOIN contributor ON m.id = contributor.music_id
 		LEFT JOIN author AS ac ON contributor.author_id = ac.id
 		LEFT JOIN image ON image.id=m.image_id`, nestedQuery,
-	), &args).
-		Build()
+	)
 
-	rows, err := database.Instance.Query(query, args...)
+	rows, err := database.Instance.Query(query, *args...)
 	if err != nil {
 		logger.Error(err)
 

@@ -12,7 +12,8 @@ export const MusicsPage: FC = () => {
         page,
         onSearchDebounce,
         onPaginationChange,
-        onHoldMusicItem,
+        holdMusicItem,
+        downloadMusic,
     } = useMusicPageState();
     const count = musics?.count ?? 0
 
@@ -20,7 +21,7 @@ export const MusicsPage: FC = () => {
         <Box sx={ContainerStyle}>
             <Searchbar value={filter} sx={SearchbarStyle} onDebounce={onSearchDebounce} debounceTime={400} />
             <PaginationComponent page={page} count={count} onChange={onPaginationChange} />
-            <MusicItems musics={musics ? musics.data : null} onHoldItem={onHoldMusicItem}/>
+            <MusicItems musics={musics ? musics.data : null} holdItem={holdMusicItem} downloadMusic={downloadMusic}/>
         </Box>
     )
 };

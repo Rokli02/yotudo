@@ -3,14 +3,14 @@ import { Music } from "@src/api/index.js";
 import { FC } from "react";
 import { LoadingPage } from "../Common/LoadingPage.js";
 import { MusicItem } from "./MusicItem.component.js";
-import { MusicService } from '@src/api/index.js'
 
 export interface MusicItemsProps {
     musics: Music[] | null;
-    onHoldItem: (id: number) => void;
+    holdItem: (id: number) => void;
+    downloadMusic: (id: number) => Promise<void>;
 }
 
-export const MusicItems: FC<MusicItemsProps> = ({musics, onHoldItem}) => {
+export const MusicItems: FC<MusicItemsProps> = ({musics, holdItem, downloadMusic}) => {
     if (musics === null) {
         return <Box sx={LoadingWrapperStyle}><LoadingPage size="large" /></Box>
     }
@@ -24,8 +24,8 @@ export const MusicItems: FC<MusicItemsProps> = ({musics, onHoldItem}) => {
             <MusicItem
                 key={music.id}
                 music={music}
-                onAction={() => MusicService.DownloadMusic(music.id)}
-                onActionAfterHold={() =>  onHoldItem(music.id)}
+                onAction={async () => downloadMusic(music.id)}
+                onActionAfterHold={() =>  holdItem(music.id)}
             />)
         }
     </Box>

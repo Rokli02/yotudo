@@ -89,9 +89,17 @@ func (c *YoutubeService) createEventData(musicId int64, progress float32, status
 }
 
 func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
+	_, err := c.MoveToDir(musicId, settings.Global.App.DownloadLocation)
+
+	return err
+}
+
+// Processes and moves the music to "directory".
+// Returns the created filename and error, if any occured
+func (c *YoutubeService) MoveToDir(musicId int64, directory string) (string, error) {
 	music, err := repository.GlobalMusicRepository.FindById(musicId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Check if music wasn't preprocessed, as it should have
@@ -100,7 +108,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 
 		logger.Warning(err)
 
-		return errors.New(err)
+		return "", errors.New(err)
 	}
 
 	// Check for music file
@@ -110,7 +118,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 
 		logger.Warning(err)
 
-		return errors.New(err)
+		return "", errors.New(err)
 	}
 
 	// Check for music with same name in temp directory
@@ -119,7 +127,7 @@ func (c *YoutubeService) MoveToDownloadDir(musicId int64) error {
 
 		logger.Warning(err)
 
-		return errors.New(err)
+		return "", errors.New(err)
 	}
 
 	var ffmpegArguments []string = []string{
@@ -195,7 +203,7 @@ leave_music_picfile:
 
 	filename := fmt.Sprintf("%s.%s", GlobalFileService.CreateFilename(music), FINAL_MUSIC_EXTENSION)
 
-	ffmpegArguments = append(ffmpegArguments, path.Join(settings.Global.App.DownloadLocation, filename))
+	ffmpegArguments = append(ffmpegArguments, path.Join(directory, filename))
 
 	cmd := exec.CommandContext(ctx, settings.Global.App.FFMPEGLocation, ffmpegArguments...)
 	if settings.USE_CMD_HIDE_WINDOW {
@@ -208,10 +216,10 @@ leave_music_picfile:
 	if err := cmd.Run(); err != nil {
 		logger.Error(err)
 
-		return err
+		return "", err
 	}
 
-	return nil
+	return filename, nil
 }
 
 func (c *YoutubeService) addMetadatas(arguments *[]string, music *model.Music) {

@@ -1,6 +1,6 @@
-import { memo, MouseEvent, useRef } from 'react';
+import { FC, memo, MouseEvent, useRef } from 'react';
 import { Music } from '@src/api/index.js';
-import { Download } from "@mui/icons-material";
+import { Download, CachedRounded } from "@mui/icons-material";
 import { SxProps, Theme } from '@mui/material/styles';
 import { Divider } from '@src/components/common/index.js';
 import { Box, Typography } from '@mui/material';
@@ -37,6 +37,8 @@ export const MusicItem = memo(({
         loadingState.current = isLoading;
         target.toggleAttribute('data-loading', isLoading);
     }
+
+    const StatusIcon = StatusActionIcon[music.status.id]
 
     return (
         <HoldDownAction
@@ -80,7 +82,7 @@ export const MusicItem = memo(({
                         loading(target, false);
                     })
                 }} data-status={music.status.id}>
-                    <Download />
+                    <StatusIcon />
                 </Box>
             </Box>
         </HoldDownAction>
@@ -88,6 +90,26 @@ export const MusicItem = memo(({
 })
 
 //#region Components
+const AnimatedCachedRounded: FC = () => {
+    return <CachedRounded sx={{
+    '@keyframes spin': {
+        '0%': {
+            transform: 'rotate(0deg)',
+        },
+        '100%': {
+            transform: 'rotate(360deg)',
+        },
+    },
+    animationName: 'spin',
+    animationIterationCount: 'infinite',
+    animationDirection: 'reverse',
+    animationDuration: '1.5s'
+}} />
+}
+const StatusActionIcon: Record<number, FC> = {
+    1: AnimatedCachedRounded,
+    2: Download,
+}
 const ContainerStyle: SxProps<Theme> = {
     position: 'relative',
     cursor: 'default',

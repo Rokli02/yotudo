@@ -2,7 +2,7 @@ import { ComponentProps, useCallback, useEffect, useMemo, useState } from "react
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PaginationComponent } from "./Pagination.component.js";
 import { DefaultPageSize } from "./constants.js";
-import { Music, MusicService, Pagination } from "@src/api/index.js";
+import { Music, MusicService, Pagination, StatusService } from "@src/api/index.js";
 
 export function useMusicPageState() {
     const [musics, setMusics] = useState<Pagination<Music[]> | null>(null)
@@ -41,9 +41,24 @@ export function useMusicPageState() {
         })
     }, [setSearchParams]);
 
-    const onHoldMusicItem = useCallback((id: number) => {
+    const holdMusicItem = useCallback((id: number) => {
         router(`${id}`, { relative: 'path' });
     }, [router]);
+
+    const downloadMusic = useCallback(async (id: number) => {
+        const status = await StatusService.GetAllStatus()
+        const updateList = (statusId: number) => setMusics((pre) => ({
+            ...pre,
+            data: pre?.data.map((music) => music.id !== id 
+                ? music
+                : { ...music, status: status[statusId] }
+            ) ?? [],
+        } as Pagination<Music[]>))
+
+        updateList(1)
+
+        MusicService.DownloadMusic(id).finally(() => updateList(2))
+    }, [setMusics])
 
     useEffect(() => {
         MusicService.GetMusics({ filter, page, size: DefaultPageSize }).then((musics) => {
@@ -57,6 +72,7 @@ export function useMusicPageState() {
         page,
         onSearchDebounce,
         onPaginationChange,
-        onHoldMusicItem,
+        holdMusicItem,
+        downloadMusic,
     } as const
 }

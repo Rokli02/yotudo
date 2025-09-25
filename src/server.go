@@ -2,7 +2,6 @@ package src
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"io"
 	"io/fs"
@@ -25,7 +24,7 @@ type Server struct {
 	port       int
 }
 
-func NewServer(webAppFS *embed.FS) *Server {
+func NewServer(webAppFS fs.FS) *Server {
 	return &Server{
 		httpServer: &http.Server{
 			Handler: getHandler(webAppFS),
@@ -122,7 +121,7 @@ func (s *Server) getPortFormListener(listener net.Listener) (int, error) {
 	return strconv.Atoi(_addr[portBeginningIndex+1:])
 }
 
-func getHandler(webAppFS *embed.FS) http.Handler {
+func getHandler(webAppFS fs.FS) http.Handler {
 	mainHandler := http.NewServeMux()
 
 	mainHandler.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +131,7 @@ func getHandler(webAppFS *embed.FS) http.Handler {
 			w.Header().Set("Access-Control-Allow-Methods", "*")
 			w.Header().Set("Access-Control-Allow-Headers", "*")
 
-			handler.GetApiHandlers().ServeHTTP(w, r)
+			handler.ApiHandlers().ServeHTTP(w, r)
 		case "/image":
 			handler.NewAssetsHandler().ServeHTTP(w, r)
 		default:

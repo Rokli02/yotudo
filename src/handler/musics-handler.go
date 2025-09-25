@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -101,47 +103,33 @@ func (m *MusicsHandler) DownloadMusicById(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	music, err := service.GlobalMusicService.GetById(id)
+	filename, err := service.GlobalYoutubeService.MoveToDir(id, settings.Global.App.TempLocation)
 	if err != nil {
-		if err == errors.ErrNotFound {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintln(w, "Nem talált")
-		} else {
-			logger.Error("Server Error:", err)
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Érvénytelen ID került megadásra")
-		}
-
-		return
-	}
-
-	if music.Filename == nil {
+		logger.Error("Server Error:", err)
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, "Még nem feldolgozott zenét próbáltál letölteni")
 
 		return
 	}
 
-	var musicFile *os.File
-
-	if _musicFile, err := os.Open(path.Join(settings.Global.App.MusicsLocation, *music.Filename)); err != nil {
-		logger.WarningF("Server Warning: Music was not found in its directory (filename=%s)", *music.Filename)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "Nem találta meg a zenét a szerver")
-
-		return
-	} else {
-		musicFile = _musicFile
+	musicPath := path.Join(settings.Global.App.TempLocation, filename)
+	musicFile, err := os.Open(musicPath)
+	if err != nil {
+		logger.Error("Server Error:", err)
 	}
 
+	defer func() {
+		err := os.Remove(musicPath)
+		if err != nil {
+			logger.Warning("Server Warning:", err)
+		}
+	}()
 	defer musicFile.Close()
 
-	filename := service.GlobalFileService.CreateFilename(music)
-	w.Header().Set("x-file-name", filename)
+	dst := base64.StdEncoding.EncodeToString([]byte(filename))
+	w.Header().Set("x-file-name", dst)
+	w.WriteHeader(http.StatusOK)
 
-	//TODO: Felhasználni a YoutubeService.MoveToDownloadDir függvényt, hogy áthelyezzük a tmp mappába, majd onnan a borítóval és metaadatokkal feltöltött zenét töltesse le
-	//TODO: Csak teszt jelleggel kommentáltam ki, utána ki kell szedni
-	// if _, err := io.CopyBuffer(w, musicFile, nil); err != nil {
-	// 	logger.Error("Server Error:", err)
-	// }
+	if _, err := io.CopyBuffer(w, musicFile, nil); err != nil {
+		logger.Error("Server Error:", err)
+	}
 }

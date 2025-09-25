@@ -14,8 +14,6 @@ export async function GetMusics(page: Page = { page: 0, size: 10 }): Promise<Pag
         },
     }).catch(() => ({ Data: [], Count: 0 }))
 
-    console.log("TEMP", result)
-
     const statusMap = await GetAllStatus();
 
     return {
@@ -40,21 +38,30 @@ export async function GetMusicById(id: number): Promise<Music> {
 export async function DownloadMusic(id: number): Promise<void> {
     await customFetch(`/musics/${id}/download`, { method: 'GET', rawResponse: true })
         .then(async (response) => {
-            console.log(response.headers.get('x-file-name')) //TODO: A kommentekből kiszedni mindent, ezt csak teszt jelleggel hagytam itt így
-            // const blob = await response.blob();
-            // const url = window.URL.createObjectURL(blob);
+            let filename: string;
+            const b64filename = response.headers.get('x-file-name')
 
-            // const tempElement = document.createElement('a');
+            if (b64filename) {
+                const b64bytes = new Uint8Array([...atob(b64filename)].map(char => char.charCodeAt(0)));
+                filename = new TextDecoder('utf-8').decode(b64bytes)
+            } else {
+                filename = `Downloaded_${Date.now().toString(16)}.mp3`
+            }
 
-            // tempElement.style.display = 'none';
-            // tempElement.href = url;
-            // tempElement.download = response.headers.get('x-file-name') ?? `Downloaded_${Date.now().toString(16)}.mp3`;
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
 
-            // document.appendChild(tempElement);
-            // tempElement.click();
-            // document.removeChild(tempElement);
+            const tempElement = document.createElement('a');
 
-            // window.URL.revokeObjectURL(url);
+            tempElement.style.display = 'none';
+            tempElement.href = url;
+            tempElement.download = filename;
+
+            document.body.appendChild(tempElement);
+            tempElement.click();
+            document.body.removeChild(tempElement);
+
+            window.URL.revokeObjectURL(url);
         })
         .catch((err) => console.error(err));
 }
