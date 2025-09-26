@@ -26,6 +26,8 @@ case $MODE in
     "dev")
         create_data_dir_if_not_found .
 
+        go build -o yotudo-server.exe ./server/cmd/main.go
+
         echo Launching DEV application
         sudo $WAILS_PATH/wails dev -tags webkit2_41 $@
         ;;
@@ -36,6 +38,8 @@ case $MODE in
         sudo chmod -R 777 frontend/wailsjs/runtime
 
         wails build -tags webkit2_41 $@
+
+        go build -o ./build/bin/yotudo-server.exe ./server/cmd/main.go
 
         echo Copying dynamic assets to build directory
 
