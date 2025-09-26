@@ -2,12 +2,10 @@ package src
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"yotudo/src/lib/logger"
+	"yotudo/src/model"
 	"yotudo/src/service"
 	"yotudo/src/settings"
 
@@ -15,17 +13,20 @@ import (
 )
 
 type App struct {
-	Ctx       context.Context
-	serverCmd *exec.Cmd
+	Ctx    context.Context
+	server *Server
 }
 
 func NewApp() *App {
-	app := &App{}
+	app := &App{
+		server: &Server{},
+	}
 
 	return app
 }
 
 func (a *App) Startup(ctx context.Context) {
+	a.server.Config = *service.GlobalInfoService.GetServerConfig()
 	logger.Info("Application is starting up...")
 	a.Ctx = ctx
 }
@@ -67,64 +68,22 @@ func (a *App) BeforeClose(ctx context.Context) (prevent bool) {
 	return
 }
 
-func (a *App) StartServer() error {
-	a.serverCmd = exec.CommandContext(context.Background(), "./yotudo-server.exe",
-		"--localhost",
-		"--host-frontend",
-		"--port", fmt.Sprintf("%d", settings.Global.Server.Port),
-	)
+func (a *App) StartServer(config *model.ServerConfig) error {
+	if err := a.server.Start(a.Ctx, config); err != nil {
+		return err
+	}
 
-	go func() {
-		stdout, _ := a.serverCmd.StdoutPipe()
-		buf := make([]byte, 4096)
+	if err := service.GlobalInfoService.SetServerConfig(config); err != nil {
+		logger.Warning(err)
+	}
 
-		for {
-			if a.serverCmd == nil {
-				return
-			}
-
-			read, err := stdout.Read(buf)
-			if err != nil {
-				logger.Warning(err)
-				return
-			}
-
-			if read != 0 {
-				var prefix string
-				out, _ := strings.CutSuffix(string(buf), "\n")
-
-				if indexOfColon := strings.Index(out, ":"); indexOfColon != -1 {
-					prefix = out[:indexOfColon]
-					out = strings.TrimSpace(out[indexOfColon+1:])
-				}
-
-				switch prefix {
-				case "INFO":
-					logger.Info(out)
-				case "ERR":
-					logger.Error(out)
-				case "WARN":
-					logger.Warning(out)
-				case "EVENT":
-					// TODO: Process events
-				default:
-					logger.Debug(out)
-				}
-			}
-		}
-	}()
-
-	return a.serverCmd.Start()
+	return nil
 }
 
 func (a *App) StopServer() error {
-	if a.serverCmd == nil {
-		return nil
-	}
+	return a.server.Stop()
+}
 
-	cmd := a.serverCmd
-	a.serverCmd = nil
-
-	cmd.Stdin.Read([]byte("exit"))
-	return cmd.Wait()
+func (a *App) GetServerConfig() *model.ServerConfig {
+	return &a.server.Config
 }

@@ -1,7 +1,7 @@
 import styles from './NavbarStyle.module.css'
 import { FC, useLayoutEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom'
-import { AudioFile, Dashboard, InterpreterMode } from '@mui/icons-material';
+import { AudioFile, Dashboard, InterpreterMode, ConnectedTv } from '@mui/icons-material';
 import { NavbarProps } from './Navbar.interface';
 
 const Navbar: FC<NavbarProps> = () => {
@@ -36,6 +36,10 @@ const Navbar: FC<NavbarProps> = () => {
         <Link to="author" className={styles['nav-item']}>
           <InterpreterMode />
           Szerzők
+        </Link>
+        <Link to="server" className={styles['nav-item']}>
+          <ConnectedTv />
+          Webszerver
         </Link>
       </div>
     </div>

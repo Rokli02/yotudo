@@ -61,6 +61,14 @@ func (i Info) Migration(currentVersion MigrationVersion) []Migration {
 				INSERT INTO info(name, value, value_type) VALUES('window_width', '1280', %d), ('window_height', '768', %d);
 			`, IntValue, IntValue),
 		},
+		{
+			Version: MigrationVersion{1, 1, 2},
+			Migration: fmt.Sprintf(`
+				INSERT INTO info(name, value, value_type) VALUES
+					('server_port', '0', %d),
+					('server_host', '1', %d);
+			`, IntValue, BoolValue),
+		},
 	}
 
 	return MigrationsByVersion(migrations, currentVersion)

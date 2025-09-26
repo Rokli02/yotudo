@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	// Process given arguments
 	args := utils.ParseArguments(os.Args[1:])
 	if args.GetState(utils.Help) {
 		fmt.Println("Most még nézz bele a kódba, később majd le lesz írva minden!")
@@ -20,7 +19,7 @@ func main() {
 	}
 
 	defer func() {
-		fmt.Println("EVENT: CLOSE_SERVER")
+		fmt.Println("EVENT: close=true")
 	}()
 
 	if err := settings.CreateEssentialDirectoriesAndFiles(); err != nil {
@@ -35,7 +34,6 @@ func main() {
 
 	database.LoadDatabase()
 
-	// Launch webserver
 	server := serverModule.NewServer(func(serverOptions *serverModule.ServerOptions) {
 		serverOptions.
 			Host(args.GetState(utils.Host)).
@@ -44,7 +42,6 @@ func main() {
 	})
 
 	fmt.Println("INFO: Starting webserver")
-	fmt.Println("DEBUG: ", server.GetAddress())
 	if err := server.Start(); err != nil {
 		fmt.Println("ERR:", err)
 		return
@@ -57,7 +54,6 @@ func main() {
 	fmt.Printf("INFO: Server is listening on http://%s\n", server.GetAddress())
 	fmt.Printf("EVENT: listening=%s\n", server.GetAddress())
 
-	// Wait for exit event
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	exitSig := utils.WaitForExit()

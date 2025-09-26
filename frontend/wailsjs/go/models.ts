@@ -248,6 +248,22 @@ export namespace model {
 		}
 	}
 	
+	export class ServerConfig {
+	    Port: number;
+	    IsHosted: boolean;
+	    ListeningOn: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ServerConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Port = source["Port"];
+	        this.IsHosted = source["IsHosted"];
+	        this.ListeningOn = source["ListeningOn"];
+	    }
+	}
 	export class Sort {
 	    Key: string;
 	    Dir: number;

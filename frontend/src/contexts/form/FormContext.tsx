@@ -14,6 +14,7 @@ export const Form: FC<IForm> = ({
     FormComponent = DefaultForm,
     clearOnSubmit = true,
     constraints,
+    ...props
 }) => {
     const waitingForResponse = useRef<boolean>(false)
     const inputs = useRef<Inputs>({});
@@ -94,7 +95,7 @@ export const Form: FC<IForm> = ({
             unregisterInput,
             getErrors,
         }}>
-            <FormComponent onSubmit={_onSubmit}>
+            <FormComponent {...props} onSubmit={_onSubmit}>
                 {children}
             </FormComponent>
         </FormContext.Provider>

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { SxProps, Theme } from "@mui/material";
 import { DetailedHTMLProps, Dispatch, FC, ReactElement, SetStateAction } from "react";
 
 export interface IForm {
@@ -6,6 +7,7 @@ export interface IForm {
     onSubmit: (value: any) => Promise<boolean>,
     onChange?: <T = any>(value: T) => void,
     transformFlatObjectTo?: (value: any) => any,
+    sx?: SxProps<Theme>,
     FormComponent?: FC<DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>>,
     clearOnSubmit?: boolean,
     constraints?: FormConstraints,

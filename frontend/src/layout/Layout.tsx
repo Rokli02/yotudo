@@ -4,6 +4,7 @@ import { UnknownPage } from '@src/pages/Common';
 import MusicPage from '@src/pages/Music/MusicPage';
 import MiscPage from'@src/pages/Misc/MiscPage';
 import AuthorPage from'@src/pages/Author/AuthorPage';
+import WebserverPage from '@src/pages/Webserver/WebserverPage';
 
 export const routes: Array<RouteObject> = [
     {
@@ -21,6 +22,10 @@ export const routes: Array<RouteObject> = [
             {
               path: "author",
               element: <AuthorPage />
+            },
+            {
+              path: "server",
+              element: <WebserverPage />
             }
         ],
     },

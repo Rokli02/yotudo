@@ -11,7 +11,7 @@ interface FormCheckboxProps extends Omit<MuiCheckboxProps, ''> {
     onChange?: FormControlLabelProps['onChange']
 }
 
-export const FormCheckbox: FC<FormCheckboxProps> = ({ label, name, onChange, value = false, ...props }) => {
+export const FormCheckbox: FC<FormCheckboxProps> = ({ label, name, onChange, value = false, sx, ...props }) => {
     const [_value, setValue] = useState<boolean>(value);
     const { registerInput, unregisterInput, onValueChange, getErrors } = useForm();
 
@@ -37,6 +37,7 @@ export const FormCheckbox: FC<FormCheckboxProps> = ({ label, name, onChange, val
     return (
         <>
             <FormControlLabel
+                sx={sx}
                 label={label}
                 name={name}
                 checked={_value}
