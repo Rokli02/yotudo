@@ -63,7 +63,7 @@ func (c *ContributorRepository) SaveMany(conn Connection, musicId int64, authorI
 	}
 
 	query := fmt.Sprintf("INSERT INTO contributor (music_id, author_id) VALUES%s;", strings.Join(values, ", "))
-	res, err := database.Instance.Exec(query, args...)
+	res, err := conn.Exec(query, args...)
 	if err != nil {
 		logger.Error("Contributor.SaveMany:", err)
 
@@ -93,7 +93,7 @@ func (c *ContributorRepository) DeleteMany(conn Connection, musicId int64, autho
 	qms, args := inClause(authorIds, musicId)
 
 	query := fmt.Sprintf("DELETE FROM contributor WHERE music_id=? AND author_id IN(%s)", qms)
-	res, err := database.Instance.Exec(query, args...)
+	res, err := conn.Exec(query, args...)
 	if err != nil {
 		logger.Error("Contributor.DeleteMany:", err)
 

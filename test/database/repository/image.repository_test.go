@@ -8,7 +8,7 @@ import (
 	"yotudo/src/model"
 )
 
-func TestSaveOne(t *testing.T) {
+func TestSaveOneImage(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	imageRepository := repository.GlobalImageRepository
@@ -22,7 +22,7 @@ func TestSaveOne(t *testing.T) {
 		return
 	}
 
-	row := db.Conn.QueryRow("SELECT id, path, referedCount FROM image WHERE id=?", savedImage.Id)
+	row := db.Conn.QueryRow("SELECT id, name, referedCount FROM image WHERE id=?", savedImage.Id)
 	image := entity.Image{}
 	if err := row.Scan(&image.Id, &image.Name, &image.ReferedCount); err != nil {
 		t.Error(err)
@@ -32,7 +32,7 @@ func TestSaveOne(t *testing.T) {
 	logger.Debug(image.String())
 }
 
-func TestSaveOneWithNilConn(t *testing.T) {
+func TestSaveOneImageWithNilConn(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	imageRepository := repository.GlobalImageRepository
@@ -46,7 +46,7 @@ func TestSaveOneWithNilConn(t *testing.T) {
 		return
 	}
 
-	row := db.Conn.QueryRow("SELECT id, path, referedCount FROM image WHERE id=?", savedImage.Id)
+	row := db.Conn.QueryRow("SELECT id, name, referedCount FROM image WHERE id=?", savedImage.Id)
 	image := entity.Image{}
 	if err := row.Scan(&image.Id, &image.Name, &image.ReferedCount); err != nil {
 		t.Error(err)
@@ -56,7 +56,7 @@ func TestSaveOneWithNilConn(t *testing.T) {
 	logger.Debug(image.String())
 }
 
-func TestFindById(t *testing.T) {
+func TestFindImageById(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	imageRepository := repository.GlobalImageRepository
@@ -73,7 +73,7 @@ func TestFindById(t *testing.T) {
 	logger.Debug(img)
 }
 
-func TestFindByIdNotFound(t *testing.T) {
+func TestFindImageByIdNotFound(t *testing.T) {
 	db := getInMemoryDB()
 	defer db.Close()
 	imageRepository := repository.GlobalImageRepository

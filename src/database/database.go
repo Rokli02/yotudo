@@ -143,7 +143,6 @@ func (db *Database) migrateDatabase(versionText string, skipUnnecessaryMigration
 
 	if sb.Len() != 0 {
 		migrationString := sb.String()
-		logger.Debug(migrationString)
 
 		if _, err := db.Conn.Exec(migrationString); err != nil {
 			logger.Error("Error during database migration (Couldn't execute built command):", err)

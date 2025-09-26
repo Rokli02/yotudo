@@ -1,6 +1,8 @@
 package database
 
 import (
+	"os"
+	"path"
 	settingsModule "yotudo/src/settings"
 )
 
@@ -11,8 +13,10 @@ type DatabaseOptions struct {
 type DatabaseOptionsFunc func(opts *DatabaseOptions)
 
 func DefaultDatabaseOptions(settings settingsModule.DatabaseSettings) *DatabaseOptions {
+	wd, _ := os.Getwd()
+
 	return &DatabaseOptions{
-		location: settings.Location,
+		location: path.Join(wd, settings.Location),
 	}
 }
 

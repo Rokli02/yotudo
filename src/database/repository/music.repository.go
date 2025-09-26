@@ -252,6 +252,10 @@ func (m *MusicRepository) UpdateOne(musicId int64, music *model.UpdateMusic) (up
 
 	if len(music.Contributors) > 0 {
 		for _, contributor := range music.Contributors {
+			if contributor.Id == nil {
+				continue
+			}
+
 			if _, found := contributorState[*contributor.Id]; found {
 				delete(contributorState, *contributor.Id)
 			} else {
@@ -269,15 +273,9 @@ func (m *MusicRepository) UpdateOne(musicId int64, music *model.UpdateMusic) (up
 		return
 	}
 
-	// If 'updateOneResponse' remained nil something went wrong during execution, so do a db rollback
-	// Otherwise completed its purpose, so commit changes
 	defer func() {
-		if updateOneResponse == nil {
-			logger.Debug("UpdateOne function ran into some problem during execution")
-
-			if err := trans.Rollback(); err != nil {
-				logger.Error(err)
-			}
+		if err := trans.Rollback(); err != nil && err != sql.ErrTxDone {
+			logger.Error(err)
 		}
 	}()
 
