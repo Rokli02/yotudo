@@ -42,7 +42,8 @@ CREATE TABLE album (
 ```
 - Abort logika implementálása a felesleges lekérdezések elkerüléséhez (talán a contextus megszakításával érhető el)
 - context első paraméter hozzáadás az összes repo függvényhez
-- A webszerver indításához szükséges metaadatok DB-ből történő kiolvasása
+- Ellenőrizni, hogy a webszerver indítás nem-e hagy élőholt processzeket maga mögött
+- FELEJTS EL MINDENT, inkább indítsa az app közvetlenül a webszervert, nem kell genyózni (mivel nincs külön go.mod neki, ezért rohadt sok függőséget felkap, ami nem lenne szükséges neki)
 - TODO-k megcsinálása
 
 ## Frontend továbbfejlesztés:
